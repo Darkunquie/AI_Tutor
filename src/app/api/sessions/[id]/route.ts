@@ -1,0 +1,195 @@
+import { NextRequest } from 'next/server';
+import { db } from '@/lib/db';
+import { UpdateSessionSchema } from '@/lib/schemas/session.schema';
+import { ApiError } from '@/lib/errors/ApiError';
+import {
+  withErrorHandling,
+  validateBody,
+  successResponse,
+} from '@/lib/error-handler';
+import { ScoreCalculator } from '@/lib/services/ScoreCalculator';
+import type { FillerWordDetection } from '@/lib/types';
+
+// GET /api/sessions/[id] - Get a specific session
+async function handleGet(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
+  const params = context!.params;
+  const { id } = await params;
+
+  const session = await db.session.findUnique({
+    where: { id },
+    include: {
+      messages: {
+        orderBy: { timestamp: 'asc' },
+      },
+      errors: true,
+      vocabulary: true,
+    },
+  });
+
+  if (!session) {
+    throw ApiError.notFound('Session');
+  }
+
+  // Parse JSON fields
+  const fillerDetails: FillerWordDetection[] = JSON.parse(session.fillerDetails || '[]');
+  const vocabularyJson: string[] = JSON.parse(session.vocabularyJson || '[]');
+
+  return successResponse({
+    id: session.id,
+    mode: session.mode,
+    level: session.level,
+    duration: session.duration,
+    score: session.score,
+    fillerWordCount: session.fillerWordCount,
+    fillerDetails,
+    avgPronunciation: session.avgPronunciation,
+    vocabularyJson,
+    vocabulary: session.vocabulary,
+    messages: session.messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      corrections: m.corrections ? JSON.parse(m.corrections) : null,
+      pronunciationScore: m.pronunciationScore,
+      fillerWordCount: m.fillerWordCount,
+      timestamp: m.timestamp,
+    })),
+    errors: session.errors,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+  });
+}
+
+// PATCH /api/sessions/[id] - Update a session
+async function handlePatch(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
+  const { id } = await context!.params;
+  const body = await validateBody(request, UpdateSessionSchema);
+
+  const {
+    duration,
+    score,
+    fillerWordCount,
+    fillerDetails,
+    avgPronunciation,
+    vocabularyJson,
+  } = body;
+
+  // Build update data
+  const updateData: Record<string, unknown> = {};
+
+  if (duration !== undefined) updateData.duration = duration;
+  if (score !== undefined) updateData.score = score;
+  if (fillerWordCount !== undefined) updateData.fillerWordCount = fillerWordCount;
+  if (fillerDetails !== undefined) updateData.fillerDetails = JSON.stringify(fillerDetails);
+  if (avgPronunciation !== undefined) updateData.avgPronunciation = avgPronunciation;
+  if (vocabularyJson !== undefined) updateData.vocabularyJson = JSON.stringify(vocabularyJson);
+
+  const session = await db.session.update({
+    where: { id },
+    data: updateData,
+  });
+
+  // Update daily stats if session is ending (has score)
+  if (score !== undefined) {
+    await updateDailyStats(session.userId, session.id, session);
+  }
+
+  return successResponse({
+    id: session.id,
+    duration: session.duration,
+    score: session.score,
+    fillerWordCount: session.fillerWordCount,
+    avgPronunciation: session.avgPronunciation,
+    updatedAt: session.updatedAt,
+  });
+}
+
+// Helper function to update daily stats with proper averaging
+async function updateDailyStats(
+  userId: string,
+  sessionId: string,
+  session: {
+    duration: number;
+    score: number | null;
+    fillerWordCount: number;
+  }
+) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Get error counts for THIS session only (not all user sessions)
+  const errorCounts = await db.error.groupBy({
+    by: ['category'],
+    where: { sessionId },
+    _count: true,
+  });
+
+  const grammarErrors = errorCounts.find((e) => e.category === 'GRAMMAR')?._count || 0;
+  const vocabErrors = errorCounts.find((e) => e.category === 'VOCABULARY')?._count || 0;
+  const structureErrors = errorCounts.find((e) => e.category === 'STRUCTURE')?._count || 0;
+  const fluencyErrors = errorCounts.find((e) => e.category === 'FLUENCY')?._count || 0;
+
+  // Get current daily stats to calculate proper average
+  const currentStats = await db.dailyStats.findUnique({
+    where: {
+      userId_date: {
+        userId,
+        date: today,
+      },
+    },
+    select: {
+      sessionsCount: true,
+      avgScore: true,
+    },
+  });
+
+  // Calculate new average score properly
+  const newAvgScore = ScoreCalculator.calculateNewAverageScore({
+    currentStats: currentStats || { sessionsCount: 0, avgScore: 0 },
+    newSessionScore: session.score || 0,
+  });
+
+  // Count new vocabulary words learned in this session
+  const wordsLearnedCount = await db.vocabulary.count({
+    where: {
+      sessionId,
+    },
+  });
+
+  // Upsert daily stats
+  await db.dailyStats.upsert({
+    where: {
+      userId_date: {
+        userId,
+        date: today,
+      },
+    },
+    create: {
+      userId,
+      date: today,
+      sessionsCount: 1,
+      totalDuration: session.duration,
+      avgScore: session.score || 0,
+      grammarErrors,
+      vocabErrors,
+      structureErrors,
+      fluencyErrors,
+      wordsLearned: wordsLearnedCount,
+      fillerWords: session.fillerWordCount,
+    },
+    update: {
+      sessionsCount: { increment: 1 },
+      totalDuration: { increment: session.duration },
+      avgScore: newAvgScore,
+      grammarErrors: { increment: grammarErrors },
+      vocabErrors: { increment: vocabErrors },
+      structureErrors: { increment: structureErrors },
+      fluencyErrors: { increment: fluencyErrors },
+      wordsLearned: { increment: wordsLearnedCount },
+      fillerWords: { increment: session.fillerWordCount },
+    },
+  });
+}
+
+export const GET = withErrorHandling(handleGet);
+export const PATCH = withErrorHandling(handlePatch);

@@ -1,0 +1,133 @@
+// Prisma schema for AI English Tutor
+// Using SQLite for zero-cost database
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id         String       @id @default(cuid())
+  lmsUserId  String       @unique // From FresherReady JWT
+  level      Level        @default(BEGINNER)
+  sessions   Session[]
+  vocabulary Vocabulary[]
+  dailyStats DailyStats[]
+  createdAt  DateTime     @default(now())
+}
+
+model Session {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id])
+  mode              Mode
+  level             Level
+  duration          Int          @default(0) // seconds
+  messages          Message[]
+  errors            Error[]
+  vocabulary        Vocabulary[]
+  score             Int?         // 0-100
+  vocabularyJson    String       @default("[]") // JSON array of new words (legacy)
+  fillerWordCount   Int          @default(0)
+  fillerDetails     String       @default("[]") // JSON array of filler word detections
+  avgPronunciation  Float?       // Average pronunciation score 0-100
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model Message {
+  id                 String   @id @default(cuid())
+  sessionId          String
+  session            Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role               Role
+  content            String
+  corrections        String?  // JSON for inline corrections
+  pronunciationScore Float?   // 0-100 pronunciation score for this message
+  fillerWordCount    Int      @default(0)
+  timestamp          DateTime @default(now())
+}
+
+model Error {
+  id          String    @id @default(cuid())
+  sessionId   String
+  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  category    ErrorType
+  original    String
+  corrected   String
+  explanation String
+  createdAt   DateTime  @default(now())
+}
+
+// Vocabulary tracking - words learned by user
+model Vocabulary {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId  String?
+  session    Session?    @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  word       String
+  definition String?
+  context    String      // Sentence where word was learned
+  source     VocabSource
+  mastery    Int         @default(0) // 0-100, increases with correct usage
+  createdAt  DateTime    @default(now())
+  reviewedAt DateTime?
+
+  @@unique([userId, word])
+  @@index([userId])
+}
+
+// Daily aggregated stats for progress dashboard
+model DailyStats {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime
+  sessionsCount   Int      @default(0)
+  totalDuration   Int      @default(0) // seconds
+  avgScore        Float    @default(0)
+  grammarErrors   Int      @default(0)
+  vocabErrors     Int      @default(0)
+  structureErrors Int      @default(0)
+  fluencyErrors   Int      @default(0)
+  wordsLearned    Int      @default(0)
+  fillerWords     Int      @default(0)
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Mode {
+  FREE_TALK
+  ROLE_PLAY
+  DEBATE
+  GRAMMAR_FIX
+}
+
+enum Role {
+  USER
+  AI
+}
+
+enum ErrorType {
+  GRAMMAR
+  VOCABULARY
+  STRUCTURE
+  FLUENCY
+}
+
+enum VocabSource {
+  CORRECTION  // From a grammar/vocab correction
+  AI_RESPONSE // New word from AI's response
+  USER_MARKED // User explicitly saved it
+}
