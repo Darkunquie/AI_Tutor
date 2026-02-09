@@ -2,6 +2,13 @@
 // Using Llama 3.3 70B - completely free!
 
 import Groq from 'groq-sdk';
+import { logger } from './utils';
+
+if (!process.env.GROQ_API_KEY) {
+  throw new Error(
+    'GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com'
+  );
+}
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -38,7 +45,7 @@ export async function chat(
 
     return completion.choices[0]?.message?.content || '';
   } catch (error) {
-    console.error('Groq API error:', error);
+    logger.error('Groq API error:', error);
     throw new Error('Failed to get response from AI. Please try again.');
   }
 }
@@ -74,7 +81,7 @@ export async function* chatStream(
       }
     }
   } catch (error) {
-    console.error('Groq API streaming error:', error);
+    logger.error('Groq API streaming error:', error);
     throw new Error('Failed to get response from AI. Please try again.');
   }
 }

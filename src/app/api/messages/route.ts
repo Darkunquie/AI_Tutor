@@ -9,6 +9,7 @@ import {
   validateQuery,
   successResponse,
 } from '@/lib/error-handler';
+import { safeJsonParse } from '@/lib/utils';
 
 // Query schema for GET
 const MessageQuerySchema = z.object({
@@ -99,7 +100,7 @@ async function handleGet(request: NextRequest) {
       id: m.id,
       role: m.role,
       content: m.content,
-      corrections: m.corrections ? JSON.parse(m.corrections) : null,
+      corrections: safeJsonParse(m.corrections, null),
       pronunciationScore: m.pronunciationScore,
       fillerWordCount: m.fillerWordCount,
       timestamp: m.timestamp,

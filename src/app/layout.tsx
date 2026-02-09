@@ -27,7 +27,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={`${lexend.className} antialiased`}>
+      <body className={`${lexend.className} antialiased`} suppressHydrationWarning>
         {children}
       </body>
     </html>

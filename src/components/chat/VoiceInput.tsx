@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { PronunciationResult, FillerWordDetection } from '@/lib/types';
 import { detectFillerWords } from '@/lib/filler-words';
+import { logger } from '@/lib/utils';
 
 interface VoiceInputProps {
   onTranscript: (text: string, pronunciationData?: PronunciationResult, fillerWords?: FillerWordDetection[]) => void;
@@ -142,7 +143,7 @@ export function VoiceInput({
     };
 
     recognition.onerror = (event: Event & { error: string }) => {
-      console.error('Speech recognition error:', event.error);
+      logger.error('Speech recognition error:', event.error);
       setIsListening(false);
       setInterimText('');
     };
@@ -195,6 +196,7 @@ export function VoiceInput({
       <button
         onClick={toggleListening}
         disabled={disabled}
+        aria-label={isListening ? 'Stop recording' : 'Start voice recording'}
         className={`group relative z-10 flex h-16 w-16 items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${
           isListening
             ? 'bg-red-500 text-white shadow-red-500/20 hover:bg-red-600'

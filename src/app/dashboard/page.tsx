@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/utils';
 import { StatsOverview } from '@/components/dashboard/StatsOverview';
 import { ProgressChart } from '@/components/dashboard/ProgressChart';
 import { ErrorAnalysis } from '@/components/dashboard/ErrorAnalysis';
@@ -54,7 +55,7 @@ export default function DashboardPage() {
         const progressResult = await api.stats.progress({ userId, period });
         setProgressData((progressResult.data || []) as unknown as ProgressData[]);
       } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
+        logger.error('Failed to fetch dashboard data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -92,7 +93,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            <button aria-label="Notifications" className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
               <span className="material-symbols-outlined text-xl">notifications</span>
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#3c83f6] rounded-full" />
             </button>

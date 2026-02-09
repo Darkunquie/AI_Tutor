@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/utils';
 
 interface Session {
   id: string;
@@ -78,7 +79,7 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
         setSessions((result as unknown as { data: Session[]; meta: { total: number } }).data || []);
         setTotal((result as unknown as { data: Session[]; meta: { total: number } }).meta?.total || 0);
       } catch (error) {
-        console.error('Failed to fetch sessions:', error);
+        logger.error('Failed to fetch sessions:', error);
       } finally {
         setIsLoading(false);
       }
@@ -219,7 +220,7 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
 
                 {/* Actions */}
                 <td className="px-6 py-4 text-right">
-                  <button className="p-1.5 rounded-lg text-slate-400 hover:text-[#3c83f6] hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <button aria-label="Session options" className="p-1.5 rounded-lg text-slate-400 hover:text-[#3c83f6] hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="material-symbols-outlined text-lg">more_horiz</span>
                   </button>
                 </td>

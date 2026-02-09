@@ -2,6 +2,7 @@
 // 100% FREE - runs in browser, no API keys needed
 
 import type { Level } from './types';
+import { logger } from './utils';
 
 // Store loaded voices
 let cachedVoices: SpeechSynthesisVoice[] = [];
@@ -149,7 +150,7 @@ export function speakText(
   utterance.onerror = (event) => {
     // Only log real errors, not cancellations
     if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
-      console.warn('TTS warning:', event.error);
+      logger.warn('TTS warning:', event.error);
     }
     if (!ended) {
       ended = true;
@@ -187,7 +188,7 @@ export function speakText(
       }
     }, 100);
   } catch (err) {
-    console.warn('TTS speak error:', err);
+    logger.warn('TTS speak error:', err);
     callbacks?.onEnd?.();
   }
 

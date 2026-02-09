@@ -1,0 +1,42 @@
+// Production-safe utilities
+
+/**
+ * Safely parse JSON with a fallback value.
+ * Prevents crashes from malformed JSON stored in the database.
+ */
+export function safeJsonParse<T>(json: string | null | undefined, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Returns a .catch() handler for fire-and-forget promises.
+ * Only logs in development to keep production console clean.
+ */
+export function logBackgroundError(context: string) {
+  return (error: unknown) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[Background task failed: ${context}]`, error);
+    }
+  };
+}
+
+/**
+ * Logger that only outputs in non-production environments.
+ */
+export const logger = {
+  error: (message: string, ...args: unknown[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(`[AI-Tutor] ${message}`, ...args);
+    }
+  },
+  warn: (message: string, ...args: unknown[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[AI-Tutor] ${message}`, ...args);
+    }
+  },
+};

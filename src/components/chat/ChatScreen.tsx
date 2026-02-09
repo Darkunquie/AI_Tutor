@@ -8,6 +8,7 @@ import { useSessionStore, formatDuration } from '@/stores/sessionStore';
 import { speakText, stopSpeaking, loadVoices, isTTSSupported } from '@/lib/speech';
 import { api } from '@/lib/api-client';
 import type { Message, Correction, PronunciationResult, FillerWordDetection } from '@/lib/types';
+import { logBackgroundError, logger } from '@/lib/utils';
 
 interface ChatScreenProps {
   onEndSession?: () => void;
@@ -177,20 +178,20 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         corrections: corrections.length > 0 ? corrections : undefined,
         pronunciationScore: pronunciationData?.score,
         fillerWordCount: fillerCount,
-      }).catch(console.error);
+      }).catch(logBackgroundError('save user message'));
 
       // Save AI message to DB (fire-and-forget)
       api.messages.save({
         sessionId,
         role: 'AI',
         content: reply,
-      }).catch(console.error);
+      }).catch(logBackgroundError('save AI message'));
 
       if (reply) {
         handleSpeak(reply);
       }
     } catch (err) {
-      console.error('Chat error:', err);
+      logger.error('Chat error:', err);
       setError('Failed to send message. Please try again.');
     } finally {
       setLoading(false);
@@ -255,6 +256,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         <div className="flex items-center gap-4">
           <button
             onClick={onEndSession}
+            aria-label="Go back"
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
@@ -296,15 +298,16 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         <div className="bg-[#3c83f6]/5 border-b border-[#3c83f6]/20 px-4 py-2 flex items-center justify-between dark:bg-[#3c83f6]/10">
           <div className="flex items-center gap-2 text-[#3c83f6]">
             <div className="flex gap-0.5 items-end h-4">
-              <span className="w-1 bg-[#3c83f6] rounded-full animate-pulse" style={{ height: '60%' }} />
-              <span className="w-1 bg-[#3c83f6] rounded-full animate-pulse" style={{ height: '100%', animationDelay: '0.1s' }} />
-              <span className="w-1 bg-[#3c83f6] rounded-full animate-pulse" style={{ height: '40%', animationDelay: '0.2s' }} />
-              <span className="w-1 bg-[#3c83f6] rounded-full animate-pulse" style={{ height: '80%', animationDelay: '0.3s' }} />
+              <span className="w-1 h-[60%] bg-[#3c83f6] rounded-full animate-pulse" />
+              <span className="w-1 h-full bg-[#3c83f6] rounded-full animate-pulse [animation-delay:0.1s]" />
+              <span className="w-1 h-[40%] bg-[#3c83f6] rounded-full animate-pulse [animation-delay:0.2s]" />
+              <span className="w-1 h-[80%] bg-[#3c83f6] rounded-full animate-pulse [animation-delay:0.3s]" />
             </div>
             <span className="text-sm font-medium">AI is speaking...</span>
           </div>
           <button
             onClick={handleStopSpeaking}
+            aria-label="Stop speaking"
             className="text-sm text-[#3c83f6] hover:text-[#3c83f6]/80 font-semibold"
           >
             Stop
@@ -369,8 +372,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
                 <div className="rounded-2xl rounded-tl-none bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                   <div className="flex gap-1.5">
                     <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce" />
-                    <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
-                    <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+                    <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce [animation-delay:0.15s]" />
+                    <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce [animation-delay:0.3s]" />
                   </div>
                 </div>
               </div>
@@ -409,6 +412,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
               <button
                 onClick={handleTextSend}
                 disabled={isLoading || !textInput.trim()}
+                aria-label="Send message"
                 className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg bg-[#3c83f6] text-white hover:bg-[#3c83f6]/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 <span className="material-symbols-outlined text-[18px]">send</span>
@@ -425,7 +429,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
             <button
               onClick={toggleTTS}
               className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 transition-colors"
-              title={ttsEnabled ? 'Mute AI voice' : 'Enable AI voice'}
+              aria-label={ttsEnabled ? 'Mute AI voice' : 'Enable AI voice'}
             >
               <span className="material-symbols-outlined">tune</span>
             </button>

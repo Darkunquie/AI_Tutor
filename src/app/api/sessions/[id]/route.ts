@@ -9,6 +9,7 @@ import {
 } from '@/lib/error-handler';
 import { ScoreCalculator } from '@/lib/services/ScoreCalculator';
 import type { FillerWordDetection } from '@/lib/types';
+import { safeJsonParse } from '@/lib/utils';
 
 // GET /api/sessions/[id] - Get a specific session
 async function handleGet(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
@@ -30,9 +31,9 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
     throw ApiError.notFound('Session');
   }
 
-  // Parse JSON fields
-  const fillerDetails: FillerWordDetection[] = JSON.parse(session.fillerDetails || '[]');
-  const vocabularyJson: string[] = JSON.parse(session.vocabularyJson || '[]');
+  // Parse JSON fields safely
+  const fillerDetails = safeJsonParse<FillerWordDetection[]>(session.fillerDetails, []);
+  const vocabularyJson = safeJsonParse<string[]>(session.vocabularyJson, []);
 
   return successResponse({
     id: session.id,
@@ -49,7 +50,7 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
       id: m.id,
       role: m.role,
       content: m.content,
-      corrections: m.corrections ? JSON.parse(m.corrections) : null,
+      corrections: safeJsonParse(m.corrections, null),
       pronunciationScore: m.pronunciationScore,
       fillerWordCount: m.fillerWordCount,
       timestamp: m.timestamp,

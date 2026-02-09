@@ -9,6 +9,7 @@ import { TopicPicker, DebatePositionSelector } from '@/components/modes/TopicPic
 import { api } from '@/lib/api-client';
 import type { Mode, Level } from '@/lib/types';
 import { MODES, LEVELS } from '@/lib/config';
+import { logger } from '@/lib/utils';
 
 const MODE_ICONS: Record<Mode, { icon: string; color: string; bgColor: string }> = {
   FREE_TALK: { icon: 'forum', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
@@ -65,7 +66,7 @@ export default function Home() {
       startSession();
       router.push(`/tutor/${mode.toLowerCase()}`);
     } catch (err) {
-      console.error('Failed to create session:', err);
+      logger.error('Failed to create session:', err);
     } finally {
       setIsStarting(false);
     }
@@ -107,7 +108,7 @@ export default function Home() {
             <h2 className="text-xl font-bold tracking-tight">AI English Tutor</h2>
           </div>
           <nav className="hidden md:flex items-center gap-8">
-            <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#">Home</a>
+            <Link href="/" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Home</Link>
             <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#modes">Features</a>
             <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#stats">Stats</a>
             <Link href="/dashboard" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Dashboard</Link>
@@ -221,20 +222,20 @@ export default function Home() {
         <section id="stats" className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 py-16">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">50k+</div>
-              <div className="text-xs uppercase tracking-widest font-bold text-slate-500">Active Students</div>
+              <div className="text-3xl font-black text-[#3c83f6] mb-1">4</div>
+              <div className="text-xs uppercase tracking-widest font-bold text-slate-500">Practice Modes</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">120+</div>
-              <div className="text-xs uppercase tracking-widest font-bold text-slate-500">Scenarios</div>
+              <div className="text-3xl font-black text-[#3c83f6] mb-1">3</div>
+              <div className="text-xs uppercase tracking-widest font-bold text-slate-500">Skill Levels</div>
             </div>
             <div>
               <div className="text-3xl font-black text-[#3c83f6] mb-1">24/7</div>
               <div className="text-xs uppercase tracking-widest font-bold text-slate-500">AI Availability</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">4.9/5</div>
-              <div className="text-xs uppercase tracking-widest font-bold text-slate-500">User Rating</div>
+              <div className="text-3xl font-black text-[#3c83f6] mb-1">Free</div>
+              <div className="text-xs uppercase tracking-widest font-bold text-slate-500">To Get Started</div>
             </div>
           </div>
         </section>
@@ -245,15 +246,15 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-2 opacity-60">
             <span className="material-symbols-outlined">translate</span>
-            <span className="text-sm font-bold">AI English Tutor &copy; 2025</span>
+            <span className="text-sm font-bold">AI English Tutor &copy; {new Date().getFullYear()}</span>
           </div>
           <div className="flex gap-8">
-            <a className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-[#3c83f6]" href="#">Privacy</a>
-            <a className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-[#3c83f6]" href="#">Terms</a>
-            <a className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-[#3c83f6]" href="#">Contact</a>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Privacy</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Terms</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact</span>
           </div>
           <div className="flex gap-4">
-            <button className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center hover:bg-[#3c83f6] hover:text-white transition-colors">
+            <button aria-label="Share" className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center hover:bg-[#3c83f6] hover:text-white transition-colors">
               <span className="material-symbols-outlined text-xl">share</span>
             </button>
           </div>
@@ -289,6 +290,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={() => setShowTopicModal(false)}
+                  aria-label="Close"
                   className="text-white/80 hover:text-white transition-colors"
                 >
                   <span className="material-symbols-outlined text-2xl">close</span>

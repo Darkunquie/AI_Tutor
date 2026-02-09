@@ -77,13 +77,17 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set((state) => ({ messageCount: state.messageCount + 1 })),
 
   addCorrection: (correction) =>
-    set((state) => ({
-      corrections: [...state.corrections, correction],
-      errorCounts: {
-        ...state.errorCounts,
-        [correction.type]: state.errorCounts[correction.type] + 1,
-      },
-    })),
+    set((state) => {
+      const MAX_CORRECTIONS = 200;
+      const updated = [...state.corrections, correction];
+      return {
+        corrections: updated.length > MAX_CORRECTIONS ? updated.slice(-MAX_CORRECTIONS) : updated,
+        errorCounts: {
+          ...state.errorCounts,
+          [correction.type]: state.errorCounts[correction.type] + 1,
+        },
+      };
+    }),
 
   addVocabulary: (word) =>
     set((state) => {

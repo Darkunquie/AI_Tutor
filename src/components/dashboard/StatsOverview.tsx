@@ -66,9 +66,9 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      {cards.map((card, i) => (
+      {cards.map((card) => (
         <div
-          key={i}
+          key={card.label}
           className="bg-white dark:bg-slate-800/40 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all duration-300"
         >
           <div className="flex items-center justify-between mb-4">

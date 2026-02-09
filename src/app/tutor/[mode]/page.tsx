@@ -8,6 +8,7 @@ import { useChatStore } from '@/stores/chatStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { api } from '@/lib/api-client';
 import type { Mode, Level, ChatContext, ErrorType, Correction } from '@/lib/types';
+import { logBackgroundError } from '@/lib/utils';
 
 interface ReportData {
   score: number;
@@ -68,7 +69,7 @@ export default function TutorPage() {
         duration: data.duration,
         score: data.score,
         vocabularyJson: data.vocabularyGained,
-      }).catch(console.error);
+      }).catch(logBackgroundError('update session'));
 
       // Save vocabulary words to DB
       for (const word of data.vocabularyGained) {
@@ -77,7 +78,7 @@ export default function TutorPage() {
           word,
           context: `Learned during ${data.mode} session`,
           source: 'CORRECTION',
-        }).catch(console.error);
+        }).catch(logBackgroundError('save vocabulary'));
       }
     }
 
