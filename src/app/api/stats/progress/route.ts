@@ -10,15 +10,13 @@ import {
 // GET /api/stats/progress - Get time-series progress data
 async function handleGet(request: NextRequest) {
   const query = validateQuery(request, ProgressQuerySchema);
-  const { userId, period = '30d' } = query;
+  const { period = '30d' } = query;
 
-  // Find user
-  const user = await db.user.findUnique({
-    where: { lmsUserId: userId },
-  });
+  // Get authenticated user ID from middleware headers
+  const userId = request.headers.get('x-user-id');
 
-  if (!user) {
-    return successResponse({ data: [], period });
+  if (!userId) {
+    throw new Error('Unauthorized - User ID not found');
   }
 
   // Calculate date range
@@ -29,7 +27,7 @@ async function handleGet(request: NextRequest) {
   // Get daily stats
   const dailyStats = await db.dailyStats.findMany({
     where: {
-      userId: user.id,
+      userId,
       date: { gte: startDate },
     },
     orderBy: { date: 'asc' },
@@ -57,7 +55,7 @@ async function handleGet(request: NextRequest) {
   // Otherwise, aggregate from sessions
   const sessions = await db.session.findMany({
     where: {
-      userId: user.id,
+      userId,
       createdAt: { gte: startDate },
     },
     orderBy: { createdAt: 'asc' },

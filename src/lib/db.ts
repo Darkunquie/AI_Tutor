@@ -3,16 +3,15 @@
 
 import { PrismaClient } from '@/generated/prisma';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import path from 'path';
 
 declare global {
   // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
 }
 
-// Create SQLite adapter for Prisma 7
-const dbPath = path.resolve(process.cwd(), 'prisma', 'dev.db');
-const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
+// Create SQLite adapter for Prisma 7 - uses DATABASE_URL from environment
+const DATABASE_URL = process.env.DATABASE_URL || 'file:./prisma/dev.db';
+const adapter = new PrismaBetterSqlite3({ url: DATABASE_URL });
 
 export const db = globalThis.prisma || new PrismaClient({ adapter });
 

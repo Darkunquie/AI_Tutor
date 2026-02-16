@@ -1,4 +1,4 @@
-// Groq API client for AI English Tutor
+// Groq API client for Talkivo
 // Using Llama 3.3 70B - completely free!
 
 import Groq from 'groq-sdk';

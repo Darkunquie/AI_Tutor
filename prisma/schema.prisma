@@ -12,12 +12,16 @@ datasource db {
 
 model User {
   id         String       @id @default(cuid())
-  lmsUserId  String       @unique // From FresherReady JWT
+  name       String
+  phone      String       @unique
+  email      String       @unique
+  password   String       // bcrypt hashed
   level      Level        @default(BEGINNER)
   sessions   Session[]
   vocabulary Vocabulary[]
   dailyStats DailyStats[]
   createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
 model Session {

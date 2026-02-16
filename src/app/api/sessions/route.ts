@@ -12,24 +12,22 @@ import {
 // POST /api/sessions - Create a new session
 async function handlePost(request: NextRequest) {
   const body = await validateBody(request, CreateSessionSchema);
-  const { userId, mode, level } = body;
+  const { mode, level } = body;
 
-  // Use a default user ID if not provided (for anonymous users)
-  // In production, this would come from authentication
-  const effectiveUserId = userId || 'anonymous';
+  // Get authenticated user ID from middleware headers
+  const userId = request.headers.get('x-user-id');
 
-  // Create or find the user
-  let user = await db.user.findUnique({
-    where: { lmsUserId: effectiveUserId },
+  if (!userId) {
+    throw new Error('Unauthorized - User ID not found');
+  }
+
+  // Verify user exists
+  const user = await db.user.findUnique({
+    where: { id: userId },
   });
 
   if (!user) {
-    user = await db.user.create({
-      data: {
-        lmsUserId: effectiveUserId,
-        level: level,
-      },
-    });
+    throw new Error('User not found');
   }
 
   // Create the session
@@ -55,25 +53,23 @@ async function handlePost(request: NextRequest) {
 // GET /api/sessions - Get sessions for a user
 async function handleGet(request: NextRequest) {
   const query = validateQuery(request, SessionQuerySchema);
-  const { userId, page = 1, pageSize = 10 } = query;
+  const { page = 1, pageSize = 10 } = query;
 
-  // Find user by lmsUserId
-  const user = await db.user.findUnique({
-    where: { lmsUserId: userId },
-  });
+  // Get authenticated user ID from middleware headers
+  const userId = request.headers.get('x-user-id');
 
-  if (!user) {
-    return paginatedResponse([], 0, page, pageSize);
+  if (!userId) {
+    throw new Error('Unauthorized - User ID not found');
   }
 
   // Get total count
   const total = await db.session.count({
-    where: { userId: user.id },
+    where: { userId },
   });
 
   // Get paginated sessions
   const sessions = await db.session.findMany({
-    where: { userId: user.id },
+    where: { userId },
     orderBy: { createdAt: 'desc' },
     skip: (page - 1) * pageSize,
     take: pageSize,

@@ -88,7 +88,7 @@ export function VoiceInput({
 
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = 'en-IN';
 
     recognition.onstart = () => {
       setIsListening(true);

@@ -46,11 +46,11 @@ function getBestVoice(): SpeechSynthesisVoice | null {
 
   if (voices.length === 0) return null;
 
-  // Try to find a good English voice
+  // Try to find a good Indian English voice
   const englishVoice =
-    voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) ||
-    voices.find(v => v.lang === 'en-US' && v.name.includes('Microsoft')) ||
-    voices.find(v => v.lang === 'en-US') ||
+    voices.find(v => v.lang === 'en-IN' && v.name.includes('Google')) ||
+    voices.find(v => v.lang === 'en-IN' && v.name.includes('Microsoft')) ||
+    voices.find(v => v.lang === 'en-IN') ||
     voices.find(v => v.lang.startsWith('en')) ||
     voices[0];
 
@@ -118,7 +118,7 @@ export function speakText(
 
   // Create utterance
   const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = 'en-US';
+  utterance.lang = 'en-IN';
   utterance.rate = getRate(level);
   utterance.pitch = 1.0;
   utterance.volume = 1.0;

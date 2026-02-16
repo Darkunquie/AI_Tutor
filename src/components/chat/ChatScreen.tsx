@@ -262,8 +262,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <div className="hidden md:block">
-            <h1 className="text-lg font-bold tracking-tight">AI English Tutor</h1>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Jarvis AI Assistant</p>
+            <h1 className="text-lg font-bold tracking-tight">Talkivo</h1>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Your AI English Tutor</p>
           </div>
         </div>
 

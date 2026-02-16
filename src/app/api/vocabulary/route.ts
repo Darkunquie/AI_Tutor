@@ -30,22 +30,20 @@ const VocabularyPatchSchema = UpdateVocabularySchema.extend({
 // POST /api/vocabulary - Save a new vocabulary word
 async function handlePost(request: NextRequest) {
   const body = await validateBody(request, SaveVocabularySchema);
-  const { userId, sessionId, word, definition, context, source } = body;
+  const { sessionId, word, definition, context, source } = body;
 
-  // Find user
-  const user = await db.user.findUnique({
-    where: { lmsUserId: userId },
-  });
+  // Get authenticated user ID from middleware headers
+  const userId = request.headers.get('x-user-id');
 
-  if (!user) {
-    throw ApiError.notFound('User');
+  if (!userId) {
+    throw new Error('Unauthorized - User ID not found');
   }
 
   // Upsert vocabulary (update if exists, create if not)
   const vocabulary = await db.vocabulary.upsert({
     where: {
       userId_word: {
-        userId: user.id,
+        userId,
         word: word.toLowerCase(),
       },
     },
@@ -57,7 +55,7 @@ async function handlePost(request: NextRequest) {
       reviewedAt: new Date(),
     },
     create: {
-      userId: user.id,
+      userId,
       sessionId: sessionId || null,
       word: word.toLowerCase(),
       definition: definition || null,
@@ -81,19 +79,17 @@ async function handlePost(request: NextRequest) {
 // GET /api/vocabulary - Get vocabulary list for a user
 async function handleGet(request: NextRequest) {
   const query = validateQuery(request, VocabularyListQuerySchema);
-  const { userId, sessionId, page, pageSize, sortBy, sortOrder } = query;
+  const { sessionId, page, pageSize, sortBy, sortOrder } = query;
 
-  // Find user
-  const user = await db.user.findUnique({
-    where: { lmsUserId: userId },
-  });
+  // Get authenticated user ID from middleware headers
+  const userId = request.headers.get('x-user-id');
 
-  if (!user) {
-    return paginatedResponse([], 0, page, pageSize);
+  if (!userId) {
+    throw new Error('Unauthorized - User ID not found');
   }
 
   // Build where clause
-  const where: { userId: string; sessionId?: string } = { userId: user.id };
+  const where: { userId: string; sessionId?: string } = { userId };
   if (sessionId) {
     where.sessionId = sessionId;
   }

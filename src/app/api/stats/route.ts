@@ -11,24 +11,13 @@ import { ScoreCalculator } from '@/lib/services/ScoreCalculator';
 // GET /api/stats - Get overview stats for a user
 async function handleGet(request: NextRequest) {
   const query = validateQuery(request, StatsQuerySchema);
-  const { userId, period = '30d' } = query;
+  const { period = '30d' } = query;
 
-  // Find user
-  const user = await db.user.findUnique({
-    where: { lmsUserId: userId },
-  });
+  // Get authenticated user ID from middleware headers
+  const userId = request.headers.get('x-user-id');
 
-  if (!user) {
-    return successResponse({
-      totalSessions: 0,
-      totalDuration: 0,
-      averageScore: 0,
-      wordsLearned: 0,
-      totalFillerWords: 0,
-      avgPronunciation: 0,
-      errorBreakdown: { GRAMMAR: 0, VOCABULARY: 0, STRUCTURE: 0, FLUENCY: 0 },
-      weeklyChange: 0,
-    });
+  if (!userId) {
+    throw new Error('Unauthorized - User ID not found');
   }
 
   // Calculate date range
@@ -41,7 +30,7 @@ async function handleGet(request: NextRequest) {
   }
 
   // Build where clause for sessions
-  const sessionWhere: { userId: string; createdAt?: { gte: Date } } = { userId: user.id };
+  const sessionWhere: { userId: string; createdAt?: { gte: Date } } = { userId };
   if (startDate) {
     sessionWhere.createdAt = { gte: startDate };
   }
@@ -79,7 +68,7 @@ async function handleGet(request: NextRequest) {
 
   // Get vocabulary count
   const wordsLearned = await db.vocabulary.count({
-    where: { userId: user.id },
+    where: { userId: userId },
   });
 
   // Get error breakdown
@@ -104,14 +93,14 @@ async function handleGet(request: NextRequest) {
 
   const thisWeekSessions = await db.session.count({
     where: {
-      userId: user.id,
+      userId: userId,
       createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
     },
   });
 
   const lastWeekSessions = await db.session.count({
     where: {
-      userId: user.id,
+      userId: userId,
       createdAt: { gte: lastWeekStart, lt: lastWeekEnd },
     },
   });

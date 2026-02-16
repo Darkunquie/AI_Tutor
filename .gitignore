@@ -49,5 +49,14 @@ next-env.d.ts
 *.db
 *.db-journal
 
+# logs (PM2, application logs)
+logs/*
+!logs/.gitkeep
+
+# backup files
+backups/
+*.backup
+*.bak
+
 # misc
 nul
