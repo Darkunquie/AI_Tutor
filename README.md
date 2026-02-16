@@ -1,6 +1,6 @@
-# AI English Tutor
+# Talkivo
 
-An AI-powered English language tutor built with Next.js. Practice speaking, debating, and roleplaying with an AI assistant named **Jarvis** that provides real-time corrections, pronunciation feedback, and vocabulary tracking.
+An AI-powered English language tutor built with Next.js. Practice speaking, debating, and roleplaying with **Talkivo** - your personal AI English tutor that provides real-time corrections, pronunciation feedback, and vocabulary tracking.
 
 ## Features
 

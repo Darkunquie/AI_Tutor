@@ -1,0 +1,33 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Modern chat bubble icon -->
+  <g id="icon">
+    <!-- Outer bubble -->
+    <path d="M30 12C19.5066 12 11 20.0736 11 30C11 34.6878 12.7659 38.9753 15.6465 42.2468L12.5 52L22.4 48.65C25.0715 49.5117 27.9644 50 31 50C41.4934 50 50 41.9264 50 32C50 21.0736 41.4934 12 30 12Z" fill="#3c83f6"/>
+
+    <!-- Inner accent dots representing speech -->
+    <circle cx="24" cy="30" r="2.5" fill="white"/>
+    <circle cx="30" cy="30" r="2.5" fill="white"/>
+    <circle cx="36" cy="30" r="2.5" fill="white"/>
+
+    <!-- Accent glow -->
+    <circle cx="30" cy="30" r="16" fill="url(#glow)" opacity="0.2"/>
+  </g>
+
+  <!-- Gradient definition for glow effect -->
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#3c83f6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Text: Talkivo -->
+  <text x="62" y="40" font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#0f172a">
+    <tspan>Talkivo</tspan>
+  </text>
+
+  <!-- Tagline (optional, can be removed) -->
+  <text x="62" y="50" font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="9" font-weight="500" fill="#64748b" letter-spacing="0.5">
+    <tspan>YOUR AI ENGLISH TUTOR</tspan>
+  </text>
+</svg>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const lexend = Lexend({
   subsets: ["latin"],
@@ -9,9 +10,13 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: "AI English Tutor - Practice English with AI",
-  description: "Improve your English speaking skills with AI-powered conversations. Practice Free Talk, Role Play, Debate, and Grammar exercises.",
-  keywords: ["English learning", "AI tutor", "language practice", "speaking skills"],
+  title: "Talkivo - Practice English with AI",
+  description: "Improve your English speaking skills with AI-powered conversations. Practice Free Talk, Role Play, Debate, and Grammar exercises with Talkivo.",
+  keywords: ["English learning", "AI tutor", "language practice", "speaking skills", "Talkivo"],
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/branding/talkivo-icon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +33,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${lexend.className} antialiased`} suppressHydrationWarning>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

@@ -10,6 +10,8 @@ import { api } from '@/lib/api-client';
 import type { Mode, Level } from '@/lib/types';
 import { MODES, LEVELS } from '@/lib/config';
 import { logger } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Logo } from '@/components/Logo';
 
 const MODE_ICONS: Record<Mode, { icon: string; color: string; bgColor: string }> = {
   FREE_TALK: { icon: 'forum', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
@@ -27,29 +29,38 @@ const MODE_CTA: Record<Mode, string> = {
 
 export default function Home() {
   const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
   const [selectedLevel, setSelectedLevel] = useState<Level>('INTERMEDIATE');
   const [showTopicModal, setShowTopicModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<Mode | null>(null);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [debatePosition, setDebatePosition] = useState<'for' | 'against' | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const { setSession, setLevel, setContext, reset: resetChat } = useChatStore();
   const { startSession, reset: resetSession } = useSessionStore();
 
   const startPracticeSession = async (mode: Mode, topic?: string, position?: 'for' | 'against') => {
     if (isStarting) return;
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      // Redirect to login page
+      router.push('/login');
+      return;
+    }
+
     setIsStarting(true);
 
     try {
       resetChat();
       resetSession();
 
-      // Create session in DB to get a real ID
+      // Create session in DB to get a real ID (userId from auth token)
       const { sessionId } = await api.sessions.create({
         mode,
         level: selectedLevel,
-        userId: 'anonymous',
       });
 
       setSession(sessionId, mode);
@@ -101,12 +112,7 @@ export default function Home() {
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-[#f5f7f8]/80 dark:bg-[#101722]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-[#3c83f6] rounded-lg text-white">
-              <span className="material-symbols-outlined block">translate</span>
-            </div>
-            <h2 className="text-xl font-bold tracking-tight">AI English Tutor</h2>
-          </div>
+          <Logo variant="full" size="md" />
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Home</Link>
             <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#modes">Features</a>
@@ -114,10 +120,62 @@ export default function Home() {
             <Link href="/dashboard" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Dashboard</Link>
           </nav>
           <div className="flex items-center gap-4">
-            <button className="hidden sm:block text-sm font-medium hover:text-[#3c83f6]">Log In</button>
-            <button className="bg-[#3c83f6] hover:bg-[#3c83f6]/90 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-[#3c83f6]/20">
-              Sign Up
-            </button>
+            {isAuthenticated && user ? (
+              // Authenticated: Show user menu
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  aria-label="User menu"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#3c83f6] flex items-center justify-center text-white text-sm font-bold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium hidden sm:block">{user.name}</span>
+                  <span className="material-symbols-outlined text-sm">expand_more</span>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <span className="material-symbols-outlined text-sm">dashboard</span>
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        logout();
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    >
+                      <span className="material-symbols-outlined text-sm">logout</span>
+                      Log Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Not authenticated: Show login/signup buttons
+              <>
+                <Link href="/login" className="hidden sm:block text-sm font-medium hover:text-[#3c83f6] transition-colors">
+                  Log In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="bg-[#3c83f6] hover:bg-[#3c83f6]/90 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-[#3c83f6]/20"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -141,82 +199,152 @@ export default function Home() {
               Practice speaking, debating, and roleplaying with our advanced AI tutor. Get real-time feedback and level up your fluency with personalized lessons.
             </p>
 
-            {/* Level Selector */}
-            <div className="max-w-md mx-auto mb-12">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">
-                Select Your Level
-              </h4>
-              <div className="flex p-1.5 bg-slate-200 dark:bg-slate-800/50 rounded-xl backdrop-blur-sm border border-slate-300 dark:border-slate-700">
-                {LEVELS.map((level) => (
-                  <label key={level.id} className="flex-1 cursor-pointer">
-                    <input
-                      className="hidden peer"
-                      name="level"
-                      type="radio"
-                      value={level.id}
-                      checked={selectedLevel === level.id}
-                      onChange={() => setSelectedLevel(level.id)}
-                    />
-                    <div className="py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-[#101722] peer-checked:text-[#3c83f6] peer-checked:shadow-sm transition-all text-center">
-                      {level.title}
-                    </div>
-                  </label>
-                ))}
+            {isAuthenticated ? (
+              /* Level Selector - Only for authenticated users */
+              <div className="max-w-md mx-auto mb-12">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">
+                  Select Your Level
+                </h4>
+                <div className="flex p-1.5 bg-slate-200 dark:bg-slate-800/50 rounded-xl backdrop-blur-sm border border-slate-300 dark:border-slate-700">
+                  {LEVELS.map((level) => (
+                    <label key={level.id} className="flex-1 cursor-pointer">
+                      <input
+                        className="hidden peer"
+                        name="level"
+                        type="radio"
+                        value={level.id}
+                        checked={selectedLevel === level.id}
+                        onChange={() => setSelectedLevel(level.id)}
+                      />
+                      <div className="py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-[#101722] peer-checked:text-[#3c83f6] peer-checked:shadow-sm transition-all text-center">
+                        {level.title}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* CTA for non-authenticated users */
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                <Link
+                  href="/signup"
+                  className="px-8 py-4 bg-[#3c83f6] hover:bg-[#3c83f6]/90 text-white rounded-xl text-lg font-bold transition-all shadow-xl shadow-[#3c83f6]/30"
+                >
+                  Get Started Free
+                </Link>
+                <Link
+                  href="/login"
+                  className="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl text-lg font-bold transition-all border-2 border-slate-200 dark:border-slate-700"
+                >
+                  Log In
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Learning Modes Grid - Only for authenticated users */}
+        {isAuthenticated && (
+          <section id="modes" className="max-w-7xl mx-auto px-6 pb-24">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-10 gap-4">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Choose Your Learning Mode</h2>
+                <p className="text-slate-500 dark:text-slate-400 mt-2">
+                  Tailored experiences for every communication goal.
+                </p>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* Learning Modes Grid */}
-        <section id="modes" className="max-w-7xl mx-auto px-6 pb-24">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-10 gap-4">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">Choose Your Learning Mode</h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">
-                Tailored experiences for every communication goal.
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {MODES.map((mode) => {
+                const iconInfo = MODE_ICONS[mode.id];
+                const cta = MODE_CTA[mode.id];
+                return (
+                  <button
+                    key={mode.id}
+                    onClick={() => handleModeClick(mode.id)}
+                    className="group relative p-8 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 hover:border-[#3c83f6]/50 transition-all duration-300 shadow-sm hover:shadow-xl dark:hover:shadow-[#3c83f6]/5 text-left"
+                  >
+                    <div className={`w-12 h-12 rounded-lg ${iconInfo.bgColor} ${iconInfo.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                      <span className="material-symbols-outlined text-3xl">{iconInfo.icon}</span>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">{mode.title}</h3>
+                    <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                      {mode.description}
+                    </p>
+                    <div className="flex items-center text-[#3c83f6] font-semibold text-sm">
+                      {cta}
+                      <span className="material-symbols-outlined ml-1 text-base">arrow_forward</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Main CTA */}
+            <div className="mt-20 text-center">
+              <button
+                onClick={() => startPracticeSession('FREE_TALK')}
+                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-[#3c83f6] text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40"
+              >
+                Start Practicing Now
+              </button>
+              <p className="mt-6 text-slate-500 text-sm font-medium">
+                No credit card required &bull; Free daily sessions included
               </p>
             </div>
-          </div>
+          </section>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {MODES.map((mode) => {
-              const iconInfo = MODE_ICONS[mode.id];
-              const cta = MODE_CTA[mode.id];
-              return (
-                <button
-                  key={mode.id}
-                  onClick={() => handleModeClick(mode.id)}
-                  className="group relative p-8 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 hover:border-[#3c83f6]/50 transition-all duration-300 shadow-sm hover:shadow-xl dark:hover:shadow-[#3c83f6]/5 text-left"
-                >
-                  <div className={`w-12 h-12 rounded-lg ${iconInfo.bgColor} ${iconInfo.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                    <span className="material-symbols-outlined text-3xl">{iconInfo.icon}</span>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{mode.title}</h3>
-                  <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-                    {mode.description}
-                  </p>
-                  <div className="flex items-center text-[#3c83f6] font-semibold text-sm">
-                    {cta}
-                    <span className="material-symbols-outlined ml-1 text-base">arrow_forward</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+        {/* Features Preview - For non-authenticated users */}
+        {!isAuthenticated && (
+          <section id="modes" className="max-w-7xl mx-auto px-6 pb-24">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-10 gap-4">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Discover Our Learning Modes</h2>
+                <p className="text-slate-500 dark:text-slate-400 mt-2">
+                  Sign up to unlock all features and start learning.
+                </p>
+              </div>
+            </div>
 
-          {/* Main CTA */}
-          <div className="mt-20 text-center">
-            <button
-              onClick={() => startPracticeSession('FREE_TALK')}
-              className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-[#3c83f6] text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40"
-            >
-              Start Practicing Now
-            </button>
-            <p className="mt-6 text-slate-500 text-sm font-medium">
-              No credit card required &bull; Free daily sessions included
-            </p>
-          </div>
-        </section>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {MODES.map((mode) => {
+                const iconInfo = MODE_ICONS[mode.id];
+                return (
+                  <div
+                    key={mode.id}
+                    className="relative p-8 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 shadow-sm text-left opacity-75"
+                  >
+                    <div className="absolute top-4 right-4 px-3 py-1 bg-[#3c83f6]/10 text-[#3c83f6] text-xs font-bold rounded-full border border-[#3c83f6]/20">
+                      🔒 Sign up to unlock
+                    </div>
+                    <div className={`w-12 h-12 rounded-lg ${iconInfo.bgColor} ${iconInfo.color} flex items-center justify-center mb-6`}>
+                      <span className="material-symbols-outlined text-3xl">{iconInfo.icon}</span>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">{mode.title}</h3>
+                    <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {mode.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Sign Up CTA */}
+            <div className="mt-20 text-center">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-[#3c83f6] text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40"
+              >
+                Sign Up to Start Learning
+              </Link>
+              <p className="mt-6 text-slate-500 text-sm font-medium">
+                No credit card required &bull; Free to get started
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* Stats Section */}
         <section id="stats" className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 py-16">
@@ -246,7 +374,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-2 opacity-60">
             <span className="material-symbols-outlined">translate</span>
-            <span className="text-sm font-bold">AI English Tutor &copy; {new Date().getFullYear()}</span>
+            <span className="text-sm font-bold">Talkivo &copy; {new Date().getFullYear()}</span>
           </div>
           <div className="flex gap-8">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Privacy</span>

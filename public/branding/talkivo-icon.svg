@@ -1,0 +1,19 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chat bubble icon -->
+  <path d="M24 4C13.5066 4 5 12.0736 5 22C5 26.6878 6.76591 30.9753 9.64648 34.2468L6.5 44L16.4 40.65C19.0715 41.5117 21.9644 42 25 42C35.4934 42 44 33.9264 44 24C44 14.0736 35.4934 4 24 4Z" fill="#3c83f6"/>
+
+  <!-- Speech dots -->
+  <circle cx="18" cy="24" r="3" fill="white"/>
+  <circle cx="24" cy="24" r="3" fill="white"/>
+  <circle cx="30" cy="24" r="3" fill="white"/>
+
+  <!-- Glow effect -->
+  <circle cx="24" cy="24" r="16" fill="url(#iconGlow)" opacity="0.3"/>
+
+  <defs>
+    <radialGradient id="iconGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#3c83f6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>

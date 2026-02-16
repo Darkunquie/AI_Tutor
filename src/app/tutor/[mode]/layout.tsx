@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Practice Session - AI English Tutor',
+  title: 'Practice Session - Talkivo',
   description: 'Practice your English speaking skills with an AI tutor in real-time.',
 };
 
