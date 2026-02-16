@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { logger } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import { StatsOverview } from '@/components/dashboard/StatsOverview';
 import { ProgressChart } from '@/components/dashboard/ProgressChart';
 import { ErrorAnalysis } from '@/components/dashboard/ErrorAnalysis';
@@ -38,21 +40,41 @@ interface ProgressData {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [period, setPeriod] = useState('30d');
   const [isLoading, setIsLoading] = useState(true);
 
-  const userId = 'anonymous';
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
+    // Don't fetch data if not authenticated or still loading auth
+    if (authLoading || !isAuthenticated || !user) {
+      return;
+    }
+
+    // Extra safety check: ensure token is in localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) {
+      logger.warn('Auth token not found in localStorage, skipping data fetch');
+      setIsLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const statsData = await api.stats.overview({ userId, period });
+        const statsData = await api.stats.overview({ userId: user.id, period });
         setStats(statsData as Stats);
 
-        const progressResult = await api.stats.progress({ userId, period });
+        const progressResult = await api.stats.progress({ userId: user.id, period });
         setProgressData((progressResult.data || []) as unknown as ProgressData[]);
       } catch (error) {
         logger.error('Failed to fetch dashboard data:', error);
@@ -62,13 +84,33 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [period]);
+  }, [period, authLoading, isAuthenticated, user]);
 
   const periodOptions = [
     { value: '7d', label: '7 Days' },
     { value: '30d', label: '30 Days' },
     { value: '90d', label: '90 Days' },
   ];
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#f5f7f8] dark:bg-[#101722] flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative mx-auto mb-4">
+            <div className="w-16 h-16 border-4 border-[#3c83f6]/20 rounded-full" />
+            <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#3c83f6] border-t-transparent rounded-full animate-spin" />
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render dashboard content if not authenticated (will redirect)
+  if (!isAuthenticated || !user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f7f8] dark:bg-[#101722] text-slate-900 dark:text-white transition-colors duration-300">
@@ -97,9 +139,11 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-xl">notifications</span>
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#3c83f6] rounded-full" />
             </button>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3c83f6] to-[#8b5cf6] flex items-center justify-center text-white text-sm font-bold">
-              Y
-            </div>
+            {user && (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3c83f6] to-[#8b5cf6] flex items-center justify-center text-white text-sm font-bold">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -165,7 +209,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Session History */}
-            <SessionHistory userId={userId} />
+            {user && <SessionHistory userId={user.id} />}
           </div>
         )}
 
@@ -197,7 +241,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
             <span className="material-symbols-outlined text-lg">school</span>
-            <span>&copy; 2026 Jarvis AI English Tutor</span>
+            <span>&copy; 2026 Talkivo</span>
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500">
             Powered by AI

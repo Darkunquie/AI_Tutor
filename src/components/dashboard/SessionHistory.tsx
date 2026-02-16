@@ -73,6 +73,15 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
 
   useEffect(() => {
     const fetchSessions = async () => {
+      // Ensure auth token is available before making API call
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+      if (!token) {
+        logger.warn('No auth token available, skipping session fetch');
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
         const result = await api.sessions.list({ userId, page, pageSize });

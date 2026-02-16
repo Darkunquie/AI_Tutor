@@ -75,6 +75,9 @@ function createApiClient(config: ApiClientConfig = {}) {
 
     const url = buildUrl(path, params);
 
+    // Get auth token from localStorage if available
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
     // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -84,6 +87,7 @@ function createApiClient(config: ApiClientConfig = {}) {
         ...fetchOptions,
         headers: {
           ...defaultHeaders,
+          ...(token && { Authorization: `Bearer ${token}` }),
           ...headers,
         },
         body: body ? JSON.stringify(body) : undefined,
