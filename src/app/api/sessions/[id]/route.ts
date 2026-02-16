@@ -13,11 +13,20 @@ import { safeJsonParse } from '@/lib/utils';
 
 // GET /api/sessions/[id] - Get a specific session
 async function handleGet(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
+  const userId = request.headers.get('x-user-id');
+  if (!userId) {
+    throw new Error('User ID not found in request');
+  }
+
   const params = context!.params;
   const { id } = await params;
 
-  const session = await db.session.findUnique({
-    where: { id },
+  // SECURITY: Only fetch session if it belongs to authenticated user
+  const session = await db.session.findFirst({
+    where: {
+      id,
+      userId, // Verify ownership
+    },
     include: {
       messages: {
         orderBy: { timestamp: 'asc' },
@@ -63,6 +72,11 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
 
 // PATCH /api/sessions/[id] - Update a session
 async function handlePatch(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
+  const userId = request.headers.get('x-user-id');
+  if (!userId) {
+    throw new Error('User ID not found in request');
+  }
+
   const { id } = await context!.params;
   const body = await validateBody(request, UpdateSessionSchema);
 
@@ -85,8 +99,12 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
   if (avgPronunciation !== undefined) updateData.avgPronunciation = avgPronunciation;
   if (vocabularyJson !== undefined) updateData.vocabularyJson = JSON.stringify(vocabularyJson);
 
+  // SECURITY: Verify session belongs to authenticated user
   const session = await db.session.update({
-    where: { id },
+    where: {
+      id,
+      userId, // Only allow updating user's own sessions
+    },
     data: updateData,
   });
 

@@ -87,8 +87,25 @@ async function handlePost(request: NextRequest) {
 
 // GET /api/messages - Get messages for a session
 async function handleGet(request: NextRequest) {
+  const userId = request.headers.get('x-user-id');
+  if (!userId) {
+    throw new Error('User ID not found in request');
+  }
+
   const query = validateQuery(request, MessageQuerySchema);
   const { sessionId } = query;
+
+  // SECURITY: Verify session belongs to authenticated user before returning messages
+  const session = await db.session.findFirst({
+    where: {
+      id: sessionId,
+      userId, // Verify ownership
+    },
+  });
+
+  if (!session) {
+    throw ApiError.notFound('Session');
+  }
 
   const messages = await db.message.findMany({
     where: { sessionId },

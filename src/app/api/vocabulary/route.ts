@@ -124,6 +124,11 @@ async function handleGet(request: NextRequest) {
 
 // PATCH /api/vocabulary - Update vocabulary mastery
 async function handlePatch(request: NextRequest) {
+  const userId = request.headers.get('x-user-id');
+  if (!userId) {
+    throw new Error('User ID not found in request');
+  }
+
   const body = await validateBody(request, VocabularyPatchSchema);
   const { id, mastery, definition } = body;
 
@@ -136,8 +141,12 @@ async function handlePatch(request: NextRequest) {
     updateData.definition = definition;
   }
 
+  // SECURITY: Verify vocabulary belongs to authenticated user
   const vocabulary = await db.vocabulary.update({
-    where: { id },
+    where: {
+      id,
+      userId, // Only allow updating user's own vocabulary
+    },
     data: updateData,
   });
 

@@ -8,10 +8,31 @@ import {
   validateBody,
   successResponse,
 } from '@/lib/error-handler';
+import { ApiError } from '@/lib/errors/ApiError';
+import { db } from '@/lib/db';
 
 async function handlePost(request: NextRequest) {
+  const userId = request.headers.get('x-user-id');
+  if (!userId) {
+    throw new Error('User ID not found in request');
+  }
+
   const body = await validateBody(request, ChatRequestSchema);
   const { message, mode, level, sessionId, context, history } = body;
+
+  // SECURITY: Verify session belongs to authenticated user
+  if (sessionId) {
+    const session = await db.session.findFirst({
+      where: {
+        id: sessionId,
+        userId, // Verify ownership
+      },
+    });
+
+    if (!session) {
+      throw ApiError.notFound('Session');
+    }
+  }
 
   // Get the appropriate system prompt
   const systemPrompt = getSystemPrompt(mode, level, context, SCENARIOS);
