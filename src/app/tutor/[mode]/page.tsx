@@ -9,6 +9,7 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { api } from '@/lib/api-client';
 import type { Mode, Level, ChatContext, ErrorType, Correction } from '@/lib/types';
 import { logBackgroundError } from '@/lib/utils';
+import RequireAuth from '@/components/auth/RequireAuth';
 
 interface ReportData {
   score: number;

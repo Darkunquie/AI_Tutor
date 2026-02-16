@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
+import { ApiError } from '@/lib/errors/ApiError';
 import { ProgressQuerySchema } from '@/lib/schemas/stats.schema';
 import {
   withErrorHandling,
