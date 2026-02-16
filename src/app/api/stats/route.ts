@@ -17,7 +17,7 @@ async function handleGet(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
 
   if (!userId) {
-    throw new Error('Unauthorized - User ID not found');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   // Calculate date range
@@ -39,6 +39,7 @@ async function handleGet(request: NextRequest) {
   const sessions = await db.session.findMany({
     where: sessionWhere,
     select: {
+      id: true,
       duration: true,
       score: true,
       fillerWordCount: true,
@@ -71,11 +72,12 @@ async function handleGet(request: NextRequest) {
     where: { userId: userId },
   });
 
-  // Get error breakdown
+  // Get error breakdown - use session IDs to avoid N+1 query
+  const sessionIds = sessions.map(s => s.id);
   const errors = await db.error.groupBy({
     by: ['category'],
     where: {
-      session: sessionWhere,
+      sessionId: { in: sessionIds },
     },
     _count: true,
   });

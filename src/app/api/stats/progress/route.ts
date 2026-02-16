@@ -16,7 +16,7 @@ async function handleGet(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
 
   if (!userId) {
-    throw new Error('Unauthorized - User ID not found');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   // Calculate date range

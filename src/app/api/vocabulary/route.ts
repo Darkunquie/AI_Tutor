@@ -36,7 +36,7 @@ async function handlePost(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
 
   if (!userId) {
-    throw new Error('Unauthorized - User ID not found');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   // Upsert vocabulary (update if exists, create if not)
@@ -85,7 +85,7 @@ async function handleGet(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
 
   if (!userId) {
-    throw new Error('Unauthorized - User ID not found');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   // Build where clause
@@ -97,10 +97,15 @@ async function handleGet(request: NextRequest) {
   // Get total count
   const total = await db.vocabulary.count({ where });
 
+  // Type-safe orderBy field validation (defense in depth)
+  const validSortFields = ['createdAt', 'word', 'mastery'] as const;
+  const orderByField: 'createdAt' | 'word' | 'mastery' =
+    validSortFields.includes(sortBy as any) ? sortBy as any : 'createdAt';
+
   // Get paginated vocabulary
   const vocabulary = await db.vocabulary.findMany({
     where,
-    orderBy: { [sortBy]: sortOrder },
+    orderBy: { [orderByField]: sortOrder },
     skip: (page - 1) * pageSize,
     take: pageSize,
   });

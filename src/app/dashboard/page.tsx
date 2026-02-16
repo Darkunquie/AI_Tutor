@@ -10,6 +10,7 @@ import { StatsOverview } from '@/components/dashboard/StatsOverview';
 import { ProgressChart } from '@/components/dashboard/ProgressChart';
 import { ErrorAnalysis } from '@/components/dashboard/ErrorAnalysis';
 import { SessionHistory } from '@/components/dashboard/SessionHistory';
+import RequireAuth from '@/components/auth/RequireAuth';
 
 interface Stats {
   totalSessions: number;
@@ -92,27 +93,8 @@ export default function DashboardPage() {
     { value: '90d', label: '90 Days' },
   ];
 
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#f5f7f8] dark:bg-[#101722] flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative mx-auto mb-4">
-            <div className="w-16 h-16 border-4 border-[#3c83f6]/20 rounded-full" />
-            <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#3c83f6] border-t-transparent rounded-full animate-spin" />
-          </div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render dashboard content if not authenticated (will redirect)
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
   return (
+    <RequireAuth>
     <div className="min-h-screen bg-[#f5f7f8] dark:bg-[#101722] text-slate-900 dark:text-white transition-colors duration-300">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#101722]/80 backdrop-blur-md">
@@ -249,5 +231,6 @@ export default function DashboardPage() {
         </div>
       </footer>
     </div>
+    </RequireAuth>
   );
 }

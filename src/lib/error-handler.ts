@@ -68,9 +68,25 @@ export function handleError(error: unknown): Response {
 }
 
 /**
+ * Type guard to check if error is a Prisma error
+ */
+function isPrismaError(error: unknown): error is Error & { code: string } {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    error.code.startsWith('P')
+  );
+}
+
+/**
  * Handles Prisma-specific errors
  */
-function handlePrismaError(error: Error & { code?: string }): Response {
+function handlePrismaError(error: Error): Response {
+  if (!isPrismaError(error)) {
+    return ApiError.internal('Database error').toResponse();
+  }
+
   const code = error.code;
 
   switch (code) {

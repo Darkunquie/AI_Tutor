@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { CreateSessionSchema, SessionQuerySchema } from '@/lib/schemas/session.schema';
+import { ApiError } from '@/lib/errors/ApiError';
 import {
   withErrorHandling,
   validateBody,
@@ -18,7 +19,7 @@ async function handlePost(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
 
   if (!userId) {
-    throw new Error('Unauthorized - User ID not found');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   // Verify user exists
@@ -59,7 +60,7 @@ async function handleGet(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
 
   if (!userId) {
-    throw new Error('Unauthorized - User ID not found');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   // Get total count

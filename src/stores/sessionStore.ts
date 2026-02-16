@@ -7,6 +7,7 @@ interface SessionState {
   startTime: number | null;
   duration: number; // in seconds
   isActive: boolean;
+  timerInterval: NodeJS.Timeout | null;
 
   // Stats
   messageCount: number;
@@ -18,6 +19,8 @@ interface SessionState {
   startSession: () => void;
   endSession: () => void;
   updateDuration: () => void;
+  setTimerInterval: (interval: NodeJS.Timeout) => void;
+  clearTimerInterval: () => void;
   incrementMessageCount: () => void;
   addCorrection: (correction: Correction) => void;
   addVocabulary: (word: string) => void;
@@ -40,6 +43,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   startTime: null,
   duration: 0,
   isActive: false,
+  timerInterval: null,
   messageCount: 0,
   errorCounts: { ...initialErrorCounts },
   corrections: [],
@@ -59,9 +63,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   endSession: () => {
     const state = get();
+    // Clear timer interval if it exists
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+    }
     if (state.startTime) {
       const duration = Math.floor((Date.now() - state.startTime) / 1000);
-      set({ isActive: false, duration });
+      set({ isActive: false, duration, timerInterval: null });
     }
   },
 
@@ -70,6 +78,16 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (state.startTime && state.isActive) {
       const duration = Math.floor((Date.now() - state.startTime) / 1000);
       set({ duration });
+    }
+  },
+
+  setTimerInterval: (interval) => set({ timerInterval: interval }),
+
+  clearTimerInterval: () => {
+    const state = get();
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      set({ timerInterval: null });
     }
   },
 
@@ -99,28 +117,40 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return state;
     }),
 
-  reset: () =>
+  reset: () => {
+    const state = get();
+    // Clear timer interval if it exists
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+    }
     set({
       startTime: null,
       duration: 0,
       isActive: false,
+      timerInterval: null,
       messageCount: 0,
       errorCounts: { ...initialErrorCounts },
       corrections: [],
       vocabularyGained: [],
-    }),
+    });
+  },
 
   // Computed values
   getScore: () => {
     const state = get();
+
+    // Return 0 if no messages yet (avoid misleading 100 score)
+    if (state.messageCount === 0) {
+      return 0;
+    }
+
     const totalErrors = Object.values(state.errorCounts).reduce(
       (a, b) => a + b,
       0
     );
-    const messagesWithCorrections = state.messageCount || 1;
 
-    // Score formula: 100 - (errors per message * 10), min 0, max 100
-    const errorsPerMessage = totalErrors / messagesWithCorrections;
+    // Score formula: 100 - (errors per message * 15), min 0, max 100
+    const errorsPerMessage = totalErrors / state.messageCount;
     const score = Math.max(0, Math.min(100, 100 - errorsPerMessage * 15));
 
     return Math.round(score);

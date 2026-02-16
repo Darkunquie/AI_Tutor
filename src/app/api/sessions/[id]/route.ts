@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { UpdateSessionSchema } from '@/lib/schemas/session.schema';
 import { ApiError } from '@/lib/errors/ApiError';
+import { ValidationError } from '@/lib/errors/ValidationError';
 import {
   withErrorHandling,
   validateBody,
@@ -40,9 +41,9 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
     throw ApiError.notFound('Session');
   }
 
-  // Parse JSON fields safely
-  const fillerDetails = safeJsonParse<FillerWordDetection[]>(session.fillerDetails, []);
-  const vocabularyJson = safeJsonParse<string[]>(session.vocabularyJson, []);
+  // Parse JSON fields safely (with logging enabled to catch data corruption)
+  const fillerDetails = safeJsonParse<FillerWordDetection[]>(session.fillerDetails, [], true);
+  const vocabularyJson = safeJsonParse<string[]>(session.vocabularyJson, [], true);
 
   return successResponse({
     id: session.id,
@@ -95,9 +96,20 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
   if (duration !== undefined) updateData.duration = duration;
   if (score !== undefined) updateData.score = score;
   if (fillerWordCount !== undefined) updateData.fillerWordCount = fillerWordCount;
-  if (fillerDetails !== undefined) updateData.fillerDetails = JSON.stringify(fillerDetails);
+
+  // Safely stringify JSON fields with error handling
+  try {
+    if (fillerDetails !== undefined) {
+      updateData.fillerDetails = JSON.stringify(fillerDetails);
+    }
+    if (vocabularyJson !== undefined) {
+      updateData.vocabularyJson = JSON.stringify(vocabularyJson);
+    }
+  } catch (error) {
+    throw new ValidationError('Invalid data format for session update');
+  }
+
   if (avgPronunciation !== undefined) updateData.avgPronunciation = avgPronunciation;
-  if (vocabularyJson !== undefined) updateData.vocabularyJson = JSON.stringify(vocabularyJson);
 
   // SECURITY: Verify session belongs to authenticated user
   const session = await db.session.update({

@@ -29,8 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Load auth state from localStorage on mount
+  // Load auth state from localStorage on mount (client-side only)
   useEffect(() => {
+    // Ensure we're on the client before accessing localStorage
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
+
     const storedToken = localStorage.getItem('auth_token');
     const storedUser = localStorage.getItem('user');
 

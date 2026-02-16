@@ -37,6 +37,7 @@ export default function Home() {
   const [debatePosition, setDebatePosition] = useState<'for' | 'against' | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { setSession, setLevel, setContext, reset: resetChat } = useChatStore();
   const { startSession, reset: resetSession } = useSessionStore();
@@ -76,8 +77,16 @@ export default function Home() {
 
       startSession();
       router.push(`/tutor/${mode.toLowerCase()}`);
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Failed to create session:', err);
+
+      // Handle authentication errors specifically
+      if (err?.status === 401 || err?.message?.includes('Unauthorized')) {
+        setError('Please log in to start a session');
+        router.push('/login');
+      } else {
+        setError('Failed to create session. Please try again.');
+      }
     } finally {
       setIsStarting(false);
     }

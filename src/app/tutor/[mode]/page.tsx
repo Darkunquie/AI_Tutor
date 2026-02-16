@@ -98,31 +98,27 @@ export default function TutorPage() {
     router.push('/dashboard');
   };
 
-  // Show report screen
-  if (showReport && reportData) {
-    return (
-      <SessionReport
-        {...reportData}
-        onGoHome={handleGoHome}
-        onViewDashboard={handleViewDashboard}
-      />
-    );
-  }
-
-  if (!sessionId || !mode) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto" />
-          <p className="mt-4 text-gray-600">Loading session...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-screen flex flex-col">
-      <ChatScreen onEndSession={handleEndSession} />
-    </div>
+    <RequireAuth>
+      {/* Show report screen */}
+      {showReport && reportData ? (
+        <SessionReport
+          {...reportData}
+          onGoHome={handleGoHome}
+          onViewDashboard={handleViewDashboard}
+        />
+      ) : !sessionId || !mode ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto" />
+            <p className="mt-4 text-gray-600">Loading session...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="h-screen flex flex-col">
+          <ChatScreen onEndSession={handleEndSession} />
+        </div>
+      )}
+    </RequireAuth>
   );
 }

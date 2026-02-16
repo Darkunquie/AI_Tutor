@@ -4,11 +4,18 @@
  * Safely parse JSON with a fallback value.
  * Prevents crashes from malformed JSON stored in the database.
  */
-export function safeJsonParse<T>(json: string | null | undefined, fallback: T): T {
+export function safeJsonParse<T>(
+  json: string | null | undefined,
+  fallback: T,
+  logFailures = false
+): T {
   if (!json) return fallback;
   try {
     return JSON.parse(json) as T;
-  } catch {
+  } catch (error) {
+    if (logFailures) {
+      console.warn('JSON parse failed:', error);
+    }
     return fallback;
   }
 }

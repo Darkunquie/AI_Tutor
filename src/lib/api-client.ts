@@ -96,10 +96,15 @@ function createApiClient(config: ApiClientConfig = {}) {
 
       clearTimeout(timeoutId);
 
-      // Parse response body
-      const contentType = response.headers.get('content-type');
-      const isJson = contentType?.includes('application/json');
-      const responseBody = isJson ? await response.json() : await response.text();
+      // Parse response body with error handling
+      let responseBody: any;
+      try {
+        const contentType = response.headers.get('content-type');
+        const isJson = contentType?.includes('application/json');
+        responseBody = isJson ? await response.json() : await response.text();
+      } catch (parseError) {
+        throw new Error('Failed to parse server response');
+      }
 
       // Handle error responses
       if (!response.ok) {

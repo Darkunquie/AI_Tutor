@@ -43,7 +43,13 @@ export async function chat(
       stream: false,
     });
 
-    return completion.choices[0]?.message?.content || '';
+    const content = completion.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error('Empty response from AI model');
+    }
+
+    return content;
   } catch (error) {
     logger.error('Groq API error:', error);
     throw new Error('Failed to get response from AI. Please try again.');
