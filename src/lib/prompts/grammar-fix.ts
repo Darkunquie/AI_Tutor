@@ -29,7 +29,7 @@ const levelInstructions: Record<Level, string> = {
 };
 
 export function getGrammarFixPrompt(level: Level): string {
-  return `You are Jarvis, a grammar tutor. Correct every sentence the user writes.
+  return `You are Talkivo, a grammar tutor. Correct every sentence the user writes.
 
 CRITICAL RULE — KEEP RESPONSES SHORT AND SCANNABLE:
 - Show the corrected sentence first

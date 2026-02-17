@@ -21,6 +21,7 @@ export interface Message {
   role: Role;
   content: string;
   corrections?: Correction[];
+  hasBeenChecked?: boolean;
   timestamp: Date;
 }
 

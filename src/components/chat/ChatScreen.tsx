@@ -7,7 +7,8 @@ import { useChatStore, messagesToHistory } from '@/stores/chatStore';
 import { useSessionStore, formatDuration } from '@/stores/sessionStore';
 import { speakText, stopSpeaking, loadVoices, isTTSSupported } from '@/lib/speech';
 import { api } from '@/lib/api-client';
-import type { Message, Correction, PronunciationResult, FillerWordDetection } from '@/lib/types';
+import type { Message, PronunciationResult, FillerWordDetection } from '@/lib/types';
+import { CorrectionParser } from '@/lib/services/CorrectionParser';
 import { logger } from '@/lib/utils';
 
 interface ChatScreenProps {
@@ -80,26 +81,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     };
   }, []);
 
-  const parseCorrections = (response: string): Correction[] => {
-    const corrections: Correction[] = [];
-    const patterns = [
-      /["']([^"']+)["']\s*→\s*["']([^"']+)["']/g,
-      /instead of ["']([^"']+)["'],?\s*(?:you could|try|say)\s*["']([^"']+)["']/gi,
-    ];
-
-    for (const pattern of patterns) {
-      let match;
-      while ((match = pattern.exec(response)) !== null) {
-        corrections.push({
-          type: 'GRAMMAR',
-          original: match[1],
-          corrected: match[2],
-          explanation: 'Suggested correction from your tutor',
-        });
-      }
-    }
-    return corrections;
-  };
+  // Empty line intentionally left for spacing
 
   const handleSpeak = (text: string) => {
     if (!ttsEnabled || !ttsSupported || !text) return;
@@ -162,10 +144,13 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         history: messagesToHistory(currentMessages),
       });
 
-      const corrections = parseCorrections(reply);
+      const corrections = CorrectionParser.parse(reply);
+      // Always mark as checked so UI can show "correct" or correction tips
+      useChatStore.getState().updateMessage(userMessage.id, {
+        corrections,
+        hasBeenChecked: true,
+      });
       if (corrections.length > 0) {
-        // Update message immutably via store action instead of mutating in-place
-        useChatStore.getState().updateMessage(userMessage.id, { corrections });
         corrections.forEach(addCorrection);
       }
 

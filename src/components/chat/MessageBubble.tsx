@@ -38,10 +38,28 @@ function CorrectionTip({ correction }: { correction: Correction }) {
   );
 }
 
+function CorrectBadge() {
+  return (
+    <div className="flex items-start gap-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+        <span className="material-symbols-outlined">check_circle</span>
+      </div>
+      <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 p-3 border border-emerald-200 dark:border-emerald-800">
+        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+          Your English is correct!
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'USER';
 
   if (isUser) {
+    const hasCorrections = message.corrections && message.corrections.length > 0;
+    const showCorrectBadge = message.hasBeenChecked && !hasCorrections;
+
     return (
       <div className="flex flex-col items-end gap-4">
         {/* User message */}
@@ -59,11 +77,18 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
 
         {/* Correction tips (displayed as coaching messages below user message) */}
-        {message.corrections && message.corrections.length > 0 && (
+        {hasCorrections && (
           <div className="w-full flex flex-col gap-4">
-            {message.corrections.map((correction, index) => (
+            {message.corrections!.map((correction, index) => (
               <CorrectionTip key={index} correction={correction} />
             ))}
+          </div>
+        )}
+
+        {/* Positive feedback when sentence is correct */}
+        {showCorrectBadge && (
+          <div className="w-full">
+            <CorrectBadge />
           </div>
         )}
       </div>

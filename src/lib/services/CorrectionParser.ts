@@ -69,6 +69,17 @@ const TEXT_CORRECTION_PATTERNS = [
     regex: /\[([^\]]+)\]\s*(?:→|->)+\s*\[([^\]]+)\]/g,
     type: 'GRAMMAR' as ErrorType,
   },
+  // Pattern: *wrong → right (asterisk prefix, casual correction)
+  {
+    regex: /\*\s*(\w+(?:\s+\w+){0,4})\s*(?:→|->)\s*(\w+(?:\s+\w+){0,4})/g,
+    type: 'GRAMMAR' as ErrorType,
+  },
+  // Pattern: we usually say "X" not "Y"
+  {
+    regex: /(?:we\s+(?:usually|normally|typically)\s+say|you\s+should\s+say|say)\s+["']([^"']+)["']\s+(?:not|instead\s+of)\s+["']([^"']+)["']/gi,
+    type: 'FLUENCY' as ErrorType,
+    reversed: true,
+  },
 ];
 
 // Vocabulary teaching patterns (to extract new words)
@@ -179,8 +190,11 @@ export class CorrectionParser {
       let match;
 
       while ((match = regex.exec(text)) !== null) {
-        const original = match[1]?.trim();
-        const corrected = match[2]?.trim();
+        const raw1 = match[1]?.trim();
+        const raw2 = match[2]?.trim();
+        // For "we usually say X not Y" patterns, groups are (corrected, original)
+        const original = (pattern as { reversed?: boolean }).reversed ? raw2 : raw1;
+        const corrected = (pattern as { reversed?: boolean }).reversed ? raw1 : raw2;
         const explanation = pattern.hasExplanation && match[3] ? match[3].trim() : undefined;
 
         if (!original || !corrected || original === corrected) {
