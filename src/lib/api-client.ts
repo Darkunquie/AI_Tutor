@@ -1,7 +1,7 @@
 // Centralized API client for frontend
 // Provides type-safe fetch wrapper with error handling
 
-import type { ApiResponse, PaginatedResponse } from './types';
+import type { ApiResponse, PaginatedResponse, StreakData, AchievementItem, ReviewWord, ReviewStats } from './types';
 
 // Default timeout in milliseconds
 const DEFAULT_TIMEOUT = 30000;
@@ -234,6 +234,29 @@ export const api = {
 
     update: (id: string, data: { definition?: string; mastery?: number }) =>
       apiClient.patch<Record<string, unknown>>(`/api/vocabulary/${id}`, data),
+
+    getReviewWords: (limit?: number) =>
+      apiClient.get<{ words: ReviewWord[]; stats: ReviewStats }>('/api/vocabulary/review', {
+        params: limit ? { limit } : undefined,
+      }),
+
+    submitReview: (id: string, correct: boolean) =>
+      apiClient.patch<{ id: string; word: string; mastery: number; reviewedAt: string | null }>(
+        `/api/vocabulary/${id}/review`, { correct }
+      ),
+  },
+
+  // Streaks
+  streaks: {
+    get: () => apiClient.get<StreakData>('/api/streaks'),
+    updateGoal: (dailyGoalMinutes: number) =>
+      apiClient.patch<{ dailyGoalMinutes: number }>('/api/streaks', { dailyGoalMinutes }),
+  },
+
+  // Achievements
+  achievements: {
+    list: () => apiClient.get<{ unlocked: AchievementItem[]; locked: AchievementItem[] }>('/api/achievements'),
+    check: () => apiClient.post<{ newlyUnlocked: string[] }>('/api/achievements/check'),
   },
 
   // Messages

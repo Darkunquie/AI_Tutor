@@ -126,6 +126,42 @@ export interface VocabularyItem {
   createdAt?: Date;
 }
 
+// ============ Streak & Achievement Types ============
+
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  todayMinutes: number;
+  dailyGoalMinutes: number;
+  dailyGoalMet: boolean;
+}
+
+export interface AchievementItem {
+  type: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  unlockedAt?: string;
+}
+
+// ============ Vocabulary Review Types ============
+
+export interface ReviewWord {
+  id: string;
+  word: string;
+  definition: string | null;
+  context: string;
+  mastery: number;
+  reviewedAt: string | null;
+}
+
+export interface ReviewStats {
+  totalDue: number;
+  totalWords: number;
+  reviewedToday: number;
+}
+
 // ============ UI Config Types ============
 
 export interface ModeInfo {

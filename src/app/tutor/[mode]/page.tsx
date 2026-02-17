@@ -11,6 +11,8 @@ import type { Mode, Level, ChatContext, ErrorType, Correction } from '@/lib/type
 import { logBackgroundError } from '@/lib/utils';
 import RequireAuth from '@/components/auth/RequireAuth';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToastStore } from '@/stores/toastStore';
+import { ACHIEVEMENT_MAP } from '@/lib/config/achievements';
 
 interface ReportData {
   score: number;
@@ -83,6 +85,17 @@ export default function TutorPage() {
           source: 'CORRECTION',
         }).catch(logBackgroundError('save vocabulary'));
       }
+
+      // Check for new achievements (non-blocking)
+      api.achievements.check().then(({ newlyUnlocked }) => {
+        const items = newlyUnlocked ?? [];
+        for (const type of items) {
+          const def = ACHIEVEMENT_MAP[type];
+          if (def) {
+            useToastStore.getState().addToast(`Achievement Unlocked: ${def.title}`, def.icon);
+          }
+        }
+      }).catch(logBackgroundError('check achievements'));
     }
 
     setReportData(data);

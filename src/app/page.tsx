@@ -12,6 +12,7 @@ import { MODES, LEVELS } from '@/lib/config';
 import { logger } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/Logo';
+import { StreakWidget } from '@/components/streaks/StreakWidget';
 
 const MODE_ICONS: Record<Mode, { icon: string; color: string; bgColor: string }> = {
   FREE_TALK: { icon: 'forum', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
@@ -153,6 +154,7 @@ export default function Home() {
             <Link href="/" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Home</Link>
             <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#modes">Features</a>
             <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#stats">Stats</a>
+            <Link href="/review" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Review</Link>
             <Link href="/dashboard" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Dashboard</Link>
           </nav>
           <div className="flex items-center gap-4">
@@ -247,29 +249,34 @@ export default function Home() {
             </p>
 
             {isAuthenticated ? (
-              /* Level Selector - Only for authenticated users */
-              <div className="max-w-md mx-auto mb-12">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">
-                  Select Your Level
-                </h4>
-                <div className="flex p-1.5 bg-slate-200 dark:bg-slate-800/50 rounded-xl backdrop-blur-sm border border-slate-300 dark:border-slate-700">
-                  {LEVELS.map((level) => (
-                    <label key={level.id} className="flex-1 cursor-pointer">
-                      <input
-                        className="hidden peer"
-                        name="level"
-                        type="radio"
-                        value={level.id}
-                        checked={selectedLevel === level.id}
-                        onChange={() => setSelectedLevel(level.id)}
-                      />
-                      <div className="py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-[#101722] peer-checked:text-[#3c83f6] peer-checked:shadow-sm transition-all text-center">
-                        {level.title}
-                      </div>
-                    </label>
-                  ))}
+              /* Level Selector + Streak - Only for authenticated users */
+              <>
+                <div className="max-w-md mx-auto mb-8">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">
+                    Select Your Level
+                  </h4>
+                  <div className="flex p-1.5 bg-slate-200 dark:bg-slate-800/50 rounded-xl backdrop-blur-sm border border-slate-300 dark:border-slate-700">
+                    {LEVELS.map((level) => (
+                      <label key={level.id} className="flex-1 cursor-pointer">
+                        <input
+                          className="hidden peer"
+                          name="level"
+                          type="radio"
+                          value={level.id}
+                          checked={selectedLevel === level.id}
+                          onChange={() => setSelectedLevel(level.id)}
+                        />
+                        <div className="py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-[#101722] peer-checked:text-[#3c83f6] peer-checked:shadow-sm transition-all text-center">
+                          {level.title}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+                <div className="max-w-sm mx-auto mb-12">
+                  <StreakWidget />
+                </div>
+              </>
             ) : (
               /* CTA for non-authenticated users */
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">

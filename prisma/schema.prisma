@@ -11,17 +11,19 @@ datasource db {
 }
 
 model User {
-  id         String       @id @default(cuid())
-  name       String
-  phone      String       @unique
-  email      String       @unique
-  password   String       // bcrypt hashed
-  level      Level        @default(BEGINNER)
-  sessions   Session[]
-  vocabulary Vocabulary[]
-  dailyStats DailyStats[]
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id               String        @id @default(cuid())
+  name             String
+  phone            String        @unique
+  email            String        @unique
+  password         String        // bcrypt hashed
+  level            Level         @default(BEGINNER)
+  dailyGoalMinutes Int           @default(15)
+  sessions         Session[]
+  vocabulary       Vocabulary[]
+  dailyStats       DailyStats[]
+  achievements     Achievement[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 model Session {
@@ -140,4 +142,15 @@ enum VocabSource {
   CORRECTION  // From a grammar/vocab correction
   AI_RESPONSE // New word from AI's response
   USER_MARKED // User explicitly saved it
+}
+
+model Achievement {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String   // e.g. FIRST_SESSION, STREAK_7, VOCAB_50
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, type])
+  @@index([userId])
 }
