@@ -29,6 +29,10 @@ export const PATCH = withAuth(async (
   // Fetch the updated record
   const updated = await db.vocabulary.findUnique({ where: { id } });
 
+  if (!updated) {
+    throw ApiError.notFound('Vocabulary word');
+  }
+
   return successResponse({
     id: updated.id,
     word: updated.word,
