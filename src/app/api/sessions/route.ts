@@ -28,7 +28,7 @@ async function handlePost(request: NextRequest) {
   });
 
   if (!user) {
-    throw new Error('User not found');
+    throw ApiError.notFound('User');
   }
 
   // Create the session

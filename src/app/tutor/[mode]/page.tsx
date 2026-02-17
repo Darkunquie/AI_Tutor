@@ -10,6 +10,7 @@ import { api } from '@/lib/api-client';
 import type { Mode, Level, ChatContext, ErrorType, Correction } from '@/lib/types';
 import { logBackgroundError } from '@/lib/utils';
 import RequireAuth from '@/components/auth/RequireAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReportData {
   score: number;
@@ -26,6 +27,7 @@ interface ReportData {
 export default function TutorPage() {
   const router = useRouter();
   const params = useParams();
+  const { user } = useAuth();
   const { sessionId, mode, level, context, reset: resetChat } = useChatStore();
   const {
     endSession,
@@ -75,7 +77,7 @@ export default function TutorPage() {
       // Save vocabulary words to DB
       for (const word of data.vocabularyGained) {
         api.vocabulary.save({
-          userId: 'anonymous',
+          userId: user?.id || '',
           word,
           context: `Learned during ${data.mode} session`,
           source: 'CORRECTION',

@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal: AbortSignal.timeout(5000),
         });
       }
     } catch (error) {

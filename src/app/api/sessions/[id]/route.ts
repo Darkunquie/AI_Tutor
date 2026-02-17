@@ -16,7 +16,7 @@ import { safeJsonParse } from '@/lib/utils';
 async function handleGet(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
   const userId = request.headers.get('x-user-id');
   if (!userId) {
-    throw new Error('User ID not found in request');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   const params = context!.params;
@@ -75,7 +75,7 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
 async function handlePatch(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
   const userId = request.headers.get('x-user-id');
   if (!userId) {
-    throw new Error('User ID not found in request');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   const { id } = await context!.params;

@@ -14,7 +14,7 @@ import { db } from '@/lib/db';
 async function handlePost(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
   if (!userId) {
-    throw new Error('User ID not found in request');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   const body = await validateBody(request, ChatRequestSchema);

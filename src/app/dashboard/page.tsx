@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [period, setPeriod] = useState('30d');
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function DashboardPage() {
 
     const fetchData = async () => {
       setIsLoading(true);
+      setFetchError(null);
       try {
         const statsData = await api.stats.overview({ userId: user.id, period });
         setStats(statsData as Stats);
@@ -79,6 +81,7 @@ export default function DashboardPage() {
         setProgressData((progressResult.data || []) as unknown as ProgressData[]);
       } catch (error) {
         logger.error('Failed to fetch dashboard data:', error);
+        setFetchError('Failed to load dashboard data. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -167,6 +170,12 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {fetchError && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-4 py-3 text-red-700 dark:text-red-400">
+            <span className="material-symbols-outlined text-lg">error</span>
+            <span className="text-sm font-medium">{fetchError}</span>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="relative">

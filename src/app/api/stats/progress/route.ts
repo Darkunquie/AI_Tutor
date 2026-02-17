@@ -22,8 +22,10 @@ async function handleGet(request: NextRequest) {
 
   // Calculate date range
   const now = new Date();
-  const days = parseInt(period) || 30;
-  const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const days = period === 'all' ? 365 : (parseInt(period) || 30);
+  const startDate = period === 'all'
+    ? new Date(0)
+    : new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
   // Get daily stats
   const dailyStats = await db.dailyStats.findMany({

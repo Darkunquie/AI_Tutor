@@ -49,7 +49,7 @@ async function handleGet(request: NextRequest) {
   });
 
   const totalSessions = sessions.length;
-  const totalDuration = sessions.reduce((sum, s) => sum + s.duration, 0);
+  const totalDuration = sessions.reduce((sum, s) => sum + (s.duration ?? 0), 0);
   const sessionsWithScore = sessions.filter((s) => s.score !== null);
   const averageScore =
     sessionsWithScore.length > 0
@@ -58,7 +58,7 @@ async function handleGet(request: NextRequest) {
             sessionsWithScore.length
         )
       : 0;
-  const totalFillerWords = sessions.reduce((sum, s) => sum + s.fillerWordCount, 0);
+  const totalFillerWords = sessions.reduce((sum, s) => sum + (s.fillerWordCount ?? 0), 0);
   const sessionsWithPronunciation = sessions.filter((s) => s.avgPronunciation !== null);
   const avgPronunciation =
     sessionsWithPronunciation.length > 0

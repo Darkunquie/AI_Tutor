@@ -141,6 +141,7 @@ export function speakText(
   };
 
   utterance.onend = () => {
+    if (resumeTimer) clearInterval(resumeTimer);
     if (!ended) {
       ended = true;
       callbacks?.onEnd?.();
@@ -148,6 +149,7 @@ export function speakText(
   };
 
   utterance.onerror = (event) => {
+    if (resumeTimer) clearInterval(resumeTimer);
     // Only log real errors, not cancellations
     if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
       logger.warn('TTS warning:', event.error);

@@ -294,9 +294,10 @@ export default function Home() {
             <div className="mt-20 text-center">
               <button
                 onClick={() => startPracticeSession('FREE_TALK')}
-                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-[#3c83f6] text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40"
+                disabled={isStarting}
+                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-[#3c83f6] text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                Start Practicing Now
+                {isStarting ? 'Starting...' : 'Start Practicing Now'}
               </button>
               <p className="mt-6 text-slate-500 text-sm font-medium">
                 No credit card required &bull; Free daily sessions included

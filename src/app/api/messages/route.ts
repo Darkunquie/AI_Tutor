@@ -18,6 +18,11 @@ const MessageQuerySchema = z.object({
 
 // POST /api/messages - Save a message
 async function handlePost(request: NextRequest) {
+  const userId = request.headers.get('x-user-id');
+  if (!userId) {
+    throw ApiError.unauthorized('User ID not found');
+  }
+
   const body = await validateBody(request, SaveMessageSchema);
   const {
     sessionId,
@@ -28,9 +33,9 @@ async function handlePost(request: NextRequest) {
     fillerWordCount,
   } = body;
 
-  // Check if session exists
-  const session = await db.session.findUnique({
-    where: { id: sessionId },
+  // SECURITY: Verify session exists and belongs to authenticated user
+  const session = await db.session.findFirst({
+    where: { id: sessionId, userId },
   });
 
   if (!session) {
@@ -89,7 +94,7 @@ async function handlePost(request: NextRequest) {
 async function handleGet(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
   if (!userId) {
-    throw new Error('User ID not found in request');
+    throw ApiError.unauthorized('User ID not found');
   }
 
   const query = validateQuery(request, MessageQuerySchema);
