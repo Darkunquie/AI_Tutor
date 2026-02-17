@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import jwt from 'jsonwebtoken';
+
+interface JWTPayload {
+  userId: string;
+  email: string;
+  name: string;
+}
+
+// Inline JWT verification - avoids module-level IIFE issues in middleware
+function verifyJWT(token: string): JWTPayload | null {
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return null;
+    return jwt.verify(token, secret, { algorithms: ['HS256'] }) as JWTPayload;
+  } catch {
+    return null;
+  }
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -31,7 +48,7 @@ export function middleware(request: NextRequest) {
       }
 
       const token = authHeader.substring(7);
-      const payload = verifyToken(token);
+      const payload = verifyJWT(token);
 
       if (!payload) {
         return NextResponse.json({ error: 'Unauthorized - Invalid token' }, { status: 401 });
@@ -50,11 +67,7 @@ export function middleware(request: NextRequest) {
       });
     }
 
-    // For page routes (/dashboard, /tutor), check for token in cookie or redirect
-    // Since we're using localStorage, we can't check it in middleware
-    // Instead, we'll let the pages handle auth checks client-side
-    // But we can check if there's a token in a cookie (if we add cookie support later)
-
+    // For page routes (/dashboard, /tutor), let client-side auth handle it
     return NextResponse.next();
   }
 

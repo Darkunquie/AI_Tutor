@@ -81,7 +81,7 @@ export default function Home() {
       logger.error('Failed to create session:', err);
 
       // Handle authentication errors specifically
-      if (err?.status === 401 || err?.message?.includes('Unauthorized')) {
+      if (err?.statusCode === 401 || err?.status === 401 || err?.message?.includes('Unauthorized')) {
         setError('Please log in to start a session');
         router.push('/login');
       } else {
