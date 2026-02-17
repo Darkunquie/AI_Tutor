@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate name
-    if (name.trim().length < 2 || name.trim().length > 100) {
+    if (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
       return NextResponse.json(
         { error: 'Name must be between 2 and 100 characters' },
         { status: 400 }

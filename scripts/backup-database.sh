@@ -33,7 +33,10 @@ NC='\033[0m' # No Color
 BACKUP_DIR="${HOME}/backups/talkivo"
 # Derive DB path from DATABASE_URL if set, otherwise fall back to default
 if [ -n "$DATABASE_URL" ]; then
-  DB_PATH=$(echo "$DATABASE_URL" | sed 's|^file:||; s|^sqlite:||; s|^file://||')
+  DB_PATH=$(echo "$DATABASE_URL" | sed 's|^file://||; s|^file:||; s|^sqlite:||; s|\?.*$||')
+else
+  DB_PATH="prisma/dev.db"
+fi
 else
   DB_PATH="prisma/dev.db"
 fi
@@ -85,15 +88,22 @@ echo ""
 # Step 3: Create backup
 print_info "Creating backup..."
 
+# Both paths produce an archive containing a single file: $(basename "$DB_PATH")
+DB_BASENAME="$(basename "$DB_PATH")"
+
 # Use sqlite3 .backup for safe, consistent backup if available
 if command -v sqlite3 &> /dev/null; then
-  TEMP_BACKUP="${BACKUP_DIR}/db-backup-${TIMESTAMP}.db"
+  TEMP_BACKUP="${BACKUP_DIR}/${DB_BASENAME}"
+  # Ensure temp file is cleaned up even if tar fails (set -e causes immediate exit)
+  cleanup_temp() { rm -f "${TEMP_BACKUP}"; }
+  trap cleanup_temp EXIT
   sqlite3 "$DB_PATH" ".backup '${TEMP_BACKUP}'"
-  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" -C "${BACKUP_DIR}" "db-backup-${TIMESTAMP}.db"
+  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" -C "${BACKUP_DIR}" "${DB_BASENAME}"
   rm -f "${TEMP_BACKUP}"
+  trap - EXIT
 else
   # Fallback to tar (less safe if app is writing concurrently)
-  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" "$DB_PATH"
+  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" -C "$(dirname "$DB_PATH")" "${DB_BASENAME}"
 fi
 
 if [ $? -eq 0 ]; then
@@ -155,8 +165,8 @@ echo ""
 
 # Step 7: Restore instructions
 print_info "To restore this backup, run:"
-echo "  tar -xzf ${BACKUP_DIR}/${BACKUP_NAME}"
-echo "  # This will extract to: ${DB_PATH}"
+echo "  tar -xzf ${BACKUP_DIR}/${BACKUP_NAME} -C $(dirname "$DB_PATH")"
+echo "  # This will extract ${DB_BASENAME} into: $(dirname "$DB_PATH")/"
 echo ""
 
 # Step 8: Disk space check

@@ -154,11 +154,18 @@ else
 fi
 echo ""
 
-# Step 8: Push database schema changes
-echo "Step 8: Pushing database schema..."
+# Step 8: Deploy database migrations
+echo "Step 8: Deploying database migrations..."
 
-npx prisma db push
-print_success "Database schema updated"
+# Pre-check: Ensure migration files exist before deploying
+# (Migrations should be generated beforehand, e.g., via 'prisma migrate dev' locally or in CI)
+if [ ! -d "prisma/migrations" ] || [ -z "$(ls -A prisma/migrations 2>/dev/null)" ]; then
+    print_error "No database migrations found in prisma/migrations/. Ensure migrations have been generated (e.g., via 'prisma migrate dev') before deploying."
+    exit 1
+fi
+
+npx prisma migrate deploy || { print_error "Database migration deployment failed"; exit 1; }
+print_success "Database migrations deployed successfully"
 echo ""
 
 # Step 9: Restart application with PM2
