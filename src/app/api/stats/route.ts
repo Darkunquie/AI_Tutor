@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { ApiError } from '@/lib/errors/ApiError';
 import { StatsQuerySchema } from '@/lib/schemas/stats.schema';
 import {
-  withErrorHandling,
+  withAuth,
   validateQuery,
   successResponse,
 } from '@/lib/error-handler';
@@ -122,4 +122,4 @@ async function handleGet(request: NextRequest) {
   });
 }
 
-export const GET = withErrorHandling(handleGet);
+export const GET = withAuth(handleGet);

@@ -4,7 +4,7 @@ import { getSystemPrompt } from '@/lib/prompts';
 import { SCENARIOS } from '@/lib/config';
 import { ChatRequestSchema } from '@/lib/schemas/chat.schema';
 import {
-  withErrorHandling,
+  withAuth,
   validateBody,
   successResponse,
 } from '@/lib/error-handler';
@@ -46,4 +46,4 @@ async function handlePost(request: NextRequest) {
   });
 }
 
-export const POST = withErrorHandling(handlePost);
+export const POST = withAuth(handlePost);

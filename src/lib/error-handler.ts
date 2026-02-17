@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { ZodError } from 'zod';
 import { ApiError } from './errors/ApiError';
 import { ValidationError } from './errors/ValidationError';
+import { verifyToken } from './auth';
 
 // Type for route handler functions
 type RouteHandler = (
@@ -172,5 +173,44 @@ export function paginatedResponse<T>(
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     },
+  });
+}
+
+/**
+ * Wraps a route handler with JWT authentication.
+ * Verifies the Bearer token from the Authorization header directly in Node.js
+ * (not Edge Runtime), then injects x-user-id/email/name headers for the handler.
+ *
+ * Use this instead of withErrorHandling for any protected API route.
+ */
+export function withAuth(handler: RouteHandler): RouteHandler {
+  return withErrorHandling(async (request, context) => {
+    const authHeader = request.headers.get('authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw ApiError.unauthorized('No token provided');
+    }
+
+    const token = authHeader.substring(7);
+    const payload = verifyToken(token);
+
+    if (!payload) {
+      throw ApiError.unauthorized('Invalid or expired token');
+    }
+
+    // Clone request with user identity headers set
+    const headers = new Headers(request.headers);
+    headers.set('x-user-id', payload.userId);
+    headers.set('x-user-email', payload.email);
+    headers.set('x-user-name', payload.name);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const authedRequest = new NextRequest(request.url, {
+      method: request.method,
+      headers,
+      body: request.body,
+    } as any);
+
+    return handler(authedRequest, context);
   });
 }

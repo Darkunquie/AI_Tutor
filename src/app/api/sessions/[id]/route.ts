@@ -4,7 +4,7 @@ import { UpdateSessionSchema } from '@/lib/schemas/session.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import { ValidationError } from '@/lib/errors/ValidationError';
 import {
-  withErrorHandling,
+  withAuth,
   validateBody,
   successResponse,
 } from '@/lib/error-handler';
@@ -222,5 +222,5 @@ async function updateDailyStats(
   });
 }
 
-export const GET = withErrorHandling(handleGet);
-export const PATCH = withErrorHandling(handlePatch);
+export const GET = withAuth(handleGet);
+export const PATCH = withAuth(handlePatch);

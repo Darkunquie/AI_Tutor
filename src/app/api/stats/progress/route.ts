@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { ApiError } from '@/lib/errors/ApiError';
 import { ProgressQuerySchema } from '@/lib/schemas/stats.schema';
 import {
-  withErrorHandling,
+  withAuth,
   validateQuery,
   successResponse,
 } from '@/lib/error-handler';
@@ -174,4 +174,4 @@ async function handleGet(request: NextRequest) {
   return successResponse({ data, period });
 }
 
-export const GET = withErrorHandling(handleGet);
+export const GET = withAuth(handleGet);
