@@ -144,6 +144,10 @@ export function VoiceInput({
 
     recognition.onerror = (event: Event & { error: string }) => {
       logger.error('Speech recognition error:', event.error);
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
       setIsListening(false);
       setInterimText('');
     };
