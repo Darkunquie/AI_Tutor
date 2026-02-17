@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useChatStore } from '@/stores/chatStore';
@@ -41,6 +41,19 @@ export default function Home() {
 
   const { setSession, setLevel, setContext, reset: resetChat } = useChatStore();
   const { startSession, reset: resetSession } = useSessionStore();
+
+  // Close modals/menus on Escape key
+  const handleEscapeKey = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setShowTopicModal(false);
+      setShowUserMenu(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [handleEscapeKey]);
 
   const startPracticeSession = async (mode: Mode, topic?: string, position?: 'for' | 'against') => {
     if (isStarting) return;

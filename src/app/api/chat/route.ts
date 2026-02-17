@@ -18,7 +18,19 @@ async function handlePost(request: NextRequest) {
   }
 
   const body = await validateBody(request, ChatRequestSchema);
-  const { message, mode, level, sessionId, context, history } = body;
+  const { message, mode, level, sessionId, history } = body;
+
+  // Sanitize user-controlled context fields (strip control characters)
+  const sanitize = (s?: string) => s?.replace(/[\x00-\x1f\x7f]/g, '').trim();
+  const context = body.context ? {
+    ...body.context,
+    topic: sanitize(body.context.topic),
+    scenario: sanitize(body.context.scenario),
+    character: sanitize(body.context.character),
+    userRole: sanitize(body.context.userRole),
+    debateTopic: sanitize(body.context.debateTopic),
+    debatePosition: sanitize(body.context.debatePosition),
+  } : undefined;
 
   // SECURITY: Verify session belongs to authenticated user
   if (sessionId) {

@@ -59,18 +59,25 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   pronunciationScores: [],
 
   // Actions
-  startSession: () =>
+  startSession: () => {
+    // Clear any existing timer to prevent orphaned intervals
+    const prev = get();
+    if (prev.timerInterval) {
+      clearInterval(prev.timerInterval);
+    }
     set({
       startTime: Date.now(),
       isActive: true,
       duration: 0,
+      timerInterval: null,
       messageCount: 0,
       errorCounts: { ...initialErrorCounts },
       corrections: [],
       vocabularyGained: [],
       fillerWordCount: 0,
       pronunciationScores: [],
-    }),
+    });
+  },
 
   endSession: () => {
     const state = get();

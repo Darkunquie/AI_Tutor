@@ -5,14 +5,14 @@ import { LevelSchema, ModeSchema, RoleSchema, ErrorTypeSchema } from './enums';
 
 export { LevelSchema, ModeSchema, RoleSchema, ErrorTypeSchema };
 
-// Chat context schema
+// Chat context schema (with length limits to prevent abuse)
 export const ChatContextSchema = z.object({
-  topic: z.string().optional(),
-  scenario: z.string().optional(),
-  character: z.string().optional(),
-  userRole: z.string().optional(),
-  debateTopic: z.string().optional(),
-  debatePosition: z.string().optional(),
+  topic: z.string().max(200).optional(),
+  scenario: z.string().max(200).optional(),
+  character: z.string().max(200).optional(),
+  userRole: z.string().max(200).optional(),
+  debateTopic: z.string().max(200).optional(),
+  debatePosition: z.string().max(50).optional(),
 }).optional();
 
 // Chat history item schema
@@ -30,7 +30,7 @@ export const ChatRequestSchema = z.object({
   level: LevelSchema,
   sessionId: z.string().min(1, 'Session ID is required'),
   context: ChatContextSchema,
-  history: z.array(ChatHistoryItemSchema).default([]),
+  history: z.array(ChatHistoryItemSchema).max(50).default([]),
 });
 
 // Correction schema

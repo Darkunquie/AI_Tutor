@@ -72,8 +72,24 @@ export function VoiceInput({
   const [interimText, setInterimText] = useState('');
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
+  // Stable refs to avoid recreating recognition when callbacks change
+  const onTranscriptRef = useRef(onTranscript);
+  const onInterimTranscriptRef = useRef(onInterimTranscript);
+  useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
+  useEffect(() => { onInterimTranscriptRef.current = onInterimTranscript; }, [onInterimTranscript]);
+
   useEffect(() => {
     setIsSupported(isSpeechRecognitionSupported());
+  }, []);
+
+  // Cleanup recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+    };
   }, []);
 
   const startListening = useCallback(() => {
@@ -120,7 +136,7 @@ export function VoiceInput({
       if (interim) {
         setInterimText(interim);
         const currentConfidence = event.results[event.results.length - 1]?.[0]?.confidence;
-        onInterimTranscript?.(interim, currentConfidence);
+        onInterimTranscriptRef.current?.(interim, currentConfidence);
       }
 
       if (final) {
@@ -138,7 +154,7 @@ export function VoiceInput({
           lowConfidenceWords: [],
         };
 
-        onTranscript(final, pronunciationData, fillerWords);
+        onTranscriptRef.current(final, pronunciationData, fillerWords);
       }
     };
 
@@ -158,7 +174,7 @@ export function VoiceInput({
 
     recognitionRef.current = recognition;
     recognition.start();
-  }, [isSupported, disabled, onTranscript, onInterimTranscript]);
+  }, [isSupported, disabled]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {

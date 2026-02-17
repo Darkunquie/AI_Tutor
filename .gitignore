@@ -58,5 +58,8 @@ backups/
 *.backup
 *.bak
 
+# test credentials
+TEST_CREDENTIALS.md
+
 # misc
 nul

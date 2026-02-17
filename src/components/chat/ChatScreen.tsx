@@ -8,7 +8,7 @@ import { useSessionStore, formatDuration } from '@/stores/sessionStore';
 import { speakText, stopSpeaking, loadVoices, isTTSSupported } from '@/lib/speech';
 import { api } from '@/lib/api-client';
 import type { Message, Correction, PronunciationResult, FillerWordDetection } from '@/lib/types';
-import { logBackgroundError, logger } from '@/lib/utils';
+import { logger } from '@/lib/utils';
 
 interface ChatScreenProps {
   onEndSession?: () => void;
@@ -21,6 +21,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
   const [ttsSupported, setTtsSupported] = useState(false);
   const [textInput, setTextInput] = useState('');
   const stopSpeakingRef = useRef<(() => void) | null>(null);
+  const sendingRef = useRef(false);
 
   const {
     sessionId,
@@ -128,7 +129,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     pronunciationData?: PronunciationResult,
     fillerWords?: FillerWordDetection[],
   ) => {
-    if (!sessionId || !mode || isLoading) return;
+    if (!sessionId || !mode || isLoading || sendingRef.current) return;
+    sendingRef.current = true;
 
     if (stopSpeakingRef.current) {
       stopSpeakingRef.current();
@@ -171,16 +173,27 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       };
       addMessage(aiMessage);
 
-      // Save user message to DB (fire-and-forget)
+      // Save messages to DB (awaited to prevent silent data loss)
       const fillerCount = fillerWords?.reduce((sum, f) => sum + f.count, 0) || 0;
-      api.messages.save({
-        sessionId,
-        role: 'USER',
-        content: text,
-        corrections: corrections.length > 0 ? corrections : undefined,
-        pronunciationScore: pronunciationData?.score,
-        fillerWordCount: fillerCount,
-      }).catch(logBackgroundError('save user message'));
+      try {
+        await Promise.all([
+          api.messages.save({
+            sessionId,
+            role: 'USER',
+            content: text,
+            corrections: corrections.length > 0 ? corrections : undefined,
+            pronunciationScore: pronunciationData?.score,
+            fillerWordCount: fillerCount,
+          }),
+          api.messages.save({
+            sessionId,
+            role: 'AI',
+            content: reply,
+          }),
+        ]);
+      } catch (saveErr) {
+        logger.error('Failed to save messages:', saveErr);
+      }
 
       // Track filler words and pronunciation in store for client-side score preview
       if (fillerCount > 0) {
@@ -190,13 +203,6 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         addPronunciationScore(pronunciationData.score);
       }
 
-      // Save AI message to DB (fire-and-forget)
-      api.messages.save({
-        sessionId,
-        role: 'AI',
-        content: reply,
-      }).catch(logBackgroundError('save AI message'));
-
       if (reply) {
         handleSpeak(reply);
       }
@@ -205,6 +211,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       setError('Failed to send message. Please try again.');
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
   };
 

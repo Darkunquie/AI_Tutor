@@ -4,14 +4,18 @@
 import Groq from 'groq-sdk';
 import { logger } from './utils';
 
-if (!process.env.GROQ_API_KEY) {
+if (!process.env.GROQ_API_KEY?.trim()) {
   throw new Error(
     'GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com'
   );
 }
 
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_TIMEOUT = 30000; // 30 seconds
+
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
+  timeout: GROQ_TIMEOUT,
 });
 
 export interface ChatMessage {
@@ -35,7 +39,7 @@ export async function chat(
 
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile', // Best for English tutoring
+      model: GROQ_MODEL,
       messages,
       temperature: 0.7,
       max_tokens: 1024,
@@ -50,8 +54,12 @@ export async function chat(
     }
 
     return content;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Groq API error:', error);
+    // Handle rate limiting specifically
+    if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
+      throw new Error('AI service is busy. Please wait a moment and try again.');
+    }
     throw new Error('Failed to get response from AI. Please try again.');
   }
 }
@@ -73,7 +81,7 @@ export async function* chatStream(
 
   try {
     const stream = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: GROQ_MODEL,
       messages,
       temperature: 0.7,
       max_tokens: 1024,

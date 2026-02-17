@@ -53,6 +53,8 @@ model Message {
   pronunciationScore Float?   // 0-100 pronunciation score for this message
   fillerWordCount    Int      @default(0)
   timestamp          DateTime @default(now())
+
+  @@index([sessionId])
 }
 
 model Error {
@@ -64,6 +66,8 @@ model Error {
   corrected   String
   explanation String
   createdAt   DateTime  @default(now())
+
+  @@index([sessionId])
 }
 
 // Vocabulary tracking - words learned by user

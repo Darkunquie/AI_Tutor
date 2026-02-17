@@ -91,8 +91,8 @@ function handlePrismaError(error: Error): Response {
   const code = error.code;
 
   switch (code) {
-    case 'P2002': // Unique constraint violation
-      return ApiError.badRequest('A record with this value already exists').toResponse();
+    case 'P2002': // Unique constraint violation (409 Conflict)
+      return new ApiError('A record with this value already exists', 409, 'BAD_REQUEST').toResponse();
     case 'P2025': // Record not found
       return ApiError.notFound('Record').toResponse();
     case 'P2003': // Foreign key constraint violation
