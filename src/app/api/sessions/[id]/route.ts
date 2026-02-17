@@ -94,7 +94,6 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
   const updateData: Record<string, unknown> = {};
 
   if (duration !== undefined) updateData.duration = duration;
-  if (score !== undefined) updateData.score = score;
   if (fillerWordCount !== undefined) updateData.fillerWordCount = fillerWordCount;
 
   // Safely stringify JSON fields with error handling
@@ -110,6 +109,53 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
   }
 
   if (avgPronunciation !== undefined) updateData.avgPronunciation = avgPronunciation;
+
+  // If session is ending (score provided), recalculate score from DB data
+  // for accuracy instead of trusting the client's simple formula
+  if (score !== undefined) {
+    const [userMessageCount, errorCounts, pronunciationMessages, currentSession] = await Promise.all([
+      db.message.count({ where: { sessionId: id, role: 'USER' } }),
+      db.error.groupBy({ by: ['category'], where: { sessionId: id }, _count: true }),
+      db.message.findMany({
+        where: { sessionId: id, role: 'USER', pronunciationScore: { not: null } },
+        select: { pronunciationScore: true },
+      }),
+      db.session.findFirst({
+        where: { id, userId },
+        select: { fillerWordCount: true },
+      }),
+    ]);
+
+    // Build error breakdown
+    const errorBreakdown = {
+      GRAMMAR: errorCounts.find((e) => e.category === 'GRAMMAR')?._count || 0,
+      VOCABULARY: errorCounts.find((e) => e.category === 'VOCABULARY')?._count || 0,
+      STRUCTURE: errorCounts.find((e) => e.category === 'STRUCTURE')?._count || 0,
+      FLUENCY: errorCounts.find((e) => e.category === 'FLUENCY')?._count || 0,
+    };
+
+    // Calculate average pronunciation from saved messages
+    const calculatedAvgPronunciation = pronunciationMessages.length > 0
+      ? pronunciationMessages.reduce((sum, m) => sum + (m.pronunciationScore || 0), 0) / pronunciationMessages.length
+      : null;
+
+    // Use actual filler count from DB (accumulated via message saves during session)
+    const dbFillerCount = (currentSession?.fillerWordCount || 0) +
+      (fillerWordCount || 0); // add any final increment from this request
+
+    const calculatedScore = ScoreCalculator.calculateSessionScore({
+      errorCounts: errorBreakdown,
+      messageCount: Math.max(userMessageCount, 1),
+      fillerWordCount: dbFillerCount,
+      avgPronunciation: calculatedAvgPronunciation,
+    });
+
+    updateData.score = calculatedScore;
+    // Save calculated avg pronunciation back to session
+    if (calculatedAvgPronunciation !== null) {
+      updateData.avgPronunciation = Math.round(calculatedAvgPronunciation);
+    }
+  }
 
   // SECURITY: Verify session belongs to authenticated user
   const session = await db.session.update({

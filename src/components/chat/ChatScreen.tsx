@@ -41,6 +41,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     updateDuration,
     incrementMessageCount,
     addCorrection,
+    addFillerCount,
+    addPronunciationScore,
   } = useSessionStore();
 
   // Initialize TTS on mount
@@ -179,6 +181,14 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         pronunciationScore: pronunciationData?.score,
         fillerWordCount: fillerCount,
       }).catch(logBackgroundError('save user message'));
+
+      // Track filler words and pronunciation in store for client-side score preview
+      if (fillerCount > 0) {
+        addFillerCount(fillerCount);
+      }
+      if (pronunciationData?.score !== undefined) {
+        addPronunciationScore(pronunciationData.score);
+      }
 
       // Save AI message to DB (fire-and-forget)
       api.messages.save({

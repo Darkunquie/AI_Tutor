@@ -1,6 +1,7 @@
 // Session store for tracking stats and timer
 import { create } from 'zustand';
 import type { ErrorType, Correction } from '@/lib/types';
+import { ScoreCalculator } from '@/lib/services/ScoreCalculator';
 
 interface SessionState {
   // Timer
@@ -15,6 +16,10 @@ interface SessionState {
   corrections: Correction[];
   vocabularyGained: string[];
 
+  // Filler & pronunciation tracking (for accurate score preview)
+  fillerWordCount: number;
+  pronunciationScores: number[];
+
   // Actions
   startSession: () => void;
   endSession: () => void;
@@ -24,6 +29,8 @@ interface SessionState {
   incrementMessageCount: () => void;
   addCorrection: (correction: Correction) => void;
   addVocabulary: (word: string) => void;
+  addFillerCount: (count: number) => void;
+  addPronunciationScore: (score: number) => void;
   reset: () => void;
 
   // Computed
@@ -48,6 +55,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   errorCounts: { ...initialErrorCounts },
   corrections: [],
   vocabularyGained: [],
+  fillerWordCount: 0,
+  pronunciationScores: [],
 
   // Actions
   startSession: () =>
@@ -59,6 +68,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       errorCounts: { ...initialErrorCounts },
       corrections: [],
       vocabularyGained: [],
+      fillerWordCount: 0,
+      pronunciationScores: [],
     }),
 
   endSession: () => {
@@ -117,6 +128,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return state;
     }),
 
+  addFillerCount: (count) =>
+    set((state) => ({ fillerWordCount: state.fillerWordCount + count })),
+
+  addPronunciationScore: (score) =>
+    set((state) => ({ pronunciationScores: [...state.pronunciationScores, score] })),
+
   reset: () => {
     const state = get();
     // Clear timer interval if it exists
@@ -132,10 +149,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       errorCounts: { ...initialErrorCounts },
       corrections: [],
       vocabularyGained: [],
+      fillerWordCount: 0,
+      pronunciationScores: [],
     });
   },
 
-  // Computed values
+  // Computed values — uses ScoreCalculator for consistency with server
   getScore: () => {
     const state = get();
 
@@ -144,16 +163,16 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return 0;
     }
 
-    const totalErrors = Object.values(state.errorCounts).reduce(
-      (a, b) => a + b,
-      0
-    );
+    const avgPronunciation = state.pronunciationScores.length > 0
+      ? state.pronunciationScores.reduce((a, b) => a + b, 0) / state.pronunciationScores.length
+      : null;
 
-    // Score formula: 100 - (errors per message * 15), min 0, max 100
-    const errorsPerMessage = totalErrors / state.messageCount;
-    const score = Math.max(0, Math.min(100, 100 - errorsPerMessage * 15));
-
-    return Math.round(score);
+    return ScoreCalculator.calculateSessionScore({
+      errorCounts: state.errorCounts,
+      messageCount: state.messageCount,
+      fillerWordCount: state.fillerWordCount,
+      avgPronunciation,
+    });
   },
 
   getErrorBreakdown: () => get().errorCounts,
