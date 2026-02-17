@@ -150,18 +150,22 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     setError(null);
 
     try {
+      // Use getState() to avoid stale closure -- messages from render scope
+      // doesn't include the userMessage we just added above
+      const currentMessages = useChatStore.getState().messages;
       const { reply } = await api.chat.send({
         message: text,
         mode,
         level,
         sessionId,
         context,
-        history: messagesToHistory(messages),
+        history: messagesToHistory(currentMessages),
       });
 
       const corrections = parseCorrections(reply);
       if (corrections.length > 0) {
-        userMessage.corrections = corrections;
+        // Update message immutably via store action instead of mutating in-place
+        useChatStore.getState().updateMessage(userMessage.id, { corrections });
         corrections.forEach(addCorrection);
       }
 
@@ -334,7 +338,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
 
       {/* Messages area */}
       <main className="custom-scrollbar flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="mx-auto flex max-w-4xl flex-col gap-8">
+        <div className="mx-auto flex max-w-4xl flex-col gap-8" aria-live="polite">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 rounded-2xl bg-[#3c83f6]/10 flex items-center justify-center mb-4">
@@ -385,7 +389,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
                 <span className="material-symbols-outlined">smart_toy</span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 ml-1">Jarvis</p>
+                <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 ml-1">Talkivo</p>
                 <div className="rounded-2xl rounded-tl-none bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                   <div className="flex gap-1.5">
                     <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce" />
@@ -448,7 +452,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
               className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 transition-colors"
               aria-label={ttsEnabled ? 'Mute AI voice' : 'Enable AI voice'}
             >
-              <span className="material-symbols-outlined">tune</span>
+              <span className="material-symbols-outlined">{ttsEnabled ? 'volume_up' : 'volume_off'}</span>
             </button>
           </div>
         </div>

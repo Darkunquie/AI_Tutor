@@ -36,10 +36,8 @@ export function withErrorHandling(handler: RouteHandler): RouteHandler {
  * Converts any error to an appropriate API response
  */
 export function handleError(error: unknown): Response {
-  // Log error in development
-  if (process.env.NODE_ENV === 'development') {
-    console.error('[API Error]', error);
-  }
+  // Always log errors for production visibility
+  console.error('[API Error]', error instanceof Error ? error.message : error);
 
   // Already an ApiError - return as-is
   if (error instanceof ApiError) {
@@ -204,11 +202,13 @@ export function withAuth(handler: RouteHandler): RouteHandler {
     headers.set('x-user-email', payload.email);
     headers.set('x-user-name', payload.name);
 
+    // Clone request to avoid ReadableStream double-consumption issues
+    const clonedRequest = request.clone();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const authedRequest = new NextRequest(request.url, {
-      method: request.method,
+    const authedRequest = new NextRequest(clonedRequest.url, {
+      method: clonedRequest.method,
       headers,
-      body: request.body,
+      body: clonedRequest.body,
     } as any);
 
     return handler(authedRequest, context);

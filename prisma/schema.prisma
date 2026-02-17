@@ -27,7 +27,7 @@ model User {
 model Session {
   id                String       @id @default(cuid())
   userId            String
-  user              User         @relation(fields: [userId], references: [id])
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   mode              Mode
   level             Level
   duration          Int          @default(0) // seconds
@@ -41,6 +41,8 @@ model Session {
   avgPronunciation  Float?       // Average pronunciation score 0-100
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+
+  @@index([userId])
 }
 
 model Message {

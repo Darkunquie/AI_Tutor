@@ -77,8 +77,8 @@ module.exports = {
       // Time to wait for app to gracefully shutdown (in ms)
       kill_timeout: 5000,
 
-      // Wait for app to be ready before considering it online
-      wait_ready: true,
+      // Note: wait_ready removed -- Next.js does not call process.send('ready'),
+      // so PM2 would wait indefinitely. App readiness relies on min_uptime instead.
     },
   ],
 };

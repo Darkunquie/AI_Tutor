@@ -1,5 +1,11 @@
 // In-memory rate limiter for API endpoints
 // Uses a Map with automatic cleanup to prevent memory leaks
+//
+// IMPORTANT: This in-memory rate limiter works correctly for long-running Node.js
+// processes (e.g., PM2, Docker), but is NOT effective in serverless environments
+// (Vercel, AWS Lambda) where each invocation may get a fresh memory space.
+// For serverless deployments, replace with Redis-backed rate limiting
+// (e.g., @upstash/ratelimit or ioredis).
 
 interface RateLimitEntry {
   count: number;

@@ -74,7 +74,7 @@ const TEXT_CORRECTION_PATTERNS = [
 // Vocabulary teaching patterns (to extract new words)
 const VOCABULARY_PATTERNS = [
   /(?:the word|term)\s+["'](\w+)["']\s+means?\s+["']([^"']+)["']/gi,
-  /["'](\w+)["']\s+(?:means|refers to|is|describes)\s+["']?([^"'.]+)["']?/gi,
+  /["'](\w+)["']\s+(?:means|refers to|describes)\s+["']?([^"'.]+)["']?/gi,
 ];
 
 /**
@@ -254,9 +254,10 @@ export class CorrectionParser {
    * Check if a message contains teaching about a specific word
    */
   static containsWordTeaching(text: string, word: string): boolean {
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const patterns = [
-      new RegExp(`\\b${word}\\b.*(?:means|refers to|is called|definition)`, 'i'),
-      new RegExp(`(?:the word|term)\\s+["']?${word}["']?`, 'i'),
+      new RegExp(`\\b${escaped}\\b.*(?:means|refers to|is called|definition)`, 'i'),
+      new RegExp(`(?:the word|term)\\s+["']?${escaped}["']?`, 'i'),
     ];
 
     return patterns.some((p) => p.test(text));

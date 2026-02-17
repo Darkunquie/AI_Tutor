@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useChatStore } from '@/stores/chatStore';
@@ -41,6 +41,7 @@ export default function Home() {
 
   const { setSession, setLevel, setContext, reset: resetChat } = useChatStore();
   const { startSession, reset: resetSession } = useSessionStore();
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Close modals/menus on Escape key
   const handleEscapeKey = useCallback((e: KeyboardEvent) => {
@@ -54,6 +55,19 @@ export default function Home() {
     document.addEventListener('keydown', handleEscapeKey);
     return () => document.removeEventListener('keydown', handleEscapeKey);
   }, [handleEscapeKey]);
+
+  // Close user menu on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showUserMenu]);
 
   const startPracticeSession = async (mode: Mode, topic?: string, position?: 'for' | 'against') => {
     if (isStarting) return;
@@ -144,7 +158,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               // Authenticated: Show user menu
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -203,6 +217,17 @@ export default function Home() {
       </header>
 
       <main>
+        {/* Error Banner */}
+        {error && (
+          <div className="max-w-4xl mx-auto mt-4 px-6">
+            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm font-medium flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg">error</span>
+              {error}
+              <button onClick={() => setError(null)} className="ml-auto underline text-sm hover:no-underline">Dismiss</button>
+            </div>
+          </div>
+        )}
+
         {/* Hero Section */}
         <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(60,131,246,0.15)_0%,rgba(16,23,34,0)_100%)]" />

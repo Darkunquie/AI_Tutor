@@ -34,7 +34,6 @@ export default function LoginPage() {
 
       if (!response.ok) {
         setError(data.error || 'Login failed');
-        setIsLoading(false);
         return;
       }
 
@@ -51,6 +50,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (err) {
       setError('Network error. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

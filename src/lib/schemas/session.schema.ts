@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { LevelSchema, ModeSchema } from './chat.schema';
 
 // Create session request schema
+// Note: userId comes from x-user-id header (set by withAuth), not from request body
 export const CreateSessionSchema = z.object({
-  userId: z.string().optional(),
   mode: ModeSchema,
   level: LevelSchema,
 });
@@ -28,8 +28,8 @@ export const UpdateSessionSchema = z.object({
 });
 
 // Session query params schema
+// Note: userId comes from x-user-id header (set by withAuth), not from query params
 export const SessionQuerySchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
 });

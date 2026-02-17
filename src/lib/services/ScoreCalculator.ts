@@ -75,7 +75,7 @@ export class ScoreCalculator {
     const errorPenalty = weightedErrors * CONFIG.POINTS_PER_ERROR;
 
     // Scale error penalty by message count (more messages = errors have less impact per message)
-    const scaleFactor = Math.max(1, messageCount / CONFIG.MIN_MESSAGES_FOR_FULL_SCORING);
+    const scaleFactor = Math.sqrt(Math.max(1, messageCount / CONFIG.MIN_MESSAGES_FOR_FULL_SCORING));
     const scaledErrorPenalty = errorPenalty / scaleFactor;
 
     score -= scaledErrorPenalty;

@@ -58,7 +58,7 @@ export default function TutorPage() {
       score: getScore(),
       duration: useSessionStore.getState().duration,
       messageCount,
-      mode: mode!,
+      mode: mode ?? 'FREE_TALK',
       level,
       context,
       errorCounts: { ...errorCounts },

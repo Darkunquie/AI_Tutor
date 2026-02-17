@@ -57,7 +57,7 @@ export function detectFillerWords(transcript: string): FillerWordDetection[] {
     // Skip if it's part of a multi-word filler already detected
     // For example, "you" in "you know"
     const isPartOfMultiWord = MULTI_WORD_FILLERS.some(mw =>
-      mw.includes(filler) && detections.some(d => d.word === mw)
+      mw.split(' ').includes(filler) && detections.some(d => d.word === mw)
     );
 
     // Special handling for common words that can be legitimate
@@ -155,39 +155,59 @@ export function getFillerReductionTips(mostCommon?: string): string[] {
 }
 
 /**
+ * Escape HTML special characters to prevent XSS
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
  * Highlight filler words in a transcript for display
  * @param transcript - Original transcript
  * @param detections - Filler word detections
- * @returns HTML string with highlighted fillers
+ * @returns HTML string with highlighted fillers (XSS-safe)
  */
 export function highlightFillerWords(
   transcript: string,
   detections: FillerWordDetection[]
 ): string {
-  if (detections.length === 0) return transcript;
+  if (detections.length === 0) return escapeHtml(transcript);
 
-  // Sort positions from last to first (to avoid index shifting)
-  const allPositions: { start: number; end: number; word: string }[] = [];
+  // Collect all positions and sort from first to last
+  const allPositions: { start: number; end: number }[] = [];
 
   for (const detection of detections) {
     for (const pos of detection.positions) {
       allPositions.push({
         start: pos,
         end: pos + detection.word.length,
-        word: detection.word,
       });
     }
   }
 
-  allPositions.sort((a, b) => b.start - a.start);
+  allPositions.sort((a, b) => a.start - b.start);
 
-  let result = transcript;
+  // Build result by escaping each segment individually
+  const parts: string[] = [];
+  let lastEnd = 0;
+
   for (const { start, end } of allPositions) {
-    const before = result.slice(0, start);
-    const filler = result.slice(start, end);
-    const after = result.slice(end);
-    result = `${before}<mark class="filler-word">${filler}</mark>${after}`;
+    if (start > lastEnd) {
+      parts.push(escapeHtml(transcript.slice(lastEnd, start)));
+    }
+    const filler = escapeHtml(transcript.slice(start, end));
+    parts.push(`<mark class="filler-word">${filler}</mark>`);
+    lastEnd = end;
   }
 
-  return result;
+  if (lastEnd < transcript.length) {
+    parts.push(escapeHtml(transcript.slice(lastEnd)));
+  }
+
+  return parts.join('');
 }

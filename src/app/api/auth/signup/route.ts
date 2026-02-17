@@ -22,7 +22,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
     const { name, phone, email, password, rememberMe } = body;
 
     // Validate required fields
@@ -34,9 +42,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate name
-    if (name.trim().length < 2) {
+    if (name.trim().length < 2 || name.trim().length > 100) {
       return NextResponse.json(
-        { error: 'Name must be at least 2 characters long' },
+        { error: 'Name must be between 2 and 100 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Validate password length (upper bound prevents bcrypt DoS)
+    if (typeof password !== 'string' || password.length > 128) {
+      return NextResponse.json(
+        { error: 'Password must be at most 128 characters' },
         { status: 400 }
       );
     }
@@ -133,7 +149,14 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: unknown) {
+    // Handle Prisma unique constraint violation (race condition on email/phone)
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Email or phone number already registered' },
+        { status: 409 }
+      );
+    }
     logger.error('Signup error:', error);
     return NextResponse.json(
       { error: 'Internal server error during signup' },

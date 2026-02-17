@@ -37,13 +37,12 @@ export function logBackgroundError(context: string) {
  */
 export const logger = {
   error: (message: string, ...args: unknown[]) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error(`[AI-Tutor] ${message}`, ...args);
-    }
+    // Always log errors, even in production -- zero visibility is dangerous
+    console.error(`[Talkivo] ${message}`, ...args);
   },
   warn: (message: string, ...args: unknown[]) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn(`[AI-Tutor] ${message}`, ...args);
+      console.warn(`[Talkivo] ${message}`, ...args);
     }
   },
 };

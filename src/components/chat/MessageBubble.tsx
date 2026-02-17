@@ -77,7 +77,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         <span className="material-symbols-outlined">smart_toy</span>
       </div>
       <div className="flex flex-col gap-1.5 max-w-[80%]">
-        <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 ml-1">Jarvis</p>
+        <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 ml-1">Talkivo</p>
         <div className="rounded-2xl rounded-tl-none bg-white p-4 text-slate-800 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700">
           <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
         </div>

@@ -38,7 +38,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
       label: 'Average Score',
       value: `${stats.averageScore}%`,
       icon: 'grade',
-      trend: stats.averageScore >= 80 ? '+5%' : null,
+      trend: null,
       trendUp: true,
     },
     {
@@ -52,14 +52,14 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
       label: 'Pronunciation',
       value: stats.avgPronunciation > 0 ? `${stats.avgPronunciation}%` : '—',
       icon: 'record_voice_over',
-      trend: stats.avgPronunciation >= 70 ? '+3%' : null,
-      trendUp: stats.avgPronunciation >= 70,
+      trend: null,
+      trendUp: true,
     },
     {
       label: 'Filler Words',
       value: stats.totalFillerWords,
       icon: 'chat_bubble',
-      trend: stats.totalFillerWords > 0 ? `-${Math.min(stats.totalFillerWords, 12)}%` : null,
+      trend: null,
       trendUp: false,
     },
   ];

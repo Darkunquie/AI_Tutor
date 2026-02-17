@@ -31,7 +31,12 @@ NC='\033[0m' # No Color
 
 # Configuration
 BACKUP_DIR="${HOME}/backups/talkivo"
-DB_PATH="prisma/dev.db"
+# Derive DB path from DATABASE_URL if set, otherwise fall back to default
+if [ -n "$DATABASE_URL" ]; then
+  DB_PATH=$(echo "$DATABASE_URL" | sed 's|^file:||; s|^sqlite:||; s|^file://||')
+else
+  DB_PATH="prisma/dev.db"
+fi
 RETENTION_DAYS=7  # Keep backups for 7 days
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 BACKUP_NAME="db-backup-${TIMESTAMP}.tar.gz"
@@ -80,8 +85,16 @@ echo ""
 # Step 3: Create backup
 print_info "Creating backup..."
 
-# Create a compressed archive of the database
-tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" "$DB_PATH"
+# Use sqlite3 .backup for safe, consistent backup if available
+if command -v sqlite3 &> /dev/null; then
+  TEMP_BACKUP="${BACKUP_DIR}/db-backup-${TIMESTAMP}.db"
+  sqlite3 "$DB_PATH" ".backup '${TEMP_BACKUP}'"
+  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" -C "${BACKUP_DIR}" "db-backup-${TIMESTAMP}.db"
+  rm -f "${TEMP_BACKUP}"
+else
+  # Fallback to tar (less safe if app is writing concurrently)
+  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" "$DB_PATH"
+fi
 
 if [ $? -eq 0 ]; then
     BACKUP_SIZE=$(du -h "${BACKUP_DIR}/${BACKUP_NAME}" | cut -f1)

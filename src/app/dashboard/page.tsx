@@ -49,12 +49,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [authLoading, isAuthenticated, router]);
+  // Auth redirect is handled by <RequireAuth> wrapper below
 
   useEffect(() => {
     // Don't fetch data if not authenticated or still loading auth
@@ -107,7 +102,7 @@ export default function DashboardPage() {
               <div className="p-2 bg-[#3c83f6] rounded-xl text-white">
                 <span className="material-symbols-outlined block text-xl">school</span>
               </div>
-              <span className="text-xl font-bold tracking-tight">Jarvis</span>
+              <span className="text-xl font-bold tracking-tight">Talkivo</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1">
               <span className="px-4 py-2 text-sm font-semibold text-[#3c83f6] bg-[#3c83f6]/10 rounded-lg">
@@ -122,7 +117,6 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <button aria-label="Notifications" className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
               <span className="material-symbols-outlined text-xl">notifications</span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#3c83f6] rounded-full" />
             </button>
             {user && (
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3c83f6] to-[#8b5cf6] flex items-center justify-center text-white text-sm font-bold">
@@ -232,7 +226,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
             <span className="material-symbols-outlined text-lg">school</span>
-            <span>&copy; 2026 Talkivo</span>
+            <span>&copy; {new Date().getFullYear()} Talkivo</span>
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500">
             Powered by AI

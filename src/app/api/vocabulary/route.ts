@@ -40,7 +40,7 @@ async function handlePost(request: NextRequest) {
   }
 
   // Upsert vocabulary (update if exists, create if not)
-  const vocabulary = await db.vocabulary.upsert({
+  let vocabulary = await db.vocabulary.upsert({
     where: {
       userId_word: {
         userId,
@@ -64,6 +64,14 @@ async function handlePost(request: NextRequest) {
       mastery: 0,
     },
   });
+
+  // Clamp mastery to 100 (increment can push it above max)
+  if (vocabulary.mastery > 100) {
+    vocabulary = await db.vocabulary.update({
+      where: { id: vocabulary.id },
+      data: { mastery: 100 },
+    });
+  }
 
   return successResponse({
     id: vocabulary.id,

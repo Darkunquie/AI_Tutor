@@ -10,11 +10,20 @@ import {
 } from '@/lib/error-handler';
 import { ApiError } from '@/lib/errors/ApiError';
 import { db } from '@/lib/db';
+import { checkRateLimit } from '@/lib/rate-limiter';
+
+const CHAT_RATE_LIMIT = { maxAttempts: 30, windowMs: 60 * 1000 };
 
 async function handlePost(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
   if (!userId) {
     throw ApiError.unauthorized('User ID not found');
+  }
+
+  // Rate limit chat requests per user
+  const rateLimit = checkRateLimit(`chat:${userId}`, CHAT_RATE_LIMIT);
+  if (!rateLimit.allowed) {
+    throw ApiError.rateLimited('Too many messages. Please slow down.');
   }
 
   const body = await validateBody(request, ChatRequestSchema);

@@ -22,10 +22,25 @@ async function handleGet(request: NextRequest) {
 
   // Calculate date range
   const now = new Date();
-  const days = period === 'all' ? 365 : (parseInt(period) || 30);
-  const startDate = period === 'all'
-    ? new Date(0)
-    : new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  let startDate: Date;
+  let days: number;
+
+  if (period === 'all') {
+    // Find earliest session to determine actual start date
+    const earliest = await db.session.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+    });
+    startDate = earliest
+      ? new Date(earliest.createdAt)
+      : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    startDate.setHours(0, 0, 0, 0);
+    days = Math.ceil((now.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+  } else {
+    days = parseInt(period) || 30;
+    startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  }
 
   // Get daily stats
   const dailyStats = await db.dailyStats.findMany({

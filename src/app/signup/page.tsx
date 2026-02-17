@@ -36,7 +36,6 @@ export default function SignupPage() {
 
       if (!response.ok) {
         setError(data.error || 'Signup failed');
-        setIsLoading(false);
         return;
       }
 
@@ -53,6 +52,7 @@ export default function SignupPage() {
       router.push('/dashboard');
     } catch (err) {
       setError('Network error. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

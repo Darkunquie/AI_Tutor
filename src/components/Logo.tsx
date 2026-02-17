@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
 interface LogoProps {
@@ -23,9 +22,9 @@ export function Logo({ variant = 'icon', size = 'md', className = '', linkToHome
         <circle cx="18" cy="24" r="3" fill="white"/>
         <circle cx="24" cy="24" r="3" fill="white"/>
         <circle cx="30" cy="24" r="3" fill="white"/>
-        <circle cx="24" cy="24" r="16" fill="url(#iconGlow)" opacity="0.3"/>
+        <circle cx="24" cy="24" r="16" fill="url(#iconGlowFull)" opacity="0.3"/>
         <defs>
-          <radialGradient id="iconGlow" cx="0.5" cy="0.5" r="0.5">
+          <radialGradient id="iconGlowFull" cx="0.5" cy="0.5" r="0.5">
             <stop offset="0%" stopColor="#60a5fa" stopOpacity="1"/>
             <stop offset="100%" stopColor="#3c83f6" stopOpacity="0"/>
           </radialGradient>

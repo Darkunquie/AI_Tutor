@@ -19,6 +19,7 @@ interface ChatState {
   setLevel: (level: Level) => void;
   setContext: (context: Partial<ChatContext>) => void;
   addMessage: (message: Message) => void;
+  updateMessage: (id: string, updates: Partial<Message>) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearChat: () => void;
@@ -46,6 +47,13 @@ export const useChatStore = create<ChatState>((set) => ({
 
   addMessage: (message) =>
     set((state) => ({ messages: [...state.messages, message] })),
+
+  updateMessage: (id, updates) =>
+    set((state) => ({
+      messages: state.messages.map((m) =>
+        m.id === id ? { ...m, ...updates } : m
+      ),
+    })),
 
   setLoading: (isLoading) => set({ isLoading }),
 

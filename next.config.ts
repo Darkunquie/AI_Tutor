@@ -17,8 +17,9 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              // Next.js requires unsafe-inline and unsafe-eval for its runtime scripts
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              // Next.js requires unsafe-inline for inline scripts
+              // TODO: Replace 'unsafe-inline' with nonce-based CSP when Next.js supports it natively
+              "script-src 'self' 'unsafe-inline'",
               // Google Fonts stylesheets + inline styles used by Tailwind
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Google Fonts woff2 files
@@ -27,6 +28,10 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob:",
               // API calls go to same origin only (Groq called server-side, not from browser)
               "connect-src 'self'",
+              // Web Workers and blobs (used by speech processing)
+              "worker-src 'self' blob:",
+              // Audio/video media
+              "media-src 'self'",
               // Prevent this page from being embedded in iframes
               "frame-ancestors 'none'",
             ].join("; "),

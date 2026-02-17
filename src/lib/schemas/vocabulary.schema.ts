@@ -6,8 +6,8 @@ import { VocabSourceSchema } from './enums';
 export { VocabSourceSchema };
 
 // Save vocabulary request schema
+// Note: userId comes from x-user-id header (set by withAuth), not from request body
 export const SaveVocabularySchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
   sessionId: z.string().optional(),
   word: z.string()
     .min(1, 'Word is required')
@@ -26,8 +26,8 @@ export const UpdateVocabularySchema = z.object({
 });
 
 // Vocabulary query params schema
+// Note: userId comes from x-user-id header (set by withAuth), not from query params
 export const VocabularyQuerySchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
   search: z.string().optional(),
   source: VocabSourceSchema.optional(),
   sortBy: z.enum(['createdAt', 'word', 'mastery']).default('createdAt'),

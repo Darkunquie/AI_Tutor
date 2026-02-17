@@ -7,7 +7,7 @@ import { RoleSchema, CorrectionSchema } from './chat.schema';
 export const SaveMessageSchema = z.object({
   sessionId: z.string().min(1, 'Session ID is required'),
   role: RoleSchema,
-  content: z.string().min(1, 'Message content is required'),
+  content: z.string().min(1, 'Message content is required').max(10000),
   corrections: z.array(CorrectionSchema).optional(),
   pronunciationScore: z.number().min(0).max(100).optional(),
   fillerWordCount: z.number().int().min(0).optional(),

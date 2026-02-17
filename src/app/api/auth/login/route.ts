@@ -16,13 +16,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
     const { email, password, rememberMe } = body;
 
     // Validate required fields
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate max lengths (prevent abuse)
+    if (typeof email !== 'string' || email.length > 254) {
+      return NextResponse.json(
+        { error: 'Invalid email address' },
+        { status: 400 }
+      );
+    }
+    if (typeof password !== 'string' || password.length > 128) {
+      return NextResponse.json(
+        { error: 'Invalid password' },
         { status: 400 }
       );
     }

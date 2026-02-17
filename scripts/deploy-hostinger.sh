@@ -17,7 +17,7 @@
 #   ./scripts/deploy-hostinger.sh
 #
 # Or run remotely via SSH:
-#   ssh user@your-server 'cd /path/to/ai-english-tutor && ./scripts/deploy-hostinger.sh'
+#   ssh user@your-server 'cd /path/to/talkivo && ./scripts/deploy-hostinger.sh'
 ################################################################################
 
 set -e  # Exit on any error
@@ -128,24 +128,21 @@ else
 fi
 echo ""
 
-# Step 5: Build application
-echo "Step 5: Building application..."
+# Step 5: Generate Prisma client (must run before build)
+echo "Step 5: Generating Prisma client..."
+
+npx prisma generate
+print_success "Prisma client generated"
+echo ""
+
+# Step 6: Build application
+echo "Step 6: Building application..."
 
 npm run build
 print_success "Build completed successfully"
 echo ""
 
-# Step 6: Database migrations
-echo "Step 6: Running database migrations..."
-
-npx prisma generate
-print_success "Prisma client generated"
-
-npx prisma db push
-print_success "Database schema updated"
-echo ""
-
-# Step 7: Create backup before deployment
+# Step 7: Create database backup (before schema changes)
 echo "Step 7: Creating database backup..."
 
 if [ -f scripts/backup-database.sh ]; then
@@ -157,10 +154,17 @@ else
 fi
 echo ""
 
-# Step 8: Restart application with PM2
-echo "Step 8: Restarting application..."
+# Step 8: Push database schema changes
+echo "Step 8: Pushing database schema..."
 
-if pm2 list | grep -q "ai-english-tutor"; then
+npx prisma db push
+print_success "Database schema updated"
+echo ""
+
+# Step 9: Restart application with PM2
+echo "Step 9: Restarting application..."
+
+if pm2 list | grep -q "talkivo"; then
     print_info "Application is running. Restarting..."
     pm2 restart ecosystem.config.js
     print_success "Application restarted"
@@ -176,17 +180,17 @@ pm2 save
 print_success "PM2 process list saved"
 echo ""
 
-# Step 9: Display application status
-echo "Step 9: Checking application status..."
+# Step 10: Display application status
+echo "Step 10: Checking application status..."
 
 pm2 status
 echo ""
 
-pm2 logs ai-english-tutor --lines 20 --nostream
+pm2 logs talkivo --lines 20 --nostream
 echo ""
 
-# Step 10: Health check
-echo "Step 10: Performing health check..."
+# Step 11: Health check
+echo "Step 11: Performing health check..."
 
 sleep 5  # Wait for app to start
 
@@ -194,7 +198,7 @@ if curl -f http://localhost:3000 > /dev/null 2>&1; then
     print_success "Health check passed - Application is responding"
 else
     print_warning "Health check warning - Application may not be responding correctly"
-    print_info "Check logs with: pm2 logs ai-english-tutor"
+    print_info "Check logs with: pm2 logs talkivo"
 fi
 echo ""
 
@@ -209,9 +213,9 @@ print_info "Port: 3000"
 print_info "Environment: $(grep NODE_ENV .env | cut -d'=' -f2)"
 echo ""
 print_info "Useful commands:"
-echo "  - View logs:     pm2 logs ai-english-tutor"
-echo "  - Restart app:   pm2 restart ai-english-tutor"
-echo "  - Stop app:      pm2 stop ai-english-tutor"
+echo "  - View logs:     pm2 logs talkivo"
+echo "  - Restart app:   pm2 restart talkivo"
+echo "  - Stop app:      pm2 stop talkivo"
 echo "  - Monitor app:   pm2 monit"
 echo "  - App status:    pm2 status"
 echo ""

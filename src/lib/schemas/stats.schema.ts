@@ -6,14 +6,14 @@ import { z } from 'zod';
 export const PeriodSchema = z.enum(['7d', '30d', '90d', 'all']).default('30d');
 
 // Stats query params schema
+// Note: userId comes from x-user-id header (set by withAuth), not from query params
 export const StatsQuerySchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
   period: PeriodSchema,
 });
 
 // Progress query params schema
+// Note: userId comes from x-user-id header (set by withAuth), not from query params
 export const ProgressQuerySchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
   period: PeriodSchema,
 });
 

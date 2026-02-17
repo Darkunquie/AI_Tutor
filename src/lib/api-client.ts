@@ -108,11 +108,13 @@ function createApiClient(config: ApiClientConfig = {}) {
 
       // Handle error responses
       if (!response.ok) {
-        // On 401, clear stale auth and redirect to login
+        // On 401, clear stale auth and redirect to login (unless already on login/signup)
         if (response.status === 401 && typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/signup')) {
+            window.location.href = '/login';
+          }
         }
         throw ApiClientError.fromResponse(response, responseBody);
       }

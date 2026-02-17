@@ -18,7 +18,7 @@ export const ChatContextSchema = z.object({
 // Chat history item schema
 export const ChatHistoryItemSchema = z.object({
   role: z.enum(['user', 'assistant']),
-  content: z.string(),
+  content: z.string().max(10000),
 });
 
 // Chat request schema

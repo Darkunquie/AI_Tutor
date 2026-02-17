@@ -251,7 +251,11 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
             Previous
           </button>
           <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
+            {(() => {
+              const startPage = Math.max(1, Math.min(page - 2, totalPages - 4));
+              const endPage = Math.min(totalPages, startPage + 4);
+              return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+            })().map((p) => (
               <button
                 key={p}
                 onClick={() => setPage(p)}
