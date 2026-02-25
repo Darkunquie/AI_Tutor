@@ -3,11 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-
 export default function SignupPage() {
   const router = useRouter();
-  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -39,17 +36,8 @@ export default function SignupPage() {
         return;
       }
 
-      // Update auth context (this also stores in localStorage)
-      login(data.token, {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        level: data.user.level,
-      });
-
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Account created but pending approval — redirect to pending page
+      router.push('/pending');
     } catch (err) {
       setError('Network error. Please try again.');
     } finally {

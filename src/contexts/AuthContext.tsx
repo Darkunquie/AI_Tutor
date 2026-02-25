@@ -10,6 +10,8 @@ interface User {
   email: string;
   phone: string;
   level: string;
+  role: string;
+  status: string;
 }
 
 interface AuthContextType {
@@ -17,6 +19,8 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
+  isPending: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
 }
@@ -104,6 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token,
     isAuthenticated: !!user && !!token,
     isLoading,
+    isAdmin: user?.role === 'ADMIN',
+    isPending: user?.status === 'PENDING',
     login,
     logout,
   };

@@ -270,6 +270,28 @@ export const api = {
       fillerWordCount?: number;
     }) => apiClient.post<Record<string, unknown>>('/api/messages', data),
   },
+
+  // Admin
+  admin: {
+    getStats: () =>
+      apiClient.get<{
+        users: { total: number; pending: number; approved: number; rejected: number; newThisWeek: number; newThisMonth: number };
+        activity: { totalSessions: number; sessionsThisWeek: number; activeUsersThisWeek: number; totalPracticeDuration: number; averageScore: number; totalVocabularyLearned: number };
+      }>('/api/admin/stats'),
+
+    getUsers: (params?: { status?: string; search?: string; page?: number; pageSize?: number }) =>
+      apiClient.get<{ data: Array<Record<string, unknown>>; meta: { total: number; page: number; pageSize: number; totalPages: number } }>(
+        '/api/admin/users', { params }
+      ),
+
+    getUser: (id: string) =>
+      apiClient.get<Record<string, unknown>>(`/api/admin/users/${id}`),
+
+    updateUserStatus: (id: string, status: 'APPROVED' | 'REJECTED') =>
+      apiClient.patch<{ id: string; name: string; email: string; status: string }>(
+        `/api/admin/users/${id}`, { status }
+      ),
+  },
 };
 
 export { createApiClient };

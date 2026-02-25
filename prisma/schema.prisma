@@ -16,6 +16,8 @@ model User {
   phone            String        @unique
   email            String        @unique
   password         String        // bcrypt hashed
+  role             UserRole      @default(USER)
+  status           UserStatus    @default(PENDING)
   level            Level         @default(BEGINNER)
   dailyGoalMinutes Int           @default(15)
   sessions         Session[]
@@ -124,6 +126,7 @@ enum Mode {
   ROLE_PLAY
   DEBATE
   GRAMMAR_FIX
+  PRONUNCIATION
 }
 
 enum Role {
@@ -142,6 +145,17 @@ enum VocabSource {
   CORRECTION  // From a grammar/vocab correction
   AI_RESPONSE // New word from AI's response
   USER_MARKED // User explicitly saved it
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model Achievement {

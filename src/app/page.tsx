@@ -19,6 +19,7 @@ const MODE_ICONS: Record<Mode, { icon: string; color: string; bgColor: string }>
   ROLE_PLAY: { icon: 'theater_comedy', color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
   DEBATE: { icon: 'gavel', color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
   GRAMMAR_FIX: { icon: 'spellcheck', color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+  PRONUNCIATION: { icon: 'record_voice_over', color: 'text-teal-500', bgColor: 'bg-teal-500/10' },
 };
 
 const MODE_CTA: Record<Mode, string> = {
@@ -26,11 +27,12 @@ const MODE_CTA: Record<Mode, string> = {
   ROLE_PLAY: 'Select Scenario',
   DEBATE: 'Join Debate',
   GRAMMAR_FIX: 'Improve Now',
+  PRONUNCIATION: 'Practice Now',
 };
 
 export default function Home() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [selectedLevel, setSelectedLevel] = useState<Level>('INTERMEDIATE');
   const [showTopicModal, setShowTopicModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<Mode | null>(null);
@@ -101,6 +103,8 @@ export default function Home() {
         setContext({ scenario: topic });
       } else if (mode === 'DEBATE' && topic) {
         setContext({ debateTopic: topic, debatePosition: position || 'for' });
+      } else if (mode === 'PRONUNCIATION' && topic) {
+        setContext({ topic });
       }
 
       startSession();
@@ -187,6 +191,16 @@ export default function Home() {
                       <span className="material-symbols-outlined text-sm">dashboard</span>
                       Dashboard
                     </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-[#3c83f6] hover:bg-slate-100 dark:hover:bg-slate-700"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
+                        Admin Portal
+                      </Link>
+                    )}
                     <button
                       onClick={() => {
                         setShowUserMenu(false);
@@ -405,7 +419,7 @@ export default function Home() {
         <section id="stats" className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 py-16">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">4</div>
+              <div className="text-3xl font-black text-[#3c83f6] mb-1">5</div>
               <div className="text-xs uppercase tracking-widest font-bold text-slate-500">Practice Modes</div>
             </div>
             <div>
@@ -463,12 +477,14 @@ export default function Home() {
                     {selectedMode === 'ROLE_PLAY' && 'Choose a Scenario'}
                     {selectedMode === 'DEBATE' && 'Select Debate Topic'}
                     {selectedMode === 'GRAMMAR_FIX' && 'Grammar Fix Mode'}
+                    {selectedMode === 'PRONUNCIATION' && 'Pronunciation Practice'}
                   </h2>
                   <p className="text-blue-100 mt-1 text-sm">
                     {selectedMode === 'FREE_TALK' && 'Pick an optional topic or jump right in'}
                     {selectedMode === 'ROLE_PLAY' && 'Practice real-world conversations'}
                     {selectedMode === 'DEBATE' && 'Choose a topic and your position'}
                     {selectedMode === 'GRAMMAR_FIX' && 'Get instant corrections on every sentence'}
+                    {selectedMode === 'PRONUNCIATION' && 'Choose a category and practice speaking clearly'}
                   </p>
                 </div>
                 <button
@@ -516,6 +532,15 @@ export default function Home() {
                     />
                   )}
                 </>
+              )}
+
+              {/* Pronunciation - category picker */}
+              {selectedMode === 'PRONUNCIATION' && (
+                <TopicPicker
+                  mode={selectedMode}
+                  onSelect={(topic) => setSelectedTopic(topic)}
+                  selectedValue={selectedTopic}
+                />
               )}
 
               {/* Grammar Fix - info card */}

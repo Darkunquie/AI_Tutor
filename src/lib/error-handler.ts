@@ -6,6 +6,7 @@ import { ZodError } from 'zod';
 import { ApiError } from './errors/ApiError';
 import { ValidationError } from './errors/ValidationError';
 import { verifyToken } from './auth';
+import { db } from './db';
 
 // Type for route handler functions
 type RouteHandler = (
@@ -196,13 +197,81 @@ export function withAuth(handler: RouteHandler): RouteHandler {
       throw ApiError.unauthorized('Invalid or expired token');
     }
 
+    // Verify user still exists and check current status (catches changes since token was issued)
+    const currentUser = await db.user.findUnique({
+      where: { id: payload.userId },
+      select: { status: true, role: true },
+    });
+
+    if (!currentUser) {
+      throw ApiError.unauthorized('User no longer exists');
+    }
+
+    if (currentUser.role !== 'ADMIN' && currentUser.status !== 'APPROVED') {
+      throw ApiError.forbidden('Your account is not approved');
+    }
+
     // Clone request with user identity headers set
     const headers = new Headers(request.headers);
     headers.set('x-user-id', payload.userId);
     headers.set('x-user-email', payload.email);
     headers.set('x-user-name', payload.name);
+    headers.set('x-user-role', currentUser.role);
+    headers.set('x-user-status', currentUser.status);
 
     // Clone request to avoid ReadableStream double-consumption issues
+    const clonedRequest = request.clone();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const authedRequest = new NextRequest(clonedRequest.url, {
+      method: clonedRequest.method,
+      headers,
+      body: clonedRequest.body,
+    } as any);
+
+    return handler(authedRequest, context);
+  });
+}
+
+/**
+ * Wraps a route handler with admin-only authentication.
+ * Verifies JWT token AND checks that the user has ADMIN role.
+ */
+export function withAdmin(handler: RouteHandler): RouteHandler {
+  return withErrorHandling(async (request, context) => {
+    const authHeader = request.headers.get('authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw ApiError.unauthorized('No token provided');
+    }
+
+    const token = authHeader.substring(7);
+    const payload = verifyToken(token);
+
+    if (!payload) {
+      throw ApiError.unauthorized('Invalid or expired token');
+    }
+
+    // Verify user exists and has admin role
+    const currentUser = await db.user.findUnique({
+      where: { id: payload.userId },
+      select: { status: true, role: true },
+    });
+
+    if (!currentUser) {
+      throw ApiError.unauthorized('User no longer exists');
+    }
+
+    if (currentUser.role !== 'ADMIN') {
+      throw ApiError.forbidden('Admin access required');
+    }
+
+    const headers = new Headers(request.headers);
+    headers.set('x-user-id', payload.userId);
+    headers.set('x-user-email', payload.email);
+    headers.set('x-user-name', payload.name);
+    headers.set('x-user-role', currentUser.role);
+    headers.set('x-user-status', currentUser.status);
+
     const clonedRequest = request.clone();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const authedRequest = new NextRequest(clonedRequest.url, {

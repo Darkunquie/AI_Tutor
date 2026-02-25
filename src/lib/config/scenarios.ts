@@ -60,6 +60,16 @@ export const DEBATE_TOPICS: DebateTopic[] = [
   { topic: 'Capitalism is the best economic system', level: 'ADVANCED' },
 ];
 
+export const PRONUNCIATION_CATEGORIES: string[] = [
+  'Daily Conversations',
+  'Travel Phrases',
+  'Business English',
+  'Tongue Twisters',
+  'News Headlines',
+  'Famous Quotes',
+  'Idioms & Expressions',
+];
+
 export const FREE_TALK_TOPICS: string[] = [
   'Self Introduction',
   'Travel and holidays',

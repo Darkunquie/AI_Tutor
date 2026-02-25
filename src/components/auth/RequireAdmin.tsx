@@ -4,25 +4,23 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface RequireAuthProps {
+interface RequireAdminProps {
   children: React.ReactNode;
 }
 
-export default function RequireAuth({ children }: RequireAuthProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+export default function RequireAdmin({ children }: RequireAdminProps) {
+  const { isAuthenticated, isLoading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
-    // Redirect pending/rejected users to the pending page
-    if (!isLoading && isAuthenticated && user && user.status !== 'APPROVED' && user.role !== 'ADMIN') {
-      router.push('/pending');
+    if (!isLoading && isAuthenticated && !isAdmin) {
+      router.push('/dashboard');
     }
-  }, [isAuthenticated, isLoading, user, router]);
+  }, [isAuthenticated, isLoading, isAdmin, router]);
 
-  // Show loading state while checking authentication
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -34,12 +32,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Block non-approved, non-admin users
-  if (user && user.status !== 'APPROVED' && user.role !== 'ADMIN') {
+  if (!isAuthenticated || !isAdmin) {
     return null;
   }
 

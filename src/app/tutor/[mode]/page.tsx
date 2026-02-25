@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ChatScreen } from '@/components/chat/ChatScreen';
+import { PronunciationScreen } from '@/components/pronunciation/PronunciationScreen';
 import { SessionReport } from '@/components/session/SessionReport';
 import { useChatStore } from '@/stores/chatStore';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -129,6 +130,10 @@ export default function TutorPage() {
             <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto" />
             <p className="mt-4 text-gray-600">Loading session...</p>
           </div>
+        </div>
+      ) : mode === 'PRONUNCIATION' ? (
+        <div className="h-screen flex flex-col">
+          <PronunciationScreen onEndSession={handleEndSession} />
         </div>
       ) : (
         <div className="h-screen flex flex-col">

@@ -29,6 +29,13 @@ export const MODES: ModeInfo[] = [
     icon: '✏️',
     color: 'bg-green-500',
   },
+  {
+    id: 'PRONUNCIATION',
+    title: 'Pronunciation',
+    description: 'Practice speaking sentences clearly. Listen, repeat, and get word-by-word feedback on your pronunciation.',
+    icon: '🗣️',
+    color: 'bg-teal-500',
+  },
 ];
 
 export const LEVELS: { id: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'; title: string; description: string }[] = [

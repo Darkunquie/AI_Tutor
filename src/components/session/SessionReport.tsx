@@ -23,6 +23,7 @@ const MODE_LABELS: Record<string, string> = {
   ROLE_PLAY: 'Role Play',
   DEBATE: 'Debate',
   GRAMMAR_FIX: 'Grammar Fix',
+  PRONUNCIATION: 'Pronunciation',
 };
 
 const MODE_ICONS: Record<string, string> = {
@@ -30,6 +31,7 @@ const MODE_ICONS: Record<string, string> = {
   ROLE_PLAY: 'theater_comedy',
   DEBATE: 'gavel',
   GRAMMAR_FIX: 'spellcheck',
+  PRONUNCIATION: 'record_voice_over',
 };
 
 const ERROR_COLORS: Record<string, { bg: string; text: string; icon: string }> = {

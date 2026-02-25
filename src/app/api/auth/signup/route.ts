@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import {
   hashPassword,
-  generateToken,
   validateEmail,
   validatePassword,
   validatePhone,
@@ -114,37 +113,26 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create user (defaults: role=USER, status=PENDING from Prisma schema)
     const user = await db.user.create({
       data: {
         name: name.trim(),
         phone: normalizedPhone,
         email: email.toLowerCase(),
         password: hashedPassword,
-        level: 'BEGINNER', // Default level
+        level: 'BEGINNER',
       },
     });
 
-    // Generate JWT token
-    const token = generateToken(
-      {
-        userId: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      rememberMe === true
-    );
-
-    // Return success response with token and user data
+    // Do NOT issue a JWT — user must wait for admin approval
     return NextResponse.json(
       {
-        message: 'Signup successful',
-        token,
+        message: 'Account created successfully. Please wait for admin approval before you can log in.',
+        status: 'PENDING',
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
-          level: user.level,
         },
       },
       { status: 201 }

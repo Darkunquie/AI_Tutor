@@ -26,6 +26,7 @@ const MODE_LABELS: Record<string, string> = {
   ROLE_PLAY: 'Role Play',
   DEBATE: 'Debate',
   GRAMMAR_FIX: 'Grammar Fix',
+  PRONUNCIATION: 'Pronunciation',
 };
 
 const MODE_ICONS: Record<string, string> = {
@@ -33,6 +34,7 @@ const MODE_ICONS: Record<string, string> = {
   ROLE_PLAY: 'theater_comedy',
   DEBATE: 'gavel',
   GRAMMAR_FIX: 'spellcheck',
+  PRONUNCIATION: 'record_voice_over',
 };
 
 const MODE_COLORS: Record<string, string> = {
@@ -40,6 +42,7 @@ const MODE_COLORS: Record<string, string> = {
   ROLE_PLAY: 'bg-purple-500/10 text-purple-500',
   DEBATE: 'bg-orange-500/10 text-orange-500',
   GRAMMAR_FIX: 'bg-emerald-500/10 text-emerald-500',
+  PRONUNCIATION: 'bg-teal-500/10 text-teal-500',
 };
 
 function formatDuration(seconds: number): string {

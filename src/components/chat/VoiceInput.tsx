@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { PronunciationResult, FillerWordDetection } from '@/lib/types';
 import { detectFillerWords } from '@/lib/filler-words';
+import { stopSpeaking } from '@/lib/speech';
 import { logger } from '@/lib/utils';
 
 interface VoiceInputProps {
@@ -95,6 +96,15 @@ export function VoiceInput({
   const startListening = useCallback(() => {
     if (!isSupported || disabled) return;
 
+    // Abort any previous recognition instance to avoid "aborted" errors
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+      recognitionRef.current = null;
+    }
+
+    // Stop any ongoing TTS — browser can't do TTS and STT simultaneously
+    stopSpeaking();
+
     const SpeechRecognitionClass =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -159,11 +169,11 @@ export function VoiceInput({
     };
 
     recognition.onerror = (event: Event & { error: string }) => {
-      logger.error('Speech recognition error:', event.error);
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-        recognitionRef.current = null;
+      // "aborted" and "no-speech" are benign — don't log them as errors
+      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        logger.error('Speech recognition error:', event.error);
       }
+      recognitionRef.current = null;
       setIsListening(false);
       setInterimText('');
     };

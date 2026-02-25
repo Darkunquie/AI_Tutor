@@ -80,12 +80,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate JWT token
+    // Check account approval status
+    if (user.status === 'PENDING') {
+      return NextResponse.json(
+        { error: 'Your account is pending approval. Please wait for an admin to approve your account.', status: 'PENDING' },
+        { status: 403 }
+      );
+    }
+
+    if (user.status === 'REJECTED') {
+      return NextResponse.json(
+        { error: 'Your account has been rejected. Please contact the administrator.', status: 'REJECTED' },
+        { status: 403 }
+      );
+    }
+
+    // Generate JWT token with role and status
     const token = generateToken(
       {
         userId: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        status: user.status,
       },
       rememberMe === true
     );
@@ -100,6 +117,8 @@ export async function POST(request: NextRequest) {
           name: user.name,
           email: user.email,
           level: user.level,
+          role: user.role,
+          status: user.status,
         },
       },
       { status: 200 }

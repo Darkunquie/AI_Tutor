@@ -23,6 +23,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
   const [textInput, setTextInput] = useState('');
   const stopSpeakingRef = useRef<(() => void) | null>(null);
   const sendingRef = useRef(false);
+  const greetingRequestedRef = useRef(false);
 
   const {
     sessionId,
@@ -81,7 +82,51 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     };
   }, []);
 
-  // Empty line intentionally left for spacing
+  // Grammar Fix: auto-send greeting with topic hint on session start
+  useEffect(() => {
+    if (
+      mode === 'GRAMMAR_FIX' &&
+      sessionId &&
+      messages.length === 0 &&
+      !isLoading &&
+      !greetingRequestedRef.current
+    ) {
+      greetingRequestedRef.current = true;
+      requestGreeting();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, sessionId, messages.length, isLoading]);
+
+  const requestGreeting = async () => {
+    if (!sessionId || !mode) return;
+    setLoading(true);
+    try {
+      const { reply } = await api.chat.send({
+        message: '[GREETING]',
+        mode,
+        level,
+        sessionId,
+        context,
+        history: [],
+      });
+      const aiMessage: Message = {
+        id: `ai-greeting-${Date.now()}`,
+        role: 'AI',
+        content: reply,
+        timestamp: new Date(),
+      };
+      addMessage(aiMessage);
+      // Save only AI message to DB (no fake user message)
+      api.messages.save({ sessionId, role: 'AI', content: reply })
+        .catch(err => logger.error('Failed to save greeting:', err));
+      handleSpeak(reply);
+    } catch (err) {
+      logger.error('Failed to get greeting:', err);
+      // Non-fatal — user can still type normally
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSpeak = (text: string) => {
     if (!ttsEnabled || !ttsSupported || !text) return;
@@ -251,6 +296,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       case 'ROLE_PLAY': return 'Role Play';
       case 'DEBATE': return 'Debate';
       case 'GRAMMAR_FIX': return 'Grammar Fix';
+      case 'PRONUNCIATION': return 'Pronunciation';
       default: return 'Practice';
     }
   };

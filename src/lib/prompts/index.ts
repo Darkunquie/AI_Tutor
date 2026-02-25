@@ -3,12 +3,14 @@ export { getFreeTalkPrompt } from './free-talk';
 export { getRolePlayPrompt } from './role-play';
 export { getDebatePrompt } from './debate';
 export { getGrammarFixPrompt } from './grammar-fix';
+export { getPronunciationPrompt } from './pronunciation';
 
 import type { Level, Mode, ChatContext, Scenario } from '../types';
 import { getFreeTalkPrompt } from './free-talk';
 import { getRolePlayPrompt } from './role-play';
 import { getDebatePrompt } from './debate';
 import { getGrammarFixPrompt } from './grammar-fix';
+import { getPronunciationPrompt } from './pronunciation';
 
 // Helper to get the right prompt based on mode
 export function getSystemPrompt(
@@ -47,6 +49,9 @@ export function getSystemPrompt(
 
     case 'GRAMMAR_FIX':
       return getGrammarFixPrompt(level);
+
+    case 'PRONUNCIATION':
+      return getPronunciationPrompt(level, context?.topic);
 
     default:
       return getFreeTalkPrompt(level);

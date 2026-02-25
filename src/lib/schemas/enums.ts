@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const LevelSchema = z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
 export type Level = z.infer<typeof LevelSchema>;
 
-export const ModeSchema = z.enum(['FREE_TALK', 'ROLE_PLAY', 'DEBATE', 'GRAMMAR_FIX']);
+export const ModeSchema = z.enum(['FREE_TALK', 'ROLE_PLAY', 'DEBATE', 'GRAMMAR_FIX', 'PRONUNCIATION']);
 export type Mode = z.infer<typeof ModeSchema>;
 
 export const RoleSchema = z.enum(['USER', 'AI']);
@@ -17,3 +17,9 @@ export type ErrorType = z.infer<typeof ErrorTypeSchema>;
 
 export const VocabSourceSchema = z.enum(['CORRECTION', 'AI_RESPONSE', 'USER_MARKED']);
 export type VocabSource = z.infer<typeof VocabSourceSchema>;
+
+export const UserRoleSchema = z.enum(['USER', 'ADMIN']);
+export type UserRole = z.infer<typeof UserRoleSchema>;
+
+export const UserStatusSchema = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
+export type UserStatus = z.infer<typeof UserStatusSchema>;

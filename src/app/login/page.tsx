@@ -33,6 +33,11 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Redirect pending users to the pending page
+        if (response.status === 403 && data.status === 'PENDING') {
+          router.push('/pending');
+          return;
+        }
         setError(data.error || 'Login failed');
         return;
       }
@@ -42,12 +47,18 @@ export default function LoginPage() {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
-        phone: data.user.phone,
+        phone: data.user.phone || '',
         level: data.user.level,
+        role: data.user.role,
+        status: data.user.status,
       });
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Role-based redirect
+      if (data.user.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       setError('Network error. Please try again.');
     } finally {

@@ -20,6 +20,8 @@ export interface JWTPayload {
   userId: string;
   email: string;
   name: string;
+  role: string;
+  status: string;
 }
 
 // Auth user interface (returned from verification)
@@ -27,6 +29,8 @@ export interface AuthUser {
   userId: string;
   email: string;
   name: string;
+  role: string;
+  status: string;
 }
 
 /**
@@ -109,6 +113,8 @@ export function getAuthUser(request: NextRequest): AuthUser | null {
     userId: payload.userId,
     email: payload.email,
     name: payload.name,
+    role: payload.role,
+    status: payload.status,
   };
 }
 

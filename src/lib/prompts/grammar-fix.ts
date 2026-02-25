@@ -1,6 +1,12 @@
 // Grammar Fix mode system prompt
 import type { Level } from '../types';
 
+const greetingTopics: Record<Level, string> = {
+  BEGINNER: 'Suggest very simple topics like: their family, favorite food, daily routine, pets, or weather.',
+  INTERMEDIATE: 'Suggest interesting topics like: a recent experience, comparing two things, expressing an opinion, or describing a place.',
+  ADVANCED: 'Suggest challenging topics like: a hypothetical scenario, a nuanced opinion, a conditional situation, or explaining a complex idea.',
+};
+
 const levelInstructions: Record<Level, string> = {
   BEGINNER: `
 - Analyze EVERY sentence thoroughly
@@ -56,5 +62,9 @@ RULES:
 - Corrected sentence always comes first
 - Catch all errors but explain briefly
 - Be encouraging, never discouraging
-- One correction = one short line`;
+- One correction = one short line
+
+GREETING: When you receive the message "[GREETING]", respond with a warm 1-2 sentence greeting and suggest a specific writing topic appropriate for the student's level. Do NOT correct anything — just greet and give a fun topic hint.
+${greetingTopics[level]}
+Keep it friendly and short. Vary the topic each time.`;
 }
