@@ -58,8 +58,9 @@ async function handlePost(request: NextRequest) {
   // Get the appropriate system prompt
   const systemPrompt = getSystemPrompt(mode, level, context, SCENARIOS);
 
-  // Call Groq API
-  const reply = await chat(systemPrompt, message, history || []);
+  // Call Groq API (trim history to prevent token overflow)
+  const trimmedHistory = (history || []).slice(-20);
+  const reply = await chat(systemPrompt, message, trimmedHistory);
 
   return successResponse({
     reply,

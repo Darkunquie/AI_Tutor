@@ -139,9 +139,8 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
       ? pronunciationMessages.reduce((sum, m) => sum + (m.pronunciationScore || 0), 0) / pronunciationMessages.length
       : null;
 
-    // Use actual filler count from DB (accumulated via message saves during session)
-    const dbFillerCount = (currentSession?.fillerWordCount || 0) +
-      (fillerWordCount || 0); // add any final increment from this request
+    // Use the higher of DB count or client-reported count (avoid double-counting)
+    const dbFillerCount = Math.max(currentSession?.fillerWordCount || 0, fillerWordCount || 0);
 
     const calculatedScore = ScoreCalculator.calculateSessionScore({
       errorCounts: errorBreakdown,
@@ -223,7 +222,7 @@ async function updateDailyStats(
   // Calculate new average score properly
   const newAvgScore = ScoreCalculator.calculateNewAverageScore({
     currentStats: currentStats || { sessionsCount: 0, avgScore: 0 },
-    newSessionScore: session.score || 0,
+    newSessionScore: session.score ?? 0,
   });
 
   // Count new vocabulary words learned in this session

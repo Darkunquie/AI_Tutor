@@ -385,7 +385,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 rounded-2xl bg-[#3c83f6]/10 flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-3xl text-[#3c83f6]">
-                  {mode === 'FREE_TALK' ? 'forum' : mode === 'ROLE_PLAY' ? 'theater_comedy' : mode === 'DEBATE' ? 'gavel' : 'spellcheck'}
+                  {({ FREE_TALK: 'forum', ROLE_PLAY: 'theater_comedy', DEBATE: 'gavel', PRONUNCIATION: 'mic', GRAMMAR_FIX: 'spellcheck' } as Record<string, string>)[mode ?? ''] ?? 'spellcheck'}
                 </span>
               </div>
               <h2 className="text-xl font-bold tracking-tight mb-2">Start Your Practice!</h2>

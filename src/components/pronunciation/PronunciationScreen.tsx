@@ -31,8 +31,6 @@ export function PronunciationScreen({ onEndSession }: PronunciationScreenProps) 
     isGenerating,
     hasResult,
     setTarget,
-    setSpoken,
-    evaluate,
     setGenerating,
     clearResult,
   } = usePronunciationStore();
@@ -120,17 +118,14 @@ export function PronunciationScreen({ onEndSession }: PronunciationScreenProps) 
   };
 
   const handleTranscript = (text: string, pronunciationData?: PronunciationResult, _fillerWords?: FillerWordDetection[]) => {
-    setSpoken(text);
     if (pronunciationData) {
       addPronunciationScore(pronunciationData.score);
     }
     incrementMessageCount();
 
-    // Auto-evaluate after receiving transcript
-    // Need to call evaluate after state updates
-    setTimeout(() => {
-      usePronunciationStore.getState().evaluate();
-    }, 50);
+    // Set spoken text and evaluate in sequence using getState() for immediate reads
+    usePronunciationStore.getState().setSpoken(text);
+    usePronunciationStore.getState().evaluate();
   };
 
   const handleTryAgain = () => {

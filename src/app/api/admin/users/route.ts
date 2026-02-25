@@ -18,8 +18,8 @@ async function handleGet(request: NextRequest) {
 
   if (search) {
     where.OR = [
-      { name: { contains: search } },
-      { email: { contains: search } },
+      { name: { contains: search, mode: 'insensitive' as const } },
+      { email: { contains: search, mode: 'insensitive' as const } },
     ];
   }
 

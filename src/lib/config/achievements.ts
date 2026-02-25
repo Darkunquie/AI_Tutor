@@ -28,7 +28,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   { type: 'FIRST_A', title: 'Ace!', description: 'Scored 90+ in a session', icon: 'grade', category: 'score' },
 
   // Modes
-  { type: 'ALL_MODES', title: 'Explorer', description: 'Tried all 4 practice modes', icon: 'explore', category: 'modes' },
+  { type: 'ALL_MODES', title: 'Explorer', description: 'Tried all 5 practice modes', icon: 'explore', category: 'modes' },
 ];
 
 export const ACHIEVEMENT_MAP: Record<string, AchievementDefinition> = Object.fromEntries(

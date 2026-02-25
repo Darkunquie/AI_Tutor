@@ -34,7 +34,7 @@ export class AchievementChecker {
       VOCAB_50: totalVocab >= 50,
       VOCAB_100: totalVocab >= 100,
       FIRST_A: (bestScore?.score ?? 0) >= 90,
-      ALL_MODES: distinctModes.length >= 4,
+      ALL_MODES: distinctModes.length >= 5,
       STREAK_3: streakData.currentStreak >= 3,
       STREAK_7: streakData.currentStreak >= 7,
       STREAK_30: streakData.currentStreak >= 30,
