@@ -5,7 +5,7 @@ import { VoiceInput } from '@/components/chat/VoiceInput';
 import { usePronunciationStore } from '@/stores/pronunciationStore';
 import { useSessionStore, formatDuration } from '@/stores/sessionStore';
 import { useChatStore } from '@/stores/chatStore';
-import { speakText, stopSpeaking, loadVoices, isTTSSupported } from '@/lib/speech';
+import { speakText, stopSpeaking, loadVoices, isTTSSupported, warmUpSpeechEngine } from '@/lib/speech';
 import { api } from '@/lib/api-client';
 import type { PronunciationResult, FillerWordDetection } from '@/lib/types';
 import { logger } from '@/lib/utils';
@@ -101,6 +101,7 @@ export function PronunciationScreen({ onEndSession }: PronunciationScreenProps) 
   }, [sessionId, isGenerating, level, context, setTarget, setGenerating]);
 
   const handleListen = () => {
+    warmUpSpeechEngine();
     if (isSpeakingState) {
       stopSpeakingRef.current?.();
       stopSpeaking();

@@ -7,6 +7,9 @@ import { logger } from './utils';
 // Store loaded voices
 let cachedVoices: SpeechSynthesisVoice[] = [];
 
+// Warm-up state for tablet browsers
+let speechWarmedUp = false;
+
 // Load voices (needed because getVoices() is async in some browsers)
 export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
@@ -34,8 +37,25 @@ export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
       };
     }
 
-    // Fallback timeout
-    setTimeout(() => resolve(loadVoiceList()), 500);
+    // Retry with increasing delays for iPadOS Safari where voices load late
+    let retryCount = 0;
+    const retryDelays = [100, 300, 500, 1000, 2000];
+
+    const retryLoadVoices = () => {
+      const retried = loadVoiceList();
+      if (retried.length > 0) {
+        resolve(retried);
+        return;
+      }
+      retryCount++;
+      if (retryCount < retryDelays.length) {
+        setTimeout(retryLoadVoices, retryDelays[retryCount]);
+      } else {
+        resolve(loadVoiceList());
+      }
+    };
+
+    setTimeout(retryLoadVoices, retryDelays[0]);
   });
 }
 
@@ -115,6 +135,11 @@ export function speakText(
 
   // Cancel any previous speech
   synth.cancel();
+
+  // Refresh cached voices if empty (tablets may load voices late)
+  if (cachedVoices.length === 0) {
+    cachedVoices = synth.getVoices();
+  }
 
   // Create utterance
   const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -223,4 +248,41 @@ export function isTTSSupported(): boolean {
 export function isSpeaking(): boolean {
   if (typeof window === 'undefined') return false;
   return window.speechSynthesis?.speaking ?? false;
+}
+
+// Warm up the speech engine with a silent utterance (required for tablets)
+// Must be called from within a user gesture (click/tap/keypress) handler
+export function warmUpSpeechEngine(): void {
+  if (speechWarmedUp) return;
+
+  const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+  if (!synth) return;
+
+  synth.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(' ');
+  utterance.volume = 0;
+  utterance.rate = 10;
+  utterance.pitch = 0.1;
+  utterance.lang = 'en-IN';
+
+  utterance.onend = () => {
+    speechWarmedUp = true;
+  };
+
+  utterance.onerror = () => {
+    // Even if the silent utterance errors, the gesture unlock may have worked
+    speechWarmedUp = true;
+  };
+
+  try {
+    synth.speak(utterance);
+  } catch {
+    speechWarmedUp = true;
+  }
+}
+
+// Check if the speech engine has been warmed up by a user gesture
+export function isSpeechWarmedUp(): boolean {
+  return speechWarmedUp;
 }

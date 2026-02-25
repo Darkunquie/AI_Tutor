@@ -12,26 +12,27 @@ export const PATCH = withAuth(async (
   const { id } = await context!.params;
   const { correct } = await validateBody(request, ReviewResultSchema);
 
-  // Atomic update with ownership verification
   const delta = correct ? 15 : -10;
-  
-  const result = await db.$executeRaw`
-    UPDATE Vocabulary
-    SET mastery = MIN(100, MAX(0, mastery + ${delta})),
-        reviewedAt = CURRENT_TIMESTAMP
-    WHERE id = ${id} AND userId = ${userId}
-  `;
 
-  if (result === 0) {
+  // Verify ownership first
+  const vocab = await db.vocabulary.findFirst({
+    where: { id, userId },
+  });
+
+  if (!vocab) {
     throw ApiError.notFound('Vocabulary word');
   }
 
-  // Fetch the updated record
-  const updated = await db.vocabulary.findUnique({ where: { id } });
+  // Update mastery with clamping
+  const newMastery = Math.min(100, Math.max(0, vocab.mastery + delta));
 
-  if (!updated) {
-    throw ApiError.notFound('Vocabulary word');
-  }
+  const updated = await db.vocabulary.update({
+    where: { id },
+    data: {
+      mastery: newMastery,
+      reviewedAt: new Date(),
+    },
+  });
 
   return successResponse({
     id: updated.id,

@@ -3,11 +3,10 @@
 // Requires ADMIN_PASSWORD env var if creating a new admin account.
 
 const { PrismaClient } = require('../src/generated/prisma');
-const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
+const { PrismaPg } = require('@prisma/adapter-pg');
 const bcrypt = require('bcryptjs');
 
-const DATABASE_URL = process.env.DATABASE_URL || 'file:./prisma/dev.db';
-const adapter = new PrismaBetterSqlite3({ url: DATABASE_URL });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const db = new PrismaClient({ adapter });
 
 const ADMIN_EMAIL = 'anillkumars4@gmail.com';

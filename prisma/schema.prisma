@@ -1,5 +1,5 @@
 // Prisma schema for AI English Tutor
-// Using SQLite for zero-cost database
+// Using PostgreSQL (Neon free tier)
 
 generator client {
   provider = "prisma-client-js"
@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {

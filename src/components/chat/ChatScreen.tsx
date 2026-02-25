@@ -5,7 +5,7 @@ import { MessageBubble } from './MessageBubble';
 import { VoiceInput } from './VoiceInput';
 import { useChatStore, messagesToHistory } from '@/stores/chatStore';
 import { useSessionStore, formatDuration } from '@/stores/sessionStore';
-import { speakText, stopSpeaking, loadVoices, isTTSSupported } from '@/lib/speech';
+import { speakText, stopSpeaking, loadVoices, isTTSSupported, warmUpSpeechEngine, isSpeechWarmedUp } from '@/lib/speech';
 import { api } from '@/lib/api-client';
 import type { Message, PronunciationResult, FillerWordDetection } from '@/lib/types';
 import { CorrectionParser } from '@/lib/services/CorrectionParser';
@@ -131,6 +131,10 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
 
   const handleSpeak = (text: string) => {
     if (!ttsEnabled || !ttsSupported || !text) return;
+
+    // On tablets, skip auto-speaking if the engine hasn't been warmed up
+    // by a user gesture yet. The text is still visible to the user.
+    if (!isSpeechWarmedUp()) return;
 
     if (stopSpeakingRef.current) {
       stopSpeakingRef.current();
@@ -271,6 +275,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
   const handleTextSend = () => {
     const trimmed = textInput.trim();
     if (trimmed && !isLoading) {
+      warmUpSpeechEngine();
       sendMessage(trimmed);
       setTextInput('');
     }
@@ -284,6 +289,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
   };
 
   const toggleTTS = () => {
+    warmUpSpeechEngine();
     if (isSpeakingState && stopSpeakingRef.current) {
       stopSpeakingRef.current();
       stopSpeakingRef.current = null;
