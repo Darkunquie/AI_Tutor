@@ -199,7 +199,15 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       if (corrections.length > 0) {
         corrections.forEach(addCorrection);
         // Extract corrected words as vocabulary for review
-        corrections.forEach(c => addVocabulary(c.corrected));
+        corrections.forEach(c => {
+          if (c.corrected && c.corrected.trim()) {
+            // Split multi-word corrections into individual tokens
+            const tokens = c.corrected.trim().split(/\s+/);
+            tokens.forEach(token => {
+              if (token) addVocabulary(token);
+            });
+          }
+        });
       }
 
       const aiMessage: Message = {
