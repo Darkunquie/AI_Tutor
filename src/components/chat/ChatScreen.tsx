@@ -44,6 +44,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     updateDuration,
     incrementMessageCount,
     addCorrection,
+    addVocabulary,
     addFillerCount,
     addPronunciationScore,
   } = useSessionStore();
@@ -197,6 +198,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       });
       if (corrections.length > 0) {
         corrections.forEach(addCorrection);
+        // Extract corrected words as vocabulary for review
+        corrections.forEach(c => addVocabulary(c.corrected));
       }
 
       const aiMessage: Message = {
