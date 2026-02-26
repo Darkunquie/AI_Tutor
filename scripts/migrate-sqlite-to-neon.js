@@ -39,7 +39,7 @@ async function migrate() {
     for (const u of users) {
       await pg.query(
         `INSERT INTO "User" (id, name, phone, email, password, role, status, level, "dailyGoalMinutes", "createdAt", "updatedAt")
-         VALUES ($1,$2,$3,$4,$5,$6:::"UserRole",$7:::"UserStatus",$8:::"Level",$9,$10,$11)
+         VALUES ($1,$2,$3,$4,$5,$6::"UserRole",$7::"UserStatus",$8::"Level",$9,$10,$11)
          ON CONFLICT (id) DO NOTHING`,
         [u.id, u.name, u.phone, u.email, u.password, u.role, u.status, u.level, u.dailyGoalMinutes, u.createdAt, u.updatedAt]
       );
@@ -52,7 +52,7 @@ async function migrate() {
     for (const s of sessions) {
       await pg.query(
         `INSERT INTO "Session" (id, "userId", mode, level, duration, score, "vocabularyJson", "fillerWordCount", "fillerDetails", "avgPronunciation", "createdAt", "updatedAt")
-         VALUES ($1,$2,$3:::"Mode",$4:::"Level",$5,$6,$7,$8,$9,$10,$11,$12)
+         VALUES ($1,$2,$3::"Mode",$4::"Level",$5,$6,$7,$8,$9,$10,$11,$12)
          ON CONFLICT (id) DO NOTHING`,
         [s.id, s.userId, s.mode, s.level, s.duration, s.score, s.vocabularyJson, s.fillerWordCount, s.fillerDetails, s.avgPronunciation, s.createdAt, s.updatedAt]
       );
@@ -65,7 +65,7 @@ async function migrate() {
     for (const m of messages) {
       await pg.query(
         `INSERT INTO "Message" (id, "sessionId", role, content, corrections, "pronunciationScore", "fillerWordCount", timestamp)
-         VALUES ($1,$2,$3:::"Role",$4,$5,$6,$7,$8)
+         VALUES ($1,$2,$3::"Role",$4,$5,$6,$7,$8)
          ON CONFLICT (id) DO NOTHING`,
         [m.id, m.sessionId, m.role, m.content, m.corrections, m.pronunciationScore, m.fillerWordCount, m.timestamp]
       );
@@ -78,7 +78,7 @@ async function migrate() {
     for (const e of errors) {
       await pg.query(
         `INSERT INTO "Error" (id, "sessionId", category, original, corrected, explanation, "createdAt")
-         VALUES ($1,$2,$3:::"ErrorType",$4,$5,$6,$7)
+         VALUES ($1,$2,$3::"ErrorType",$4,$5,$6,$7)
          ON CONFLICT (id) DO NOTHING`,
         [e.id, e.sessionId, e.category, e.original, e.corrected, e.explanation, e.createdAt]
       );
@@ -91,7 +91,7 @@ async function migrate() {
     for (const v of vocab) {
       await pg.query(
         `INSERT INTO "Vocabulary" (id, "userId", "sessionId", word, definition, context, source, mastery, "createdAt", "reviewedAt")
-         VALUES ($1,$2,$3,$4,$5,$6,$7:::"VocabSource",$8,$9,$10)
+         VALUES ($1,$2,$3,$4,$5,$6,$7::"VocabSource",$8,$9,$10)
          ON CONFLICT (id) DO NOTHING`,
         [v.id, v.userId, v.sessionId, v.word, v.definition, v.context, v.source, v.mastery, v.createdAt, v.reviewedAt]
       );
