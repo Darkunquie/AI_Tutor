@@ -36,6 +36,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     addMessage,
     setLoading,
     setError,
+    streamingMessageId,
     startStreaming,
     appendStreamToken,
     finishStreaming,
@@ -184,13 +185,12 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     setLoading(true);
     setError(null);
 
+    const aiMessageId = `ai-${Date.now()}`;
+
     try {
       // Use getState() to avoid stale closure -- messages from render scope
       // doesn't include the userMessage we just added above
       const currentMessages = useChatStore.getState().messages;
-
-      // Create placeholder AI message for streaming
-      const aiMessageId = `ai-${Date.now()}`;
       const aiMessage: Message = {
         id: aiMessageId,
         role: 'AI',
@@ -228,8 +228,9 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
           reply = result.reply;
           useChatStore.getState().updateMessage(aiMessageId, { content: reply });
         }
+      } finally {
+        finishStreaming();
       }
-      finishStreaming();
 
       const corrections = CorrectionParser.parse(reply);
       // Always mark as checked so UI can show "correct" or correction tips
@@ -287,6 +288,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     } catch (err) {
       logger.error('Chat error:', err);
       setError('Failed to send message. Please try again.');
+      // Remove empty placeholder AI message on failure
+      useChatStore.getState().removeMessage(aiMessageId);
     } finally {
       setLoading(false);
       sendingRef.current = false;
@@ -460,7 +463,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
             <MessageBubble key={message.id} message={message} />
           ))}
 
-          {isLoading && !useChatStore.getState().streamingMessageId && (
+          {isLoading && !streamingMessageId && (
             <div className="flex items-start gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#3c83f6] text-white shadow-lg shadow-[#3c83f6]/20">
                 <span className="material-symbols-outlined">smart_toy</span>

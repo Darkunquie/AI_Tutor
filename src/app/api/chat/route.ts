@@ -73,7 +73,8 @@ async function handlePost(request: NextRequest) {
           }
           controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
           controller.close();
-        } catch {
+        } catch (error) {
+          console.error('[chatStream] Stream error:', error);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`));
           controller.close();
         }

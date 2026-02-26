@@ -25,8 +25,8 @@ module.exports = {
       // Application name
       name: 'talkivo',
 
-      // Script to run (for Next.js built app)
-      script: 'npm',
+      // Script to run (direct entry point for proper PM2 clustering)
+      script: 'node_modules/next/dist/bin/next',
       args: 'start',
 
       // Number of instances ('max' uses all CPU cores for load balancing)

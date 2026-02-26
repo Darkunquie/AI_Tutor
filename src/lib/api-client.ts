@@ -197,49 +197,89 @@ export const api = {
       sessionId: string;
       context?: { topic?: string; scenario?: string; character?: string; userRole?: string; debateTopic?: string; debatePosition?: string };
       history: Array<{ role: 'user' | 'assistant'; content: string }>;
-    }): AsyncGenerator<string> {
+    }, options?: { timeout?: number }): AsyncGenerator<string> {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(data),
-      });
+      const controller = new AbortController();
+      const timeout = options?.timeout ?? 60000;
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw ApiClientError.fromResponse(response, body);
-      }
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify(data),
+          signal: controller.signal,
+        });
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new ApiClientError('No stream body', 0, 'STREAM_ERROR');
+        clearTimeout(timeoutId);
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+        if (!response.ok) {
+          if (response.status === 401 && typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+            if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/signup')) {
+              window.location.href = '/login';
+            }
+          }
+          const body = await response.json().catch(() => ({}));
+          throw ApiClientError.fromResponse(response, body);
+        }
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const reader = response.body?.getReader();
+        if (!reader) throw new ApiClientError('No stream body', 0, 'STREAM_ERROR');
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6);
-          if (payload === '[DONE]') return;
-          try {
-            const parsed = JSON.parse(payload);
-            if (parsed.error) throw new ApiClientError(parsed.error, 500, 'STREAM_ERROR');
-            if (parsed.token) yield parsed.token;
-          } catch (e) {
-            if (e instanceof ApiClientError) throw e;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            // Flush decoder and process remaining buffer
+            buffer += decoder.decode();
+            if (buffer.trim() && buffer.startsWith('data: ')) {
+              const payload = buffer.slice(6);
+              if (payload !== '[DONE]') {
+                try {
+                  const parsed = JSON.parse(payload);
+                  if (parsed.error) throw new ApiClientError(parsed.error, 500, 'STREAM_ERROR');
+                  if (parsed.token) yield parsed.token;
+                } catch (e) {
+                  if (e instanceof ApiClientError) throw e;
+                }
+              }
+            }
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6);
+            if (payload === '[DONE]') return;
+            try {
+              const parsed = JSON.parse(payload);
+              if (parsed.error) throw new ApiClientError(parsed.error, 500, 'STREAM_ERROR');
+              if (parsed.token) yield parsed.token;
+            } catch (e) {
+              if (e instanceof ApiClientError) throw e;
+            }
           }
         }
+      } catch (error) {
+        if (error instanceof ApiClientError) throw error;
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new ApiClientError('Stream timeout', 408, 'TIMEOUT');
+        }
+        throw new ApiClientError('Stream failed', 0, 'STREAM_ERROR');
+      } finally {
+        clearTimeout(timeoutId);
       }
     },
   },
