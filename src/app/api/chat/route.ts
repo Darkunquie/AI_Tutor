@@ -1,12 +1,11 @@
 import { NextRequest } from 'next/server';
-import { chat } from '@/lib/groq';
+import { chatStream } from '@/lib/groq';
 import { getSystemPrompt } from '@/lib/prompts';
 import { SCENARIOS } from '@/lib/config';
 import { ChatRequestSchema } from '@/lib/schemas/chat.schema';
 import {
   withAuth,
   validateBody,
-  successResponse,
 } from '@/lib/error-handler';
 import { ApiError } from '@/lib/errors/ApiError';
 import { db } from '@/lib/db';
@@ -58,13 +57,45 @@ async function handlePost(request: NextRequest) {
   // Get the appropriate system prompt
   const systemPrompt = getSystemPrompt(mode, level, context, SCENARIOS);
 
-  // Call Groq API (trim history to prevent token overflow)
+  // Check if client wants streaming
+  const acceptsStream = request.headers.get('accept')?.includes('text/event-stream');
+
+  if (acceptsStream) {
+    // Streaming response via SSE
+    const trimmedHistory = (history || []).slice(-20);
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of chatStream(systemPrompt, message, trimmedHistory)) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: chunk })}\n\n`));
+          }
+          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controller.close();
+        } catch {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`));
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  }
+
+  // Non-streaming fallback (for backwards compatibility)
+  const { chat } = await import('@/lib/groq');
   const trimmedHistory = (history || []).slice(-20);
   const reply = await chat(systemPrompt, message, trimmedHistory);
 
-  return successResponse({
-    reply,
-    sessionId,
+  return Response.json({
+    data: { reply, sessionId },
   });
 }
 

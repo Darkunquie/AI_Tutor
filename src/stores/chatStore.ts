@@ -1,6 +1,6 @@
 // Chat store using Zustand
 import { create } from 'zustand';
-import type { Message, Mode, Level, ChatContext, Correction } from '@/lib/types';
+import type { Message, Mode, Level, ChatContext } from '@/lib/types';
 
 interface ChatState {
   // Current session
@@ -14,6 +14,9 @@ interface ChatState {
   isLoading: boolean;
   error: string | null;
 
+  // Streaming
+  streamingMessageId: string | null;
+
   // Actions
   setSession: (sessionId: string, mode: Mode) => void;
   setLevel: (level: Level) => void;
@@ -24,9 +27,12 @@ interface ChatState {
   setError: (error: string | null) => void;
   clearChat: () => void;
   reset: () => void;
+  startStreaming: (messageId: string) => void;
+  appendStreamToken: (token: string) => void;
+  finishStreaming: () => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
+export const useChatStore = create<ChatState>((set, get) => ({
   // Initial state
   sessionId: null,
   mode: null,
@@ -35,6 +41,7 @@ export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isLoading: false,
   error: null,
+  streamingMessageId: null,
 
   // Actions
   setSession: (sessionId, mode) =>
@@ -70,7 +77,24 @@ export const useChatStore = create<ChatState>((set) => ({
       messages: [],
       isLoading: false,
       error: null,
+      streamingMessageId: null,
     }),
+
+  startStreaming: (messageId) =>
+    set({ streamingMessageId: messageId }),
+
+  appendStreamToken: (token) => {
+    const { streamingMessageId, messages } = get();
+    if (!streamingMessageId) return;
+    set({
+      messages: messages.map((m) =>
+        m.id === streamingMessageId ? { ...m, content: m.content + token } : m
+      ),
+    });
+  },
+
+  finishStreaming: () =>
+    set({ streamingMessageId: null }),
 }));
 
 // Helper to convert messages to API format

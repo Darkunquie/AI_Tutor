@@ -29,11 +29,11 @@ module.exports = {
       script: 'npm',
       args: 'start',
 
-      // Number of instances (1 for single VPS, 'max' for all CPU cores)
-      instances: 1,
+      // Number of instances ('max' uses all CPU cores for load balancing)
+      instances: 'max',
 
-      // Execution mode ('cluster' for load balancing, 'fork' for single process)
-      exec_mode: 'fork',
+      // Execution mode ('cluster' for load balancing across CPU cores)
+      exec_mode: 'cluster',
 
       // Auto-restart application on crash
       autorestart: true,

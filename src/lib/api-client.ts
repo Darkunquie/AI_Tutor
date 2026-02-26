@@ -189,6 +189,59 @@ export const api = {
       context?: { topic?: string; scenario?: string; character?: string; userRole?: string; debateTopic?: string; debatePosition?: string };
       history: Array<{ role: 'user' | 'assistant'; content: string }>;
     }) => apiClient.post<{ reply: string; sessionId: string }>('/api/chat', data),
+
+    stream: async function* (data: {
+      message: string;
+      mode: string;
+      level: string;
+      sessionId: string;
+      context?: { topic?: string; scenario?: string; character?: string; userRole?: string; debateTopic?: string; debatePosition?: string };
+      history: Array<{ role: 'user' | 'assistant'; content: string }>;
+    }): AsyncGenerator<string> {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw ApiClientError.fromResponse(response, body);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new ApiClientError('No stream body', 0, 'STREAM_ERROR');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6);
+          if (payload === '[DONE]') return;
+          try {
+            const parsed = JSON.parse(payload);
+            if (parsed.error) throw new ApiClientError(parsed.error, 500, 'STREAM_ERROR');
+            if (parsed.token) yield parsed.token;
+          } catch (e) {
+            if (e instanceof ApiClientError) throw e;
+          }
+        }
+      }
+    },
   },
 
   // Sessions

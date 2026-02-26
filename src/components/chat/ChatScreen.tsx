@@ -36,6 +36,9 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     addMessage,
     setLoading,
     setError,
+    startStreaming,
+    appendStreamToken,
+    finishStreaming,
   } = useChatStore();
 
   const {
@@ -185,14 +188,48 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       // Use getState() to avoid stale closure -- messages from render scope
       // doesn't include the userMessage we just added above
       const currentMessages = useChatStore.getState().messages;
-      const { reply } = await api.chat.send({
-        message: text,
-        mode,
-        level,
-        sessionId,
-        context,
-        history: messagesToHistory(currentMessages),
-      });
+
+      // Create placeholder AI message for streaming
+      const aiMessageId = `ai-${Date.now()}`;
+      const aiMessage: Message = {
+        id: aiMessageId,
+        role: 'AI',
+        content: '',
+        timestamp: new Date(),
+      };
+      addMessage(aiMessage);
+      startStreaming(aiMessageId);
+
+      // Stream tokens from the API
+      let reply = '';
+      try {
+        for await (const token of api.chat.stream({
+          message: text,
+          mode,
+          level,
+          sessionId,
+          context,
+          history: messagesToHistory(currentMessages),
+        })) {
+          reply += token;
+          appendStreamToken(token);
+        }
+      } catch {
+        // Fallback to non-streaming if SSE fails
+        if (!reply) {
+          const result = await api.chat.send({
+            message: text,
+            mode,
+            level,
+            sessionId,
+            context,
+            history: messagesToHistory(currentMessages),
+          });
+          reply = result.reply;
+          useChatStore.getState().updateMessage(aiMessageId, { content: reply });
+        }
+      }
+      finishStreaming();
 
       const corrections = CorrectionParser.parse(reply);
       // Always mark as checked so UI can show "correct" or correction tips
@@ -213,14 +250,6 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
           }
         });
       }
-
-      const aiMessage: Message = {
-        id: `ai-${Date.now()}`,
-        role: 'AI',
-        content: reply,
-        timestamp: new Date(),
-      };
-      addMessage(aiMessage);
 
       // Save messages to DB (awaited to prevent silent data loss)
       const fillerCount = fillerWords?.reduce((sum, f) => sum + f.count, 0) || 0;
@@ -431,7 +460,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
             <MessageBubble key={message.id} message={message} />
           ))}
 
-          {isLoading && (
+          {isLoading && !useChatStore.getState().streamingMessageId && (
             <div className="flex items-start gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#3c83f6] text-white shadow-lg shadow-[#3c83f6]/20">
                 <span className="material-symbols-outlined">smart_toy</span>
