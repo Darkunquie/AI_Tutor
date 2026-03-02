@@ -4,7 +4,7 @@ import { getSystemPrompt } from '@/lib/prompts';
 import { SCENARIOS } from '@/lib/config';
 import { ChatRequestSchema } from '@/lib/schemas/chat.schema';
 import {
-  withAuth,
+  withActiveSubscription,
   validateBody,
 } from '@/lib/error-handler';
 import { ApiError } from '@/lib/errors/ApiError';
@@ -100,4 +100,4 @@ async function handlePost(request: NextRequest) {
   });
 }
 
-export const POST = withAuth(handlePost);
+export const POST = withActiveSubscription(handlePost);

@@ -7,6 +7,8 @@ async function handleGet(_request: NextRequest) {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+  const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
   const [
     totalUsers,
     pendingUsers,
@@ -19,6 +21,10 @@ async function handleGet(_request: NextRequest) {
     newUsersThisWeek,
     newUsersThisMonth,
     activeUsersThisWeek,
+    activeTrials,
+    expiringSoon,
+    expiredTrials,
+    noTrialUsers,
   ] = await Promise.all([
     db.user.count({ where: { role: 'USER' } }),
     db.user.count({ where: { status: 'PENDING', role: 'USER' } }),
@@ -38,6 +44,19 @@ async function handleGet(_request: NextRequest) {
       select: { userId: true },
       distinct: ['userId'],
     }),
+    // Trial analytics
+    db.user.count({
+      where: { status: 'APPROVED', role: 'USER', subscriptionStatus: 'TRIAL', trialEndsAt: { gt: now } },
+    }),
+    db.user.count({
+      where: { status: 'APPROVED', role: 'USER', subscriptionStatus: 'TRIAL', trialEndsAt: { gt: now, lte: twentyFourHoursFromNow } },
+    }),
+    db.user.count({
+      where: { status: 'APPROVED', role: 'USER', subscriptionStatus: 'EXPIRED' },
+    }),
+    db.user.count({
+      where: { status: 'APPROVED', role: 'USER', subscriptionStatus: 'NONE' },
+    }),
   ]);
 
   return successResponse({
@@ -56,6 +75,12 @@ async function handleGet(_request: NextRequest) {
       totalPracticeDuration: sessionAgg._sum.duration || 0,
       averageScore: Math.round(sessionAgg._avg.score || 0),
       totalVocabularyLearned: totalVocabulary,
+    },
+    trials: {
+      active: activeTrials,
+      expiringSoon,
+      expired: expiredTrials,
+      noTrial: noTrialUsers,
     },
   });
 }

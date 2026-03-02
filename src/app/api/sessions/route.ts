@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { CreateSessionSchema, SessionQuerySchema } from '@/lib/schemas/session.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import {
-  withAuth,
+  withActiveSubscription,
   validateBody,
   validateQuery,
   successResponse,
@@ -100,5 +100,5 @@ async function handleGet(request: NextRequest) {
   );
 }
 
-export const POST = withAuth(handlePost);
-export const GET = withAuth(handleGet);
+export const POST = withActiveSubscription(handlePost);
+export const GET = withActiveSubscription(handleGet);

@@ -17,8 +17,10 @@ model User {
   email            String        @unique
   password         String        // bcrypt hashed
   role             UserRole      @default(USER)
-  status           UserStatus    @default(PENDING)
-  level            Level         @default(BEGINNER)
+  status             UserStatus         @default(PENDING)
+  subscriptionStatus SubscriptionStatus @default(NONE)
+  trialEndsAt        DateTime?
+  level              Level              @default(BEGINNER)
   dailyGoalMinutes Int           @default(15)
   sessions         Session[]
   vocabulary       Vocabulary[]
@@ -156,6 +158,12 @@ enum UserStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum SubscriptionStatus {
+  NONE
+  TRIAL
+  EXPIRED
 }
 
 model Achievement {

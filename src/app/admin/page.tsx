@@ -4,8 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminStatsCards from '@/components/admin/AdminStatsCards';
+import TrialStatsCards from '@/components/admin/TrialStatsCards';
 import UserTable from '@/components/admin/UserTable';
+import type { UserRow } from '@/components/admin/UserTable';
+import TrialDialog from '@/components/admin/TrialDialog';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { api } from '@/lib/api-client';
+import { useToastStore } from '@/stores/toastStore';
 
 interface AdminStats {
   users: {
@@ -24,17 +29,12 @@ interface AdminStats {
     averageScore: number;
     totalVocabularyLearned: number;
   };
-}
-
-interface UserRow {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: string;
-  level: string;
-  createdAt: string;
-  _count: { sessions: number };
+  trials: {
+    active: number;
+    expiringSoon: number;
+    expired: number;
+    noTrial: number;
+  };
 }
 
 export default function AdminDashboardPage() {
@@ -43,14 +43,24 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Dialog state
+  const [trialDialogOpen, setTrialDialogOpen] = useState(false);
+  const [approveTargetId, setApproveTargetId] = useState<string | null>(null);
+  const [bulkTrialDialogOpen, setBulkTrialDialogOpen] = useState(false);
+  const [rejectAllDialogOpen, setRejectAllDialogOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const addToast = useToastStore((s) => s.addToast);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const [statsData, usersData] = await Promise.all([
         api.admin.getStats(),
         api.admin.getUsers({ status: 'PENDING', pageSize: 10 }),
       ]);
-      setStats(statsData);
+      setStats(statsData as AdminStats);
       setPendingUsers(usersData.data as unknown as UserRow[]);
     } catch {
       setError('Failed to load admin data');
@@ -63,14 +73,70 @@ export default function AdminDashboardPage() {
     fetchData();
   }, [fetchData]);
 
-  const handleApprove = async (id: string) => {
-    await api.admin.updateUserStatus(id, 'APPROVED');
-    fetchData();
+  // Single user approve — opens trial dialog
+  const handleApprove = (id: string) => {
+    setApproveTargetId(id);
+    setTrialDialogOpen(true);
+  };
+
+  const handleApproveConfirm = async (trial: { enabled: boolean; days: number }) => {
+    if (!approveTargetId) return;
+    setActionLoading(true);
+    try {
+      await api.admin.updateUserStatus(approveTargetId, 'APPROVED', trial);
+      setTrialDialogOpen(false);
+      setApproveTargetId(null);
+      addToast('User approved', 'check_circle', 'success');
+      fetchData();
+    } catch {
+      addToast('Failed to approve user', 'error', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleReject = async (id: string) => {
-    await api.admin.updateUserStatus(id, 'REJECTED');
-    fetchData();
+    try {
+      await api.admin.updateUserStatus(id, 'REJECTED');
+      addToast('User rejected', 'cancel', 'success');
+      fetchData();
+    } catch {
+      addToast('Failed to reject user', 'error', 'error');
+    }
+  };
+
+  // Bulk approve
+  const handleBulkApprove = async (trial: { enabled: boolean; days: number }) => {
+    setActionLoading(true);
+    try {
+      const result = await api.admin.bulkAction({ action: 'APPROVE_ALL', trial });
+      setBulkTrialDialogOpen(false);
+      if (result.processed < result.total) {
+        addToast(`Approved ${result.processed}/${result.total} users`, 'warning', 'warning');
+      } else {
+        addToast(`Approved all ${result.processed} users`, 'check_circle', 'success');
+      }
+      fetchData();
+    } catch {
+      addToast('Failed to bulk approve', 'error', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Bulk reject
+  const handleBulkReject = async () => {
+    setActionLoading(true);
+    try {
+      const result = await api.admin.bulkAction({ action: 'REJECT_ALL' });
+      setRejectAllDialogOpen(false);
+      addToast(`Rejected ${result.processed} users`, 'cancel', 'success');
+      fetchData();
+    } catch {
+      addToast('Failed to bulk reject', 'error', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -94,13 +160,23 @@ export default function AdminDashboardPage() {
             </div>
           ) : stats ? (
             <div className="space-y-8">
-              {/* Stats Cards */}
+              {/* Platform Overview */}
               <section>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
                   Platform Overview
                 </h2>
                 <AdminStatsCards stats={stats} />
               </section>
+
+              {/* Trial Analytics */}
+              {stats.trials && (
+                <section>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                    Trial Analytics
+                  </h2>
+                  <TrialStatsCards trials={stats.trials} />
+                </section>
+              )}
 
               {/* Pending Users */}
               <section>
@@ -113,6 +189,26 @@ export default function AdminDashboardPage() {
                       </span>
                     )}
                   </h2>
+
+                  {/* Bulk Actions */}
+                  {stats.users.pending > 0 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setBulkTrialDialogOpen(true)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">done_all</span>
+                        Approve All ({stats.users.pending})
+                      </button>
+                      <button
+                        onClick={() => setRejectAllDialogOpen(true)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                        Reject All
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
@@ -126,6 +222,36 @@ export default function AdminDashboardPage() {
             </div>
           ) : null}
         </main>
+
+        {/* Dialogs */}
+        <TrialDialog
+          open={trialDialogOpen}
+          onClose={() => { setTrialDialogOpen(false); setApproveTargetId(null); }}
+          onConfirm={handleApproveConfirm}
+          title="Approve User"
+          description="Choose trial settings for this user."
+          loading={actionLoading}
+        />
+
+        <TrialDialog
+          open={bulkTrialDialogOpen}
+          onClose={() => setBulkTrialDialogOpen(false)}
+          onConfirm={handleBulkApprove}
+          title={`Approve All (${stats?.users.pending ?? 0}) Users`}
+          description="Choose trial settings for all pending users."
+          loading={actionLoading}
+        />
+
+        <ConfirmDialog
+          open={rejectAllDialogOpen}
+          onClose={() => setRejectAllDialogOpen(false)}
+          onConfirm={handleBulkReject}
+          title="Reject All Pending Users"
+          message={`Are you sure you want to reject all ${stats?.users.pending ?? 0} pending users? This action cannot be undone.`}
+          confirmLabel="Reject All"
+          confirmColor="red"
+          loading={actionLoading}
+        />
       </div>
     </RequireAdmin>
   );

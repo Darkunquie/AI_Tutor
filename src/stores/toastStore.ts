@@ -4,21 +4,22 @@ export interface Toast {
   id: string;
   message: string;
   icon?: string;
+  type?: 'success' | 'warning' | 'error';
 }
 
 interface ToastStore {
   toasts: Toast[];
-  addToast: (message: string, icon?: string) => void;
+  addToast: (message: string, icon?: string, type?: Toast['type']) => void;
   removeToast: (id: string) => void;
 }
 
 export const useToastStore = create<ToastStore>((set) => ({
   toasts: [],
 
-  addToast: (message, icon) => {
+  addToast: (message, icon, type) => {
     const id = crypto.randomUUID();
     set((state) => ({
-      toasts: [...state.toasts, { id, message, icon }],
+      toasts: [...state.toasts, { id, message, icon, type }],
     }));
     // Auto-dismiss after 4 seconds
     setTimeout(() => {

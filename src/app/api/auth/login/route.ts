@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check account approval status
+    // Check account approval status (before trial expiry to avoid wasted DB writes)
     if (user.status === 'PENDING') {
       return NextResponse.json(
         { error: 'Your account is pending approval. Please wait for an admin to approve your account.', status: 'PENDING' },
@@ -93,6 +93,15 @@ export async function POST(request: NextRequest) {
         { error: 'Your account has been rejected. Please contact the administrator.', status: 'REJECTED' },
         { status: 403 }
       );
+    }
+
+    // Auto-expire trial if it has ended (only for approved users)
+    if (user.subscriptionStatus === 'TRIAL' && user.trialEndsAt && new Date(user.trialEndsAt) <= new Date()) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { subscriptionStatus: 'EXPIRED' },
+      });
+      user.subscriptionStatus = 'EXPIRED';
     }
 
     // Generate JWT token with role and status
@@ -119,6 +128,8 @@ export async function POST(request: NextRequest) {
           level: user.level,
           role: user.role,
           status: user.status,
+          subscriptionStatus: user.subscriptionStatus,
+          trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
         },
       },
       { status: 200 }

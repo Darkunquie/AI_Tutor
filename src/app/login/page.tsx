@@ -52,11 +52,19 @@ export default function LoginPage() {
         level: data.user.level,
         role: data.user.role,
         status: data.user.status,
+        subscriptionStatus: data.user.subscriptionStatus || 'NONE',
+        trialEndsAt: data.user.trialEndsAt || null,
       });
 
       // Role-based redirect
       if (data.user.role === 'ADMIN') {
         router.push('/admin');
+      } else if (
+        data.user.subscriptionStatus === 'EXPIRED' ||
+        data.user.subscriptionStatus === 'NONE' ||
+        (data.user.subscriptionStatus === 'TRIAL' && data.user.trialEndsAt && new Date(data.user.trialEndsAt) <= new Date())
+      ) {
+        router.push('/subscription');
       } else {
         router.push('/dashboard');
       }

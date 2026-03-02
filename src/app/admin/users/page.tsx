@@ -1,21 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import UserTable from '@/components/admin/UserTable';
+import type { UserRow } from '@/components/admin/UserTable';
+import TrialDialog from '@/components/admin/TrialDialog';
+import ExtendTrialDialog from '@/components/admin/ExtendTrialDialog';
 import { api } from '@/lib/api-client';
-
-interface UserRow {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: string;
-  level: string;
-  createdAt: string;
-  _count: { sessions: number };
-}
+import { useToastStore } from '@/stores/toastStore';
 
 const STATUS_TABS = [
   { label: 'All', value: '' },
@@ -33,7 +26,20 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
+  // Dialog state
+  const [trialDialogOpen, setTrialDialogOpen] = useState(false);
+  const [approveTargetId, setApproveTargetId] = useState<string | null>(null);
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const addToast = useToastStore((s) => s.addToast);
+
+  // Track fetch version to ignore stale responses
+  const fetchVersionRef = useRef(0);
+
   const fetchUsers = useCallback(async () => {
+    const version = ++fetchVersionRef.current;
     try {
       setLoading(true);
       const params: Record<string, string | number> = { page, pageSize: 20 };
@@ -41,15 +47,18 @@ export default function AdminUsersPage() {
       if (search) params.search = search;
 
       const result = await api.admin.getUsers(params);
+      // Ignore stale responses
+      if (version !== fetchVersionRef.current) return;
       setUsers(result.data as unknown as UserRow[]);
       setTotalPages(result.meta.totalPages);
       setTotal(result.meta.total);
     } catch {
-      // Error handled silently
+      if (version !== fetchVersionRef.current) return;
+      addToast('Failed to load users', 'error', 'error');
     } finally {
-      setLoading(false);
+      if (version === fetchVersionRef.current) setLoading(false);
     }
-  }, [statusFilter, search, page]);
+  }, [statusFilter, search, page, addToast]);
 
   useEffect(() => {
     fetchUsers();
@@ -60,14 +69,61 @@ export default function AdminUsersPage() {
     setPage(1);
   }, [statusFilter, search]);
 
-  const handleApprove = async (id: string) => {
-    await api.admin.updateUserStatus(id, 'APPROVED');
-    fetchUsers();
+  // Approve — opens trial dialog
+  const handleApprove = (id: string) => {
+    setApproveTargetId(id);
+    setTrialDialogOpen(true);
+  };
+
+  const handleApproveConfirm = async (trial: { enabled: boolean; days: number }) => {
+    if (!approveTargetId) return;
+    setActionLoading(true);
+    try {
+      await api.admin.updateUserStatus(approveTargetId, 'APPROVED', trial);
+      setTrialDialogOpen(false);
+      setApproveTargetId(null);
+      addToast('User approved', 'check_circle', 'success');
+      fetchUsers();
+    } catch {
+      addToast('Failed to approve user', 'error', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleReject = async (id: string) => {
-    await api.admin.updateUserStatus(id, 'REJECTED');
-    fetchUsers();
+    try {
+      await api.admin.updateUserStatus(id, 'REJECTED');
+      addToast('User rejected', 'cancel', 'success');
+      fetchUsers();
+    } catch {
+      addToast('Failed to reject user', 'error', 'error');
+    }
+  };
+
+  // Extend trial
+  const handleExtendTrial = (id: string) => {
+    const user = users.find((u) => u.id === id);
+    if (user) {
+      setSelectedUser(user);
+      setExtendDialogOpen(true);
+    }
+  };
+
+  const handleExtendConfirm = async (days: number) => {
+    if (!selectedUser) return;
+    setActionLoading(true);
+    try {
+      await api.admin.extendTrial(selectedUser.id, days);
+      setExtendDialogOpen(false);
+      setSelectedUser(null);
+      addToast(`Extended trial for ${selectedUser.name}`, 'timer', 'success');
+      fetchUsers();
+    } catch {
+      addToast('Failed to extend trial', 'error', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -125,6 +181,7 @@ export default function AdminUsersPage() {
               users={users}
               onApprove={handleApprove}
               onReject={handleReject}
+              onExtendTrial={handleExtendTrial}
               loading={loading}
             />
           </div>
@@ -152,6 +209,26 @@ export default function AdminUsersPage() {
             </div>
           )}
         </main>
+
+        {/* Dialogs */}
+        <TrialDialog
+          open={trialDialogOpen}
+          onClose={() => { setTrialDialogOpen(false); setApproveTargetId(null); }}
+          onConfirm={handleApproveConfirm}
+          title="Approve User"
+          description="Choose trial settings for this user."
+          loading={actionLoading}
+        />
+
+        <ExtendTrialDialog
+          open={extendDialogOpen}
+          onClose={() => { setExtendDialogOpen(false); setSelectedUser(null); }}
+          onConfirm={handleExtendConfirm}
+          userName={selectedUser?.name ?? ''}
+          currentTrialEnd={selectedUser?.trialEndsAt ?? null}
+          subscriptionStatus={selectedUser?.subscriptionStatus ?? 'NONE'}
+          loading={actionLoading}
+        />
       </div>
     </RequireAdmin>
   );

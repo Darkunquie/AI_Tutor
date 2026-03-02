@@ -283,3 +283,54 @@ export function withAdmin(handler: RouteHandler): RouteHandler {
     return handler(authedRequest, context);
   });
 }
+
+/**
+ * Wraps a route handler with JWT auth + active subscription check.
+ * Admins always bypass. For regular users, verifies they have an active trial.
+ * Auto-expires trials that have ended.
+ */
+export function withActiveSubscription(handler: RouteHandler): RouteHandler {
+  return withAuth(async (request, context) => {
+    const role = request.headers.get('x-user-role');
+
+    // Admins always have full access
+    if (role === 'ADMIN') {
+      return handler(request, context);
+    }
+
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
+      throw ApiError.unauthorized('User ID not found');
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { subscriptionStatus: true, trialEndsAt: true },
+    });
+
+    if (!user) {
+      throw ApiError.unauthorized('User no longer exists');
+    }
+
+    // Check trial validity
+    if (user.subscriptionStatus === 'TRIAL') {
+      if (!user.trialEndsAt || new Date(user.trialEndsAt) <= new Date()) {
+        // Auto-expire the trial in DB
+        await db.user.update({
+          where: { id: userId },
+          data: { subscriptionStatus: 'EXPIRED' },
+        });
+        throw ApiError.forbidden('Your trial has expired. Please contact admin for a subscription.');
+      }
+      // Trial is active, proceed
+      return handler(request, context);
+    }
+
+    // NONE or EXPIRED
+    if (user.subscriptionStatus === 'EXPIRED') {
+      throw ApiError.forbidden('Your trial has expired. Please contact admin for a subscription.');
+    }
+
+    throw ApiError.forbidden('No active subscription. Please contact admin.');
+  });
+}

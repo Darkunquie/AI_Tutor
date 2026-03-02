@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { withAuth, successResponse } from '@/lib/error-handler';
+import { withActiveSubscription, successResponse } from '@/lib/error-handler';
 
 // Interval in days based on mastery level
 function intervalDays(mastery: number): number {
@@ -11,7 +11,7 @@ function intervalDays(mastery: number): number {
   return 30;
 }
 
-export const GET = withAuth(async (request: NextRequest) => {
+export const GET = withActiveSubscription(async (request: NextRequest) => {
   const userId = request.headers.get('x-user-id')!;
   const limit = Math.min(
     50,
