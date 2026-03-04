@@ -84,11 +84,16 @@ export async function checkRateLimit(key: string, options: RateLimitOptions): Pr
   if (client) {
     const count = await client.incr(key);
     if (count === 1) {
-      // First request in window — set expiry
       await client.pexpire(key, options.windowMs);
     }
-    const ttlMs = count === 1 ? options.windowMs : await client.pttl(key);
-    const resetIn = Math.max(0, ttlMs);
+    let ttlMs = await client.pttl(key);
+    // pttl returns -1 (key has no TTL) or -2 (key missing) in edge cases
+    // (e.g. crash between INCR and PEXPIRE). Heal by re-setting the TTL.
+    if (ttlMs < 0) {
+      await client.pexpire(key, options.windowMs);
+      ttlMs = options.windowMs;
+    }
+    const resetIn = ttlMs;
     if (count > options.maxAttempts) {
       return { allowed: false, remaining: 0, resetIn };
     }
