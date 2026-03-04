@@ -16,7 +16,8 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const adapter = new PrismaNeon({ connectionString: env.DATABASE_URL, max: 5 });
+// max: 3 — safe for 2 PM2 cluster workers (2 × 3 = 6, within Neon free tier limit of 10)
+const adapter = new PrismaNeon({ connectionString: env.DATABASE_URL, max: 3 });
 export const db = globalThis.prisma || new PrismaClient({ adapter });
 
 if (env.NODE_ENV === 'production') {

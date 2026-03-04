@@ -8,7 +8,7 @@ import { withErrorHandling } from '@/lib/error-handler';
 export const POST = withErrorHandling(async (request: NextRequest) => {
   // Rate limit by IP — return early to preserve the Retry-After header
   const ip = getClientIp(request);
-  const rateLimit = checkRateLimit(`login:${ip}`, LOGIN_RATE_LIMIT);
+  const rateLimit = await checkRateLimit(`login:${ip}`, LOGIN_RATE_LIMIT);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'Too many login attempts. Please try again later.' },

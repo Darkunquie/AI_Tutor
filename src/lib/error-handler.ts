@@ -269,7 +269,7 @@ export function withAdmin(handler: RouteHandler): RouteHandler {
     }
 
     // Rate limit admin actions (60 requests/minute per admin)
-    const adminRateLimit = checkRateLimit(`admin:${payload.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+    const adminRateLimit = await checkRateLimit(`admin:${payload.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
     if (!adminRateLimit.allowed) {
       throw ApiError.rateLimited('Too many admin requests. Please slow down.');
     }

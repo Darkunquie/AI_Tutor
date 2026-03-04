@@ -1,12 +1,26 @@
-// In-memory rate limiter for API endpoints
-// Uses a Map with automatic cleanup to prevent memory leaks
+// Rate limiter for API endpoints
 //
-// IMPORTANT: This in-memory rate limiter works correctly for long-running Node.js
-// processes (e.g., PM2 fork mode, Docker), but is NOT effective in serverless
-// environments (Vercel, AWS Lambda) or PM2 cluster mode where each worker
-// gets its own memory space. For those, replace with Redis-backed rate limiting.
+// Two backends:
+//   1. Redis (Upstash) — cluster-safe, shared across PM2 workers.
+//      Enabled when REDIS_URL + REDIS_TOKEN env vars are set.
+//   2. In-memory Map — fallback for single-process / local dev.
+//      NOT effective in PM2 cluster mode (each worker has its own counter).
 
 import { NextRequest } from 'next/server';
+import { Redis } from '@upstash/redis';
+
+// ── Redis client (lazy-initialised, only if env vars present) ─────────────
+let redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redis !== null) { return redis; }
+  const url = process.env.REDIS_URL;
+  const token = process.env.REDIS_TOKEN;
+  if (url && token) {
+    redis = new Redis({ url, token });
+  }
+  return redis;
+}
 
 /**
  * Extract client IP from request headers in a spoof-resistant way.
@@ -15,18 +29,19 @@ import { NextRequest } from 'next/server';
 export function getClientIp(request: NextRequest): string {
   // x-real-ip is set by Nginx with $remote_addr — cannot be spoofed by the client
   const realIp = request.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
+  if (realIp) { return realIp.trim(); }
 
   // Fallback: use the LAST entry in x-forwarded-for (added by the trusted proxy)
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     const parts = forwarded.split(',').map(s => s.trim()).filter(Boolean);
-    if (parts.length > 0) return parts.at(-1)!;
+    if (parts.length > 0) { return parts.at(-1)!; }
   }
 
   return 'unknown-ip';
 }
 
+// ── In-memory fallback ────────────────────────────────────────────────────
 interface RateLimitEntry {
   count: number;
   resetTime: number;
@@ -34,12 +49,11 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>();
 
-// Clean up expired entries every 5 minutes
-const CLEANUP_INTERVAL = 5 * 60 * 1000;
+const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
 let cleanupTimer: NodeJS.Timeout | null = null;
 
 function startCleanup() {
-  if (cleanupTimer) return;
+  if (cleanupTimer) { return; }
   cleanupTimer = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of store) {
@@ -48,34 +62,49 @@ function startCleanup() {
       }
     }
   }, CLEANUP_INTERVAL);
-  // Allow Node.js to exit even if timer is active
-  if (cleanupTimer.unref) cleanupTimer.unref();
+  if (cleanupTimer.unref) { cleanupTimer.unref(); }
 }
 
-interface RateLimitOptions {
+// ── Public interface ──────────────────────────────────────────────────────
+export interface RateLimitOptions {
   maxAttempts: number;
   windowMs: number;
 }
 
-interface RateLimitResult {
+export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetIn: number; // ms until reset
 }
 
-export function checkRateLimit(key: string, options: RateLimitOptions): RateLimitResult {
-  startCleanup();
+export async function checkRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
+  const client = getRedis();
 
+  // ── Redis path ────────────────────────────────────────────────────────
+  if (client) {
+    const count = await client.incr(key);
+    if (count === 1) {
+      // First request in window — set expiry
+      await client.pexpire(key, options.windowMs);
+    }
+    const ttlMs = count === 1 ? options.windowMs : await client.pttl(key);
+    const resetIn = Math.max(0, ttlMs);
+    if (count > options.maxAttempts) {
+      return { allowed: false, remaining: 0, resetIn };
+    }
+    return { allowed: true, remaining: options.maxAttempts - count, resetIn };
+  }
+
+  // ── In-memory path ────────────────────────────────────────────────────
+  startCleanup();
   const now = Date.now();
   const entry = store.get(key);
 
-  // No entry or expired — allow and start fresh window
   if (!entry || now > entry.resetTime) {
     store.set(key, { count: 1, resetTime: now + options.windowMs });
     return { allowed: true, remaining: options.maxAttempts - 1, resetIn: options.windowMs };
   }
 
-  // Within window — check count
   if (entry.count >= options.maxAttempts) {
     return { allowed: false, remaining: 0, resetIn: entry.resetTime - now };
   }

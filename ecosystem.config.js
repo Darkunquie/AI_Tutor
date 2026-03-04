@@ -29,13 +29,14 @@ module.exports = {
       script: 'node_modules/next/dist/bin/next',
       args: 'start',
 
-      // Single instance — keeps in-memory rate limiter effective.
-      // PM2 still provides crash recovery and auto-restart.
-      // Switch to cluster mode with Redis rate limiting when scaling beyond one instance.
-      instances: 1,
+      // 2 workers — utilises both vCPUs on a typical VPS.
+      // Requires Redis-backed rate limiter (REDIS_URL + REDIS_TOKEN) so
+      // per-worker in-memory counters don't bypass rate limits.
+      // Set instances: 1 and exec_mode: 'fork' to revert to single-process mode.
+      instances: 2,
 
-      // Fork mode for single instance (no cluster overhead)
-      exec_mode: 'fork',
+      // Cluster mode — Node.js cluster, shared port, CPU parallelism
+      exec_mode: 'cluster',
 
       // Auto-restart application on crash
       autorestart: true,
@@ -43,8 +44,8 @@ module.exports = {
       // Don't watch for file changes in production
       watch: false,
 
-      // Maximum memory before restart (prevents memory leaks)
-      max_memory_restart: '1G',
+      // Maximum memory per worker before restart (512MB × 2 workers = 1GB total)
+      max_memory_restart: '512M',
 
       // Environment variables for production
       env: {

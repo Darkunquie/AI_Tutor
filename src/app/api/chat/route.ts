@@ -20,7 +20,7 @@ async function handlePost(request: NextRequest) {
   }
 
   // Rate limit chat requests per user
-  const rateLimit = checkRateLimit(`chat:${userId}`, CHAT_RATE_LIMIT);
+  const rateLimit = await checkRateLimit(`chat:${userId}`, CHAT_RATE_LIMIT);
   if (!rateLimit.allowed) {
     throw ApiError.rateLimited('Too many messages. Please slow down.');
   }
