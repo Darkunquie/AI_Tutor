@@ -18,15 +18,28 @@ export interface UserRow {
 
 interface UserTableProps {
   users: UserRow[];
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  onExtendTrial?: (id: string) => void;
+  onApprove: (id: string) => void | Promise<void>;
+  onReject: (id: string) => void | Promise<void>;
+  onExtendTrial?: (id: string) => void | Promise<void>;
   loading?: boolean;
 }
 
 function getSubscriptionBadge(subscriptionStatus: string, trialEndsAt: string | null) {
-  if (subscriptionStatus === 'TRIAL' && trialEndsAt) {
-    const daysLeft = Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (subscriptionStatus === 'TRIAL') {
+    if (!trialEndsAt) {
+      return {
+        label: 'Trial (no end date)',
+        className: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+      };
+    }
+    const endTime = new Date(trialEndsAt).getTime();
+    if (Number.isNaN(endTime)) {
+      return {
+        label: 'Trial (invalid date)',
+        className: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+      };
+    }
+    const daysLeft = Math.ceil((endTime - Date.now()) / (1000 * 60 * 60 * 24));
     if (daysLeft > 0) {
       return {
         label: `Trial (${daysLeft}d left)`,
@@ -158,7 +171,7 @@ export default function UserTable({ users, onApprove, onReject, onExtendTrial, l
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex items-center justify-end gap-2">
-                    {user.status !== 'APPROVED' && (
+                    {user.status === 'PENDING' && (
                       <button
                         onClick={() => handleAction(user.id, 'approve')}
                         disabled={actionLoading === `${user.id}-approve`}
@@ -172,8 +185,16 @@ export default function UserTable({ users, onApprove, onReject, onExtendTrial, l
                     )}
                     {user.status === 'APPROVED' && onExtendTrial && (
                       <button
-                        onClick={() => onExtendTrial(user.id)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors"
+                        onClick={async () => {
+                          setActionLoading(`${user.id}-extend`);
+                          try {
+                            await onExtendTrial(user.id);
+                          } finally {
+                            setActionLoading(null);
+                          }
+                        }}
+                        disabled={actionLoading === `${user.id}-extend`}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50"
                       >
                         <span className="material-symbols-outlined text-sm">
                           add

@@ -155,11 +155,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Logo variant="full" size="md" />
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Home</Link>
-            <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#modes">Features</a>
-            <a className="text-sm font-medium hover:text-[#3c83f6] transition-colors cursor-pointer" href="#stats">Stats</a>
-            <Link href="/review" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Review</Link>
-            <Link href="/dashboard" className="text-sm font-medium hover:text-[#3c83f6] transition-colors">Dashboard</Link>
+            <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">Home</Link>
+            <a className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" href="#modes">Features</a>
+            <a className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" href="#stats">Stats</a>
+            <Link href="/review" className="text-sm font-medium hover:text-primary transition-colors">Review</Link>
+            <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">Dashboard</Link>
           </nav>
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
@@ -170,7 +170,7 @@ export default function Home() {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   aria-label="User menu"
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#3c83f6] flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium hidden sm:block">{user.name}</span>
@@ -178,10 +178,33 @@ export default function Home() {
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50">
                     <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
                       <p className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+                      {/* Trial status badge */}
+                      {user.subscriptionStatus === 'TRIAL' && user.trialEndsAt && (() => {
+                        const daysLeft = Math.max(0, Math.ceil(
+                          (new Date(user.trialEndsAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                        ));
+                        return daysLeft > 0 ? (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold">
+                            <span className="material-symbols-outlined text-xs">timer</span>
+                            Trial: {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
+                            <span className="material-symbols-outlined text-xs">timer_off</span>
+                            Trial expired
+                          </span>
+                        );
+                      })()}
+                      {user.subscriptionStatus === 'EXPIRED' && (
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
+                          <span className="material-symbols-outlined text-xs">timer_off</span>
+                          Trial expired
+                        </span>
+                      )}
                     </div>
                     <Link
                       href="/dashboard"
@@ -191,10 +214,20 @@ export default function Home() {
                       <span className="material-symbols-outlined text-sm">dashboard</span>
                       Dashboard
                     </Link>
+                    {!isAdmin && (
+                      <Link
+                        href="/subscription"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <span className="material-symbols-outlined text-sm">workspace_premium</span>
+                        Subscription
+                      </Link>
+                    )}
                     {isAdmin && (
                       <Link
                         href="/admin"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-[#3c83f6] hover:bg-slate-100 dark:hover:bg-slate-700"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-slate-100 dark:hover:bg-slate-700"
                         onClick={() => setShowUserMenu(false)}
                       >
                         <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
@@ -217,12 +250,12 @@ export default function Home() {
             ) : (
               // Not authenticated: Show login/signup buttons
               <>
-                <Link href="/login" className="hidden sm:block text-sm font-medium hover:text-[#3c83f6] transition-colors">
+                <Link href="/login" className="hidden sm:block text-sm font-medium hover:text-primary transition-colors">
                   Log In
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-[#3c83f6] hover:bg-[#3c83f6]/90 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-[#3c83f6]/20"
+                  className="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-primary/20"
                 >
                   Sign Up
                 </Link>
@@ -248,14 +281,14 @@ export default function Home() {
         <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(60,131,246,0.15)_0%,rgba(16,23,34,0)_100%)]" />
           <div className="max-w-7xl mx-auto px-6 text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3c83f6]/10 text-[#3c83f6] border border-[#3c83f6]/20 text-xs font-bold mb-6 tracking-wide uppercase">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold mb-6 tracking-wide uppercase">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3c83f6] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3c83f6]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
               New: Advanced Debate Mode
             </div>
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 bg-gradient-to-r from-[#3c83f6] to-indigo-400 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 bg-gradient-to-r from-primary to-indigo-400 bg-clip-text text-transparent">
               Master English Through <br className="hidden md:block" /> Conversation
             </h1>
             <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-600 dark:text-slate-400 font-light leading-relaxed mb-10">
@@ -280,7 +313,7 @@ export default function Home() {
                           checked={selectedLevel === level.id}
                           onChange={() => setSelectedLevel(level.id)}
                         />
-                        <div className="py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-[#101722] peer-checked:text-[#3c83f6] peer-checked:shadow-sm transition-all text-center">
+                        <div className="py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-[#101722] peer-checked:text-primary peer-checked:shadow-sm transition-all text-center">
                           {level.title}
                         </div>
                       </label>
@@ -296,7 +329,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                 <Link
                   href="/signup"
-                  className="px-8 py-4 bg-[#3c83f6] hover:bg-[#3c83f6]/90 text-white rounded-xl text-lg font-bold transition-all shadow-xl shadow-[#3c83f6]/30"
+                  className="px-8 py-4 bg-primary hover:bg-primary/90 text-white rounded-xl text-lg font-bold transition-all shadow-xl shadow-primary/30"
                 >
                   Get Started Free
                 </Link>
@@ -331,7 +364,7 @@ export default function Home() {
                   <button
                     key={mode.id}
                     onClick={() => handleModeClick(mode.id)}
-                    className="group relative p-8 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 hover:border-[#3c83f6]/50 transition-all duration-300 shadow-sm hover:shadow-xl dark:hover:shadow-[#3c83f6]/5 text-left"
+                    className="group relative p-8 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-xl dark:hover:shadow-primary/5 text-left"
                   >
                     <div className={`w-12 h-12 rounded-lg ${iconInfo.bgColor} ${iconInfo.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                       <span className="material-symbols-outlined text-3xl">{iconInfo.icon}</span>
@@ -340,7 +373,7 @@ export default function Home() {
                     <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
                       {mode.description}
                     </p>
-                    <div className="flex items-center text-[#3c83f6] font-semibold text-sm">
+                    <div className="flex items-center text-primary font-semibold text-sm">
                       {cta}
                       <span className="material-symbols-outlined ml-1 text-base">arrow_forward</span>
                     </div>
@@ -354,7 +387,7 @@ export default function Home() {
               <button
                 onClick={() => startPracticeSession('FREE_TALK')}
                 disabled={isStarting}
-                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-[#3c83f6] text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-primary text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-primary/40 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isStarting ? 'Starting...' : 'Start Practicing Now'}
               </button>
@@ -385,7 +418,7 @@ export default function Home() {
                     key={mode.id}
                     className="relative p-8 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 shadow-sm text-left opacity-75"
                   >
-                    <div className="absolute top-4 right-4 px-3 py-1 bg-[#3c83f6]/10 text-[#3c83f6] text-xs font-bold rounded-full border border-[#3c83f6]/20">
+                    <div className="absolute top-4 right-4 px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/20">
                       🔒 Sign up to unlock
                     </div>
                     <div className={`w-12 h-12 rounded-lg ${iconInfo.bgColor} ${iconInfo.color} flex items-center justify-center mb-6`}>
@@ -404,7 +437,7 @@ export default function Home() {
             <div className="mt-20 text-center">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-[#3c83f6] text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40"
+                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl bg-primary text-white text-xl font-bold hover:scale-105 transition-all shadow-2xl shadow-primary/40"
               >
                 Sign Up to Start Learning
               </Link>
@@ -419,19 +452,19 @@ export default function Home() {
         <section id="stats" className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 py-16">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">5</div>
+              <div className="text-3xl font-black text-primary mb-1">5</div>
               <div className="text-xs uppercase tracking-widest font-bold text-slate-500">Practice Modes</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">3</div>
+              <div className="text-3xl font-black text-primary mb-1">3</div>
               <div className="text-xs uppercase tracking-widest font-bold text-slate-500">Skill Levels</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">24/7</div>
+              <div className="text-3xl font-black text-primary mb-1">24/7</div>
               <div className="text-xs uppercase tracking-widest font-bold text-slate-500">AI Availability</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#3c83f6] mb-1">Free</div>
+              <div className="text-3xl font-black text-primary mb-1">Free</div>
               <div className="text-xs uppercase tracking-widest font-bold text-slate-500">To Get Started</div>
             </div>
           </div>
@@ -451,7 +484,7 @@ export default function Home() {
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact</span>
           </div>
           <div className="flex gap-4">
-            <button aria-label="Share" className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center hover:bg-[#3c83f6] hover:text-white transition-colors">
+            <button aria-label="Share" className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
               <span className="material-symbols-outlined text-xl">share</span>
             </button>
           </div>
@@ -469,7 +502,7 @@ export default function Home() {
           {/* Modal */}
           <div className="relative w-full max-w-2xl max-h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-[#3c83f6] to-indigo-500">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-primary to-indigo-500">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-white">
@@ -588,7 +621,7 @@ export default function Home() {
                   {/* Level info */}
                   <div className="mt-6 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/30">
                     <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-[#3c83f6]">school</span>
+                      <span className="material-symbols-outlined text-primary">school</span>
                       <div>
                         <p className="text-sm font-semibold">Level: {selectedLevel}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -614,7 +647,7 @@ export default function Home() {
               <button
                 onClick={handleTopicConfirm}
                 disabled={!canConfirmTopic() || isStarting}
-                className="px-6 py-2.5 bg-[#3c83f6] text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-[#3c83f6]/20 hover:bg-[#3c83f6]/90 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#3c83f6]"
+                className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20 hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary"
               >
                 {isStarting ? 'Starting...' : 'Start Session'}
                 {!isStarting && <span className="material-symbols-outlined ml-1 text-base align-middle">arrow_forward</span>}

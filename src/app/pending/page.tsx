@@ -24,7 +24,7 @@ export default function PendingApprovalPage() {
         {/* Info Card */}
         <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
           <div className="flex items-start gap-3 mb-6">
-            <span className="material-symbols-outlined text-[#3c83f6] mt-0.5">
+            <span className="material-symbols-outlined text-primary mt-0.5">
               info
             </span>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -60,7 +60,7 @@ export default function PendingApprovalPage() {
 
           <Link
             href="/login"
-            className="w-full inline-flex items-center justify-center px-6 py-3 bg-[#3c83f6] text-white rounded-lg font-bold text-sm hover:bg-[#3c83f6]/90 transition-all"
+            className="w-full inline-flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-all"
           >
             Back to Login
           </Link>

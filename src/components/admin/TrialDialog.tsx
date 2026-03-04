@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface TrialDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ const DURATION_OPTIONS = [
 ];
 
 export default function TrialDialog({ open, onClose, onConfirm, title, description, loading }: TrialDialogProps) {
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
   const [trialEnabled, setTrialEnabled] = useState(true);
   const [days, setDays] = useState(3);
 
@@ -29,6 +31,17 @@ export default function TrialDialog({ open, onClose, onConfirm, title, descripti
     }
   }, [open]);
 
+  // Escape key to close
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open && !loading) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, loading, onClose]);
+
   if (!open) return null;
 
   return (
@@ -37,8 +50,14 @@ export default function TrialDialog({ open, onClose, onConfirm, title, descripti
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={loading ? undefined : onClose} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="trial-dialog-title"
+        className="relative w-full max-w-md bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6"
+      >
+        <h3 id="trial-dialog-title" className="text-lg font-bold text-slate-900 dark:text-white mb-1">
           {title}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
@@ -51,7 +70,7 @@ export default function TrialDialog({ open, onClose, onConfirm, title, descripti
             type="checkbox"
             checked={trialEnabled}
             onChange={(e) => setTrialEnabled(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-[#3c83f6] focus:ring-[#3c83f6]"
+            className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
           />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Apply free trial
@@ -59,7 +78,7 @@ export default function TrialDialog({ open, onClose, onConfirm, title, descripti
         </label>
 
         {/* Duration Picker */}
-        <div className={`space-y-2 ml-7 mb-6 ${!trialEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+        <div className={`space-y-2 ml-7 mb-6 ${!trialEnabled ? 'opacity-40' : ''}`}>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
             Trial duration
           </p>
@@ -71,7 +90,8 @@ export default function TrialDialog({ open, onClose, onConfirm, title, descripti
                 value={opt.value}
                 checked={days === opt.value}
                 onChange={() => setDays(opt.value)}
-                className="w-4 h-4 border-slate-300 text-[#3c83f6] focus:ring-[#3c83f6]"
+                disabled={!trialEnabled}
+                className="w-4 h-4 border-slate-300 text-primary focus:ring-primary"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">
                 {opt.label}
@@ -92,7 +112,7 @@ export default function TrialDialog({ open, onClose, onConfirm, title, descripti
           <button
             onClick={() => onConfirm({ enabled: trialEnabled, days })}
             disabled={loading}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-[#3c83f6] text-white hover:bg-[#3c83f6]/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

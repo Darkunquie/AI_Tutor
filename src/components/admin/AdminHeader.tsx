@@ -19,8 +19,8 @@ export default function AdminHeader() {
         <div className="flex items-center justify-between h-16">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#3c83f6]/10">
-              <span className="material-symbols-outlined text-xl text-[#3c83f6]">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10">
+              <span className="material-symbols-outlined text-xl text-primary">
                 admin_panel_settings
               </span>
             </div>
@@ -41,7 +41,7 @@ export default function AdminHeader() {
                   href={item.href}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-[#3c83f6]/10 text-[#3c83f6]'
+                      ? 'bg-primary/10 text-primary'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >

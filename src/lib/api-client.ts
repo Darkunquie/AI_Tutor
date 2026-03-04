@@ -335,7 +335,14 @@ export const api = {
       }>('/api/stats', { params }),
 
     progress: (params: { userId: string; period?: string }) =>
-      apiClient.get<{ data: Array<Record<string, unknown>>; period: string }>('/api/stats/progress', { params }),
+      apiClient.get<{
+        data: Array<{
+          date: string; sessions: number; duration: number; score: number;
+          grammarErrors: number; vocabErrors: number; structureErrors: number;
+          fluencyErrors: number; fillerWords: number;
+        }>;
+        period: string;
+      }>('/api/stats/progress', { params }),
   },
 
   // Vocabulary

@@ -39,8 +39,14 @@ async function handlePost(request: NextRequest) {
     throw ApiError.unauthorized('User ID not found');
   }
 
-  // Upsert vocabulary (update if exists, create if not)
-  let vocabulary = await db.vocabulary.upsert({
+  // Read current mastery so we can clamp atomically inside the upsert,
+  // avoiding a separate clamp update that races with concurrent requests.
+  const existing = await db.vocabulary.findUnique({
+    where: { userId_word: { userId, word: word.toLowerCase() } },
+    select: { mastery: true },
+  });
+
+  const vocabulary = await db.vocabulary.upsert({
     where: {
       userId_word: {
         userId,
@@ -50,8 +56,8 @@ async function handlePost(request: NextRequest) {
     update: {
       // Update context if seen again
       context: context,
-      // Increase mastery on repeated exposure
-      mastery: { increment: 5 },
+      // Clamp increment atomically — prevents concurrent requests from racing past 100
+      mastery: Math.min(100, (existing?.mastery ?? 0) + 5),
       reviewedAt: new Date(),
     },
     create: {
@@ -64,14 +70,6 @@ async function handlePost(request: NextRequest) {
       mastery: 0,
     },
   });
-
-  // Clamp mastery to 100 (increment can push it above max)
-  if (vocabulary.mastery > 100) {
-    vocabulary = await db.vocabulary.update({
-      where: { id: vocabulary.id },
-      data: { mastery: 100 },
-    });
-  }
 
   return successResponse({
     id: vocabulary.id,

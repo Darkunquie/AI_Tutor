@@ -74,7 +74,8 @@ async function handlePost(request: NextRequest) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, sessionId })}\n\n`));
           controller.close();
         } catch (error) {
-          console.error('[chatStream] Stream error:', error);
+          const { logger } = await import('@/lib/utils');
+          logger.error('Chat stream error:', error);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`));
           controller.close();
         }

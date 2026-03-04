@@ -31,7 +31,7 @@ export function Logo({ variant = 'icon', size = 'md', className = '', linkToHome
         </defs>
       </svg>
       {/* Text */}
-      <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-[#3c83f6] to-indigo-500 bg-clip-text text-transparent">
+      <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
         Talkivo
       </span>
     </div>

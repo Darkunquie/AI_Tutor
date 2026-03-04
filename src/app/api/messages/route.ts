@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { SaveMessageSchema } from '@/lib/schemas/message.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import {
+  withAuth,
   withActiveSubscription,
   validateBody,
   validateQuery,
@@ -131,4 +132,4 @@ async function handleGet(request: NextRequest) {
 }
 
 export const POST = withActiveSubscription(handlePost);
-export const GET = withActiveSubscription(handleGet);
+export const GET = withAuth(handleGet);

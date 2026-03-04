@@ -36,8 +36,8 @@ export default function AdminStatsCards({ stats }: AdminStatsCardsProps) {
       label: 'Total Users',
       value: stats.users.total,
       icon: 'group',
-      color: 'text-[#3c83f6]',
-      bgColor: 'bg-[#3c83f6]/10',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
       sub: `${stats.users.newThisWeek} new this week`,
     },
     {

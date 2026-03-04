@@ -1,14 +1,13 @@
 #!/bin/bash
 
 ################################################################################
-# Database Backup Script
+# Database Backup Script (PostgreSQL / Neon)
 #
-# This script creates timestamped backups of the SQLite database and manages
-# backup retention (keeps last 7 backups by default).
+# Creates a timestamped pg_dump backup and manages retention (7 days default).
 #
 # Prerequisites:
-#   - SQLite database file exists at prisma/dev.db
-#   - tar command available (standard on Linux/Unix)
+#   - DATABASE_URL environment variable set (postgres:// connection string)
+#   - pg_dump available (postgresql-client package)
 #
 # Usage:
 #   chmod +x scripts/backup-database.sh
@@ -31,94 +30,61 @@ NC='\033[0m' # No Color
 
 # Configuration
 BACKUP_DIR="${HOME}/backups/talkivo"
-# Derive DB path from DATABASE_URL if set, otherwise fall back to default
-if [ -n "$DATABASE_URL" ]; then
-  DB_PATH=$(echo "$DATABASE_URL" | sed 's|^file://||; s|^file:||; s|^sqlite:||; s|\?.*$||')
-else
-  DB_PATH="prisma/dev.db"
-fi
-else
-  DB_PATH="prisma/dev.db"
-fi
-RETENTION_DAYS=7  # Keep backups for 7 days
+RETENTION_DAYS=7
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP_NAME="db-backup-${TIMESTAMP}.tar.gz"
+BACKUP_NAME="db-backup-${TIMESTAMP}.sql.gz"
 
-# Function to print colored output
-print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠ $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}✗ $1${NC}"
-}
-
-print_info() {
-    echo -e "${BLUE}ℹ $1${NC}"
-}
+print_success() { echo -e "${GREEN}✓ $1${NC}"; }
+print_warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
+print_error()   { echo -e "${RED}✗ $1${NC}"; }
+print_info()    { echo -e "${BLUE}ℹ $1${NC}"; }
 
 echo "=========================================="
 echo "💾 Database Backup Starting"
 echo "=========================================="
 echo ""
 
-# Step 1: Check if database exists
-print_info "Checking database file..."
-
-if [ ! -f "$DB_PATH" ]; then
-    print_error "Database file not found at: $DB_PATH"
-    exit 1
+# Step 1: Verify DATABASE_URL is set
+print_info "Checking DATABASE_URL..."
+if [ -z "$DATABASE_URL" ]; then
+    # Try loading from .env
+    if [ -f ".env" ]; then
+        export "$(grep -v '^#' .env | grep 'DATABASE_URL' | xargs)"
+    fi
 fi
 
-DB_SIZE=$(du -h "$DB_PATH" | cut -f1)
-print_success "Database found: $DB_PATH (Size: $DB_SIZE)"
+if [ -z "$DATABASE_URL" ]; then
+    print_error "DATABASE_URL is not set. Export it or add it to .env"
+    exit 1
+fi
+print_success "DATABASE_URL found"
 echo ""
 
-# Step 2: Create backup directory if it doesn't exist
-print_info "Preparing backup directory..."
+# Step 2: Verify pg_dump is available
+print_info "Checking pg_dump..."
+if ! command -v pg_dump &> /dev/null; then
+    print_error "pg_dump not found. Install postgresql-client: apt-get install postgresql-client"
+    exit 1
+fi
+print_success "pg_dump available: $(pg_dump --version | head -1)"
+echo ""
 
+# Step 3: Create backup directory
+print_info "Preparing backup directory..."
 mkdir -p "$BACKUP_DIR"
 print_success "Backup directory ready: $BACKUP_DIR"
 echo ""
 
-# Step 3: Create backup
+# Step 4: Run pg_dump and compress output
 print_info "Creating backup..."
-
-# Both paths produce an archive containing a single file: $(basename "$DB_PATH")
-DB_BASENAME="$(basename "$DB_PATH")"
-
-# Use sqlite3 .backup for safe, consistent backup if available
-if command -v sqlite3 &> /dev/null; then
-  TEMP_BACKUP="${BACKUP_DIR}/${DB_BASENAME}"
-  # Ensure temp file is cleaned up even if tar fails (set -e causes immediate exit)
-  cleanup_temp() { rm -f "${TEMP_BACKUP}"; }
-  trap cleanup_temp EXIT
-  sqlite3 "$DB_PATH" ".backup '${TEMP_BACKUP}'"
-  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" -C "${BACKUP_DIR}" "${DB_BASENAME}"
-  rm -f "${TEMP_BACKUP}"
-  trap - EXIT
-else
-  # Fallback to tar (less safe if app is writing concurrently)
-  tar -czf "${BACKUP_DIR}/${BACKUP_NAME}" -C "$(dirname "$DB_PATH")" "${DB_BASENAME}"
-fi
-
-if [ $? -eq 0 ]; then
-    BACKUP_SIZE=$(du -h "${BACKUP_DIR}/${BACKUP_NAME}" | cut -f1)
-    print_success "Backup created: ${BACKUP_NAME} (Size: ${BACKUP_SIZE})"
-else
-    print_error "Backup creation failed"
-    exit 1
-fi
+pg_dump "$DATABASE_URL" | gzip > "${BACKUP_DIR}/${BACKUP_NAME}"
+BACKUP_SIZE=$(du -h "${BACKUP_DIR}/${BACKUP_NAME}" | cut -f1)
+print_success "Backup created: ${BACKUP_NAME} (Size: ${BACKUP_SIZE})"
 echo ""
 
-# Step 4: Verify backup integrity
+# Step 5: Verify backup integrity
 print_info "Verifying backup integrity..."
-
-if tar -tzf "${BACKUP_DIR}/${BACKUP_NAME}" > /dev/null 2>&1; then
+if gzip -t "${BACKUP_DIR}/${BACKUP_NAME}" 2>/dev/null; then
     print_success "Backup integrity verified"
 else
     print_error "Backup integrity check failed"
@@ -126,29 +92,22 @@ else
 fi
 echo ""
 
-# Step 5: Clean up old backups (keep only last 7)
-print_info "Cleaning up old backups (keeping last ${RETENTION_DAYS})..."
-
-# Count backups before cleanup
-BACKUP_COUNT_BEFORE=$(ls -1 "${BACKUP_DIR}"/db-backup-*.tar.gz 2>/dev/null | wc -l)
-
-# Delete backups older than RETENTION_DAYS
-find "${BACKUP_DIR}" -name "db-backup-*.tar.gz" -type f -mtime +${RETENTION_DAYS} -delete
-
-# Count backups after cleanup
-BACKUP_COUNT_AFTER=$(ls -1 "${BACKUP_DIR}"/db-backup-*.tar.gz 2>/dev/null | wc -l)
+# Step 6: Clean up old backups (keep only last RETENTION_DAYS days)
+print_info "Cleaning up old backups (keeping last ${RETENTION_DAYS} days)..."
+BACKUP_COUNT_BEFORE=$(ls -1 "${BACKUP_DIR}"/db-backup-*.sql.gz 2>/dev/null | wc -l)
+find "${BACKUP_DIR}" -name "db-backup-*.sql.gz" -type f -mtime +"${RETENTION_DAYS}" -delete
+BACKUP_COUNT_AFTER=$(ls -1 "${BACKUP_DIR}"/db-backup-*.sql.gz 2>/dev/null | wc -l)
 DELETED_COUNT=$((BACKUP_COUNT_BEFORE - BACKUP_COUNT_AFTER))
 
-if [ $DELETED_COUNT -gt 0 ]; then
+if [ "$DELETED_COUNT" -gt 0 ]; then
     print_success "Deleted ${DELETED_COUNT} old backup(s)"
 else
     print_info "No old backups to delete"
 fi
-
 print_success "Current backup count: ${BACKUP_COUNT_AFTER}"
 echo ""
 
-# Step 6: Display backup summary
+# Step 7: Display backup summary
 echo "=========================================="
 echo "✓ Backup Completed Successfully!"
 echo "=========================================="
@@ -160,16 +119,15 @@ echo "  - Size:      ${BACKUP_SIZE}"
 echo "  - Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 print_info "Recent Backups:"
-ls -lht "${BACKUP_DIR}"/db-backup-*.tar.gz | head -5
+ls -lht "${BACKUP_DIR}"/db-backup-*.sql.gz 2>/dev/null | head -5
 echo ""
 
-# Step 7: Restore instructions
+# Step 8: Restore instructions
 print_info "To restore this backup, run:"
-echo "  tar -xzf ${BACKUP_DIR}/${BACKUP_NAME} -C $(dirname "$DB_PATH")"
-echo "  # This will extract ${DB_BASENAME} into: $(dirname "$DB_PATH")/"
+echo "  gunzip -c ${BACKUP_DIR}/${BACKUP_NAME} | psql \"\$DATABASE_URL\""
 echo ""
 
-# Step 8: Disk space check
+# Step 9: Disk space check
 print_info "Disk space status:"
 df -h "${BACKUP_DIR}" | tail -1
 echo ""

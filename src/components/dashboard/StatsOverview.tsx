@@ -75,8 +75,8 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {card.label}
             </span>
-            <div className="w-9 h-9 rounded-xl bg-[#3c83f6]/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-lg text-[#3c83f6]">{card.icon}</span>
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-lg text-primary">{card.icon}</span>
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">

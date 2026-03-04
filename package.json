@@ -16,6 +16,8 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-neon": "^7.4.2",
     "@prisma/adapter-pg": "^7.4.1",
     "@prisma/client": "^7.3.0",
     "bcryptjs": "^3.0.3",
@@ -28,6 +30,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0",
+    "ws": "^8.19.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
@@ -42,6 +45,7 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/ui": "^4.0.18",
     "eslint": "^9",

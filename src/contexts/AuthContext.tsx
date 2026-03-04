@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasActiveSubscription =
     user?.role === 'ADMIN' ||
+    user?.subscriptionStatus === 'ACTIVE' ||
     (user?.subscriptionStatus === 'TRIAL' &&
       user?.trialEndsAt != null &&
       new Date(user.trialEndsAt) > new Date()) ||

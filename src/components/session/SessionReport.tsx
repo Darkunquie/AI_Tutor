@@ -189,7 +189,7 @@ export function SessionReport({
               key={stat.label}
               className="bg-white dark:bg-slate-800/40 rounded-xl p-3 text-center border border-slate-200 dark:border-slate-800"
             >
-              <span className="material-symbols-outlined text-lg text-[#3c83f6]">{stat.icon}</span>
+              <span className="material-symbols-outlined text-lg text-primary">{stat.icon}</span>
               <div className="text-lg font-black mt-1">{stat.value}</div>
               <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
                 {stat.label}
@@ -236,7 +236,7 @@ export function SessionReport({
               {displayedCorrections.map((c, i) => {
                 const colors = ERROR_COLORS[c.type];
                 return (
-                  <div key={i} className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                  <div key={`${c.original}-${c.corrected}-${i}`} className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60">
                     <span className={`material-symbols-outlined text-lg mt-0.5 ${colors.text}`}>
                       {colors.icon}
                     </span>
@@ -261,7 +261,7 @@ export function SessionReport({
             {corrections.length > 5 && (
               <button
                 onClick={() => setShowAllCorrections(!showAllCorrections)}
-                className="mt-3 text-sm font-semibold text-[#3c83f6] hover:text-[#3c83f6]/80 transition-colors"
+                className="mt-3 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
               >
                 {showAllCorrections ? 'Show less' : `Show all ${corrections.length} corrections`}
               </button>
@@ -278,8 +278,8 @@ export function SessionReport({
             <div className="flex flex-wrap gap-2">
               {vocabularyGained.map((word, i) => (
                 <span
-                  key={i}
-                  className="px-3 py-1.5 bg-[#3c83f6]/10 text-[#3c83f6] text-sm font-semibold rounded-lg"
+                  key={`${word}-${i}`}
+                  className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg"
                 >
                   {word}
                 </span>
@@ -297,7 +297,7 @@ export function SessionReport({
           <ul className="space-y-2">
             {tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <span className="material-symbols-outlined text-base text-[#3c83f6] mt-0.5 flex-shrink-0">
+                <span className="material-symbols-outlined text-base text-primary mt-0.5 flex-shrink-0">
                   arrow_right
                 </span>
                 {tip}
@@ -317,7 +317,7 @@ export function SessionReport({
           </button>
           <button
             onClick={onViewDashboard}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#3c83f6] text-white font-semibold hover:bg-[#3c83f6]/90 transition-colors shadow-lg shadow-[#3c83f6]/20"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
           >
             <span className="material-symbols-outlined text-lg">insights</span>
             View Dashboard

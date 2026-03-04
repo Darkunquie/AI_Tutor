@@ -46,7 +46,7 @@ export function FillerWordAlert({
     <div
       className={`
         fixed bottom-24 left-1/2 -translate-x-1/2 z-50
-        bg-[#3c83f6] text-white px-5 py-3.5 rounded-xl shadow-xl shadow-[#3c83f6]/20
+        bg-primary text-white px-5 py-3.5 rounded-xl shadow-xl shadow-primary/20
         flex items-center gap-3 max-w-sm
         transition-all duration-300
         ${isLeaving ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}

@@ -96,12 +96,15 @@ export default function AdminDashboardPage() {
   };
 
   const handleReject = async (id: string) => {
+    setActionLoading(true);
     try {
       await api.admin.updateUserStatus(id, 'REJECTED');
       addToast('User rejected', 'cancel', 'success');
       fetchData();
     } catch {
       addToast('Failed to reject user', 'error', 'error');
+    } finally {
+      setActionLoading(false);
     }
   };
 

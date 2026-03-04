@@ -232,7 +232,7 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
 
                 {/* Actions */}
                 <td className="px-6 py-4 text-right">
-                  <button aria-label="Session options" className="p-1.5 rounded-lg text-slate-400 hover:text-[#3c83f6] hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <button aria-label="Session options" className="p-1.5 rounded-lg text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="material-symbols-outlined text-lg">more_horiz</span>
                   </button>
                 </td>
@@ -248,7 +248,7 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#3c83f6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span className="material-symbols-outlined text-lg">chevron_left</span>
             Previous
@@ -264,7 +264,7 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
                 onClick={() => setPage(p)}
                 className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${
                   p === page
-                    ? 'bg-[#3c83f6] text-white shadow-lg shadow-[#3c83f6]/30'
+                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
@@ -275,7 +275,7 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#3c83f6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next
             <span className="material-symbols-outlined text-lg">chevron_right</span>

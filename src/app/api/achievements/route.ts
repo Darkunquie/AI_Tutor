@@ -2,9 +2,11 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { withAuth, successResponse } from '@/lib/error-handler';
 import { ACHIEVEMENTS } from '@/lib/config/achievements';
+import { ApiError } from '@/lib/errors/ApiError';
 
 export const GET = withAuth(async (request: NextRequest) => {
-  const userId = request.headers.get('x-user-id')!;
+  const userId = request.headers.get('x-user-id');
+  if (!userId) { throw ApiError.unauthorized('User ID not found'); }
 
   const userAchievements = await db.achievement.findMany({
     where: { userId },

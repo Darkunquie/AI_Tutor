@@ -230,7 +230,7 @@ export function VoiceInput({
         className={`group relative z-10 flex h-16 w-16 items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${
           isListening
             ? 'bg-red-500 text-white shadow-red-500/20 hover:bg-red-600'
-            : 'bg-[#3c83f6] text-white shadow-[#3c83f6]/20 hover:bg-[#3c83f6]/90'
+            : 'bg-primary text-white shadow-primary/20 hover:bg-primary/90'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <span className="material-symbols-outlined text-[32px]">mic</span>

@@ -18,13 +18,13 @@ function CorrectionTip({ correction }: { correction: Correction }) {
 
   return (
     <div className="flex items-start gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#3c83f6]/10 text-[#3c83f6]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
         <span className="material-symbols-outlined">lightbulb</span>
       </div>
       <div className="flex flex-col gap-2 max-w-[80%]">
-        <div className={`rounded-xl ${style.bg} p-4 border border-[#3c83f6]/20 ${style.text}`}>
+        <div className={`rounded-xl ${style.bg} p-4 border border-primary/20 ${style.text}`}>
           <p className="text-sm font-medium">
-            <strong className="text-[#3c83f6] font-bold">{correction.type} Tip:</strong>{' '}
+            <strong className="text-primary font-bold">{correction.type} Tip:</strong>{' '}
             <span className="line-through opacity-60">{correction.original}</span>
             {' → '}
             <span className="font-bold underline">{correction.corrected}</span>
@@ -66,7 +66,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         <div className="flex items-start justify-end gap-4 max-w-[80%]">
           <div className="flex flex-col gap-1.5 items-end">
             <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mr-1">You</p>
-            <div className="rounded-2xl rounded-tr-none bg-[#3c83f6] p-4 text-white shadow-lg shadow-[#3c83f6]/20">
+            <div className="rounded-2xl rounded-tr-none bg-primary p-4 text-white shadow-lg shadow-primary/20">
               <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
             </div>
           </div>
@@ -98,7 +98,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   // AI message
   return (
     <div className="flex items-start gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#3c83f6] text-white shadow-lg shadow-[#3c83f6]/20">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
         <span className="material-symbols-outlined">smart_toy</span>
       </div>
       <div className="flex flex-col gap-1.5 max-w-[80%]">

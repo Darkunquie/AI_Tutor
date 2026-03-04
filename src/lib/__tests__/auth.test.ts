@@ -77,6 +77,8 @@ describe('Auth Utilities', () => {
       userId: 'user123',
       email: 'test@example.com',
       name: 'Test User',
+      role: 'USER',
+      status: 'APPROVED',
     };
 
     it('should generate a valid JWT token', () => {
@@ -122,6 +124,8 @@ describe('Auth Utilities', () => {
       userId: 'user456',
       email: 'verify@example.com',
       name: 'Verify User',
+      role: 'USER',
+      status: 'APPROVED',
     };
 
     it('should verify and decode a valid token', () => {

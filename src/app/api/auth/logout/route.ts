@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Logout error:', error);
+    const { logger } = await import('@/lib/utils');
+    logger.error('Logout error:', error);
     return NextResponse.json(
       { error: 'Internal server error during logout' },
       { status: 500 }

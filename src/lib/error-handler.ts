@@ -7,6 +7,9 @@ import { ApiError } from './errors/ApiError';
 import { ValidationError } from './errors/ValidationError';
 import { verifyToken } from './auth';
 import { db } from './db';
+import { checkRateLimit } from './rate-limiter';
+import { checkAndExpireTrial } from './services/trial';
+import { logger } from './utils';
 
 // Type for route handler functions
 type RouteHandler = (
@@ -38,7 +41,7 @@ export function withErrorHandling(handler: RouteHandler): RouteHandler {
  */
 export function handleError(error: unknown): Response {
   // Always log errors for production visibility
-  console.error('[API Error]', error instanceof Error ? error.message : error);
+  logger.error('API error', error instanceof Error ? error : new Error(String(error)));
 
   // Already an ApiError - return as-is
   if (error instanceof ApiError) {
@@ -265,6 +268,12 @@ export function withAdmin(handler: RouteHandler): RouteHandler {
       throw ApiError.forbidden('Admin access required');
     }
 
+    // Rate limit admin actions (60 requests/minute per admin)
+    const adminRateLimit = checkRateLimit(`admin:${payload.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+    if (!adminRateLimit.allowed) {
+      throw ApiError.rateLimited('Too many admin requests. Please slow down.');
+    }
+
     const headers = new Headers(request.headers);
     headers.set('x-user-id', payload.userId);
     headers.set('x-user-email', payload.email);
@@ -312,22 +321,14 @@ export function withActiveSubscription(handler: RouteHandler): RouteHandler {
       throw ApiError.unauthorized('User no longer exists');
     }
 
-    // Check trial validity
-    if (user.subscriptionStatus === 'TRIAL') {
-      if (!user.trialEndsAt || new Date(user.trialEndsAt) <= new Date()) {
-        // Auto-expire the trial in DB
-        await db.user.update({
-          where: { id: userId },
-          data: { subscriptionStatus: 'EXPIRED' },
-        });
-        throw ApiError.forbidden('Your trial has expired. Please contact admin for a subscription.');
-      }
-      // Trial is active, proceed
+    // Auto-expire trial if ended, then check status
+    const status = await checkAndExpireTrial(userId, user.subscriptionStatus, user.trialEndsAt);
+
+    if (status === 'TRIAL') {
       return handler(request, context);
     }
 
-    // NONE or EXPIRED
-    if (user.subscriptionStatus === 'EXPIRED') {
+    if (status === 'EXPIRED') {
       throw ApiError.forbidden('Your trial has expired. Please contact admin for a subscription.');
     }
 

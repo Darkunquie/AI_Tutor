@@ -23,7 +23,7 @@ export function TopicPicker({ mode, onSelect, selectedValue }: TopicPickerProps)
               onClick={() => onSelect(topic)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 selectedValue === topic
-                  ? 'bg-[#3c83f6] text-white shadow-md'
+                  ? 'bg-primary text-white shadow-md'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -48,7 +48,7 @@ export function TopicPicker({ mode, onSelect, selectedValue }: TopicPickerProps)
               onClick={() => onSelect(scenario.id)}
               className={`p-4 rounded-xl border-2 text-left transition-all ${
                 selectedValue === scenario.id
-                  ? 'border-[#3c83f6] bg-[#3c83f6]/5 dark:bg-[#3c83f6]/10'
+                  ? 'border-primary bg-primary/5 dark:bg-primary/10'
                   : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-600'
               }`}
             >
@@ -79,7 +79,7 @@ export function TopicPicker({ mode, onSelect, selectedValue }: TopicPickerProps)
               onClick={() => onSelect(item.topic)}
               className={`p-4 rounded-xl border-2 text-left transition-all ${
                 selectedValue === item.topic
-                  ? 'border-[#3c83f6] bg-[#3c83f6]/5 dark:bg-[#3c83f6]/10'
+                  ? 'border-primary bg-primary/5 dark:bg-primary/10'
                   : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-600'
               }`}
             >

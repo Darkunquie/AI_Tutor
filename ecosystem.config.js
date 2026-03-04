@@ -29,11 +29,13 @@ module.exports = {
       script: 'node_modules/next/dist/bin/next',
       args: 'start',
 
-      // Number of instances ('max' uses all CPU cores for load balancing)
-      instances: 'max',
+      // Single instance — keeps in-memory rate limiter effective.
+      // PM2 still provides crash recovery and auto-restart.
+      // Switch to cluster mode with Redis rate limiting when scaling beyond one instance.
+      instances: 1,
 
-      // Execution mode ('cluster' for load balancing across CPU cores)
-      exec_mode: 'cluster',
+      // Fork mode for single instance (no cluster overhead)
+      exec_mode: 'fork',
 
       // Auto-restart application on crash
       autorestart: true,

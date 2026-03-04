@@ -1,144 +1,122 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { comparePassword, generateToken, validateEmail } from '@/lib/auth';
-import { logger } from '@/lib/utils';
-import { checkRateLimit, LOGIN_RATE_LIMIT } from '@/lib/rate-limiter';
+import { checkRateLimit, LOGIN_RATE_LIMIT, getClientIp } from '@/lib/rate-limiter';
+import { checkAndExpireTrial } from '@/lib/services/trial';
+import { withErrorHandling } from '@/lib/error-handler';
 
-export async function POST(request: NextRequest) {
-  try {
-    // Rate limit by IP
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    const rateLimit = checkRateLimit(`login:${ip}`, LOGIN_RATE_LIMIT);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: 'Too many login attempts. Please try again later.' },
-        { status: 429, headers: { 'Retry-After': String(Math.ceil(rateLimit.resetIn / 1000)) } }
-      );
-    }
-
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-    const { email, password, rememberMe } = body;
-
-    // Validate required fields
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate max lengths (prevent abuse)
-    if (typeof email !== 'string' || email.length > 254) {
-      return NextResponse.json(
-        { error: 'Invalid email address' },
-        { status: 400 }
-      );
-    }
-    if (typeof password !== 'string' || password.length > 128) {
-      return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 400 }
-      );
-    }
-
-    // Validate email format
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-      return NextResponse.json(
-        { error: emailValidation.error },
-        { status: 400 }
-      );
-    }
-
-    // Find user by email
-    const user = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Compare password
-    const isPasswordValid = await comparePassword(password, user.password);
-
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Check account approval status (before trial expiry to avoid wasted DB writes)
-    if (user.status === 'PENDING') {
-      return NextResponse.json(
-        { error: 'Your account is pending approval. Please wait for an admin to approve your account.', status: 'PENDING' },
-        { status: 403 }
-      );
-    }
-
-    if (user.status === 'REJECTED') {
-      return NextResponse.json(
-        { error: 'Your account has been rejected. Please contact the administrator.', status: 'REJECTED' },
-        { status: 403 }
-      );
-    }
-
-    // Auto-expire trial if it has ended (only for approved users)
-    if (user.subscriptionStatus === 'TRIAL' && user.trialEndsAt && new Date(user.trialEndsAt) <= new Date()) {
-      await db.user.update({
-        where: { id: user.id },
-        data: { subscriptionStatus: 'EXPIRED' },
-      });
-      user.subscriptionStatus = 'EXPIRED';
-    }
-
-    // Generate JWT token with role and status
-    const token = generateToken(
-      {
-        userId: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        status: user.status,
-      },
-      rememberMe === true
-    );
-
-    // Return success response with token and user data
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limit by IP — return early to preserve the Retry-After header
+  const ip = getClientIp(request);
+  const rateLimit = checkRateLimit(`login:${ip}`, LOGIN_RATE_LIMIT);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      {
-        message: 'Login successful',
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          level: user.level,
-          role: user.role,
-          status: user.status,
-          subscriptionStatus: user.subscriptionStatus,
-          trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    logger.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error during login' },
-      { status: 500 }
+      { error: 'Too many login attempts. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rateLimit.resetIn / 1000)) } }
     );
   }
-}
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid JSON in request body' },
+      { status: 400 }
+    );
+  }
+  const { email, password, rememberMe } = body;
+
+  if (!email || !password) {
+    return NextResponse.json(
+      { error: 'Email and password are required' },
+      { status: 400 }
+    );
+  }
+
+  if (typeof email !== 'string' || email.length > 254) {
+    return NextResponse.json(
+      { error: 'Invalid email address' },
+      { status: 400 }
+    );
+  }
+  if (typeof password !== 'string' || password.length > 128) {
+    return NextResponse.json(
+      { error: 'Invalid password' },
+      { status: 400 }
+    );
+  }
+
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.isValid) {
+    return NextResponse.json(
+      { error: emailValidation.error },
+      { status: 400 }
+    );
+  }
+
+  const user = await db.user.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+
+  if (!user) {
+    return NextResponse.json(
+      { error: 'Invalid email or password' },
+      { status: 401 }
+    );
+  }
+
+  const isPasswordValid = await comparePassword(password, user.password);
+  if (!isPasswordValid) {
+    return NextResponse.json(
+      { error: 'Invalid email or password' },
+      { status: 401 }
+    );
+  }
+
+  if (user.status === 'PENDING') {
+    return NextResponse.json(
+      { error: 'Your account is pending approval. Please wait for an admin to approve your account.', status: 'PENDING' },
+      { status: 403 }
+    );
+  }
+
+  if (user.status === 'REJECTED') {
+    return NextResponse.json(
+      { error: 'Your account has been rejected. Please contact the administrator.', status: 'REJECTED' },
+      { status: 403 }
+    );
+  }
+
+  // Auto-expire trial if it has ended (only for approved users)
+  user.subscriptionStatus = await checkAndExpireTrial(user.id, user.subscriptionStatus, user.trialEndsAt);
+
+  const token = generateToken(
+    {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+    },
+    rememberMe === true
+  );
+
+  return NextResponse.json(
+    {
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        level: user.level,
+        role: user.role,
+        status: user.status,
+        subscriptionStatus: user.subscriptionStatus,
+        trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
+      },
+    },
+    { status: 200 }
+  );
+});

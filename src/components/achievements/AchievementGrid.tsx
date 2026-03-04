@@ -46,7 +46,7 @@ export function AchievementGrid() {
           <p className="text-sm text-red-500 mb-2">{error}</p>
           <button
             onClick={fetchAchievements}
-            className="text-xs text-[#3c83f6] hover:underline"
+            className="text-xs text-primary hover:underline"
           >
             Retry
           </button>

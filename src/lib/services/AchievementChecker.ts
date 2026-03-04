@@ -1,6 +1,7 @@
 // Achievement checking and unlocking service
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/utils';
 import { StreakCalculator } from './StreakCalculator';
 
 export class AchievementChecker {
@@ -64,7 +65,7 @@ export class AchievementChecker {
           // Only ignore duplicate key errors, log others
           const error = result.reason;
           if (error?.code !== 'P2002') {
-            console.error(`Failed to create achievement ${newlyUnlocked[index]}:`, error);
+            logger.error(`Failed to create achievement ${newlyUnlocked[index]}:`, error);
           }
         }
       });

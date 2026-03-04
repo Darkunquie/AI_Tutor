@@ -1,21 +1,22 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
+import { Prisma } from '@/generated/prisma';
 import { ApiError } from '@/lib/errors/ApiError';
 import { withAdmin, validateBody, successResponse } from '@/lib/error-handler';
-
-const TRIAL_DAYS = [3, 6, 14] as const;
+import { logger } from '@/lib/utils';
+import { TRIAL_DAYS, type TrialDays } from '@/lib/config';
 
 const UpdateUserSchema = z.object({
   status: z.enum(['APPROVED', 'REJECTED']).optional(),
   trial: z.object({
     enabled: z.boolean(),
-    days: z.number().refine((d) => TRIAL_DAYS.includes(d as 3 | 6 | 14), {
+    days: z.number().refine((d) => TRIAL_DAYS.includes(d as TrialDays), {
       message: 'Trial days must be 3, 6, or 14',
     }),
   }).optional(),
   extendTrial: z.object({
-    days: z.number().refine((d) => TRIAL_DAYS.includes(d as 3 | 6 | 14), {
+    days: z.number().refine((d) => TRIAL_DAYS.includes(d as TrialDays), {
       message: 'Trial days must be 3, 6, or 14',
     }),
   }).optional(),
@@ -138,12 +139,13 @@ async function handlePatch(
       },
     });
 
+    logger.info('admin_action', { action: 'extend_trial', adminId: requestingUserId, targetId: id, days: body.extendTrial.days, newTrialEnd: newTrialEnd.toISOString() });
+
     return successResponse(updated);
   }
 
   // Handle approve/reject with optional trial
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any = { status: body.status };
+  const data: Prisma.UserUpdateInput = { status: body.status };
 
   if (body.status === 'APPROVED') {
     if (body.trial?.enabled) {
@@ -170,6 +172,8 @@ async function handlePatch(
       trialEndsAt: true,
     },
   });
+
+  logger.info('admin_action', { action: body.status === 'APPROVED' ? 'approve_user' : 'reject_user', adminId: requestingUserId, targetId: id, trial: body.trial });
 
   return successResponse(updated);
 }

@@ -92,12 +92,15 @@ export default function AdminUsersPage() {
   };
 
   const handleReject = async (id: string) => {
+    setActionLoading(true);
     try {
       await api.admin.updateUserStatus(id, 'REJECTED');
       addToast('User rejected', 'cancel', 'success');
       fetchUsers();
     } catch {
       addToast('Failed to reject user', 'error', 'error');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -151,7 +154,7 @@ export default function AdminUsersPage() {
                   onClick={() => setStatusFilter(tab.value)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     statusFilter === tab.value
-                      ? 'bg-[#3c83f6] text-white'
+                      ? 'bg-primary text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
@@ -170,7 +173,7 @@ export default function AdminUsersPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name or email..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1e293b] text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3c83f6] focus:border-transparent"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1e293b] text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
           </div>

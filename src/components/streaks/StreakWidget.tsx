@@ -11,7 +11,6 @@ export function StreakWidget() {
 
   useEffect(() => {
     let mounted = true;
-    const controller = new AbortController();
 
     setLoading(true);
     api.streaks.get()
@@ -32,7 +31,6 @@ export function StreakWidget() {
 
     return () => {
       mounted = false;
-      controller.abort();
     };
   }, []);
 
@@ -102,7 +100,7 @@ export function StreakWidget() {
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className={data.dailyGoalMet ? 'text-emerald-500' : 'text-[#3c83f6]'}
+              className={data.dailyGoalMet ? 'text-emerald-500' : 'text-primary'}
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">

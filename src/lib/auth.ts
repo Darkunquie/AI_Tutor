@@ -1,19 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
+import { env } from './env';
 
-// JWT Secret from environment variable - REQUIRED
-// Type assertion is safe because we throw if undefined
-const JWT_SECRET = (() => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error(
-      'JWT_SECRET environment variable is not set. ' +
-      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
-    );
-  }
-  return secret;
-})();
+const JWT_SECRET = env.JWT_SECRET;
 
 // JWT payload interface
 export interface JWTPayload {
@@ -146,7 +136,7 @@ export function validateEmail(email: string): {
   isValid: boolean;
   error?: string;
 } {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   if (!email || !emailRegex.test(email)) {
     return {

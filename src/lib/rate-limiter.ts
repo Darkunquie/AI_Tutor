@@ -2,10 +2,30 @@
 // Uses a Map with automatic cleanup to prevent memory leaks
 //
 // IMPORTANT: This in-memory rate limiter works correctly for long-running Node.js
-// processes (e.g., PM2, Docker), but is NOT effective in serverless environments
-// (Vercel, AWS Lambda) where each invocation may get a fresh memory space.
-// For serverless deployments, replace with Redis-backed rate limiting
-// (e.g., @upstash/ratelimit or ioredis).
+// processes (e.g., PM2 fork mode, Docker), but is NOT effective in serverless
+// environments (Vercel, AWS Lambda) or PM2 cluster mode where each worker
+// gets its own memory space. For those, replace with Redis-backed rate limiting.
+
+import { NextRequest } from 'next/server';
+
+/**
+ * Extract client IP from request headers in a spoof-resistant way.
+ * Prefers x-real-ip (set by trusted Nginx proxy) over x-forwarded-for.
+ */
+export function getClientIp(request: NextRequest): string {
+  // x-real-ip is set by Nginx with $remote_addr — cannot be spoofed by the client
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
+
+  // Fallback: use the LAST entry in x-forwarded-for (added by the trusted proxy)
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const parts = forwarded.split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length > 0) return parts.at(-1)!;
+  }
+
+  return 'unknown-ip';
+}
 
 interface RateLimitEntry {
   count: number;

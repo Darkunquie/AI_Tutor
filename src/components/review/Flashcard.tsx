@@ -79,10 +79,10 @@ export function Flashcard({ words, onComplete }: FlashcardProps) {
         tabIndex={0}
         role="button"
         aria-pressed={flipped}
-        className={`w-full min-h-[240px] rounded-2xl border-2 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#3c83f6] focus:ring-offset-2 ${
+        className={`w-full min-h-[240px] rounded-2xl border-2 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
           flipped
-            ? 'bg-white dark:bg-slate-800 border-[#3c83f6]/30 shadow-lg'
-            : 'bg-gradient-to-br from-[#3c83f6] to-indigo-500 border-transparent text-white shadow-xl shadow-[#3c83f6]/20 hover:scale-[1.02]'
+            ? 'bg-white dark:bg-slate-800 border-primary/30 shadow-lg'
+            : 'bg-gradient-to-br from-primary to-indigo-500 border-transparent text-white shadow-xl shadow-primary/20 hover:scale-[1.02]'
         }`}
       >
         {!flipped ? (

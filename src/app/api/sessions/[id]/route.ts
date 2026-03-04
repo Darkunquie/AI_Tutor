@@ -111,7 +111,8 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
   if (avgPronunciation !== undefined) updateData.avgPronunciation = avgPronunciation;
 
   // If session is ending (score provided), recalculate score from DB data
-  // for accuracy instead of trusting the client's simple formula
+  // for accuracy instead of trusting the client's simple formula.
+  // These reads run BEFORE the transaction (no need to hold a lock for reads).
   if (score !== undefined) {
     const [userMessageCount, errorCounts, pronunciationMessages, currentSession] = await Promise.all([
       db.message.count({ where: { sessionId: id, role: 'USER' } }),
@@ -156,19 +157,25 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
     }
   }
 
-  // SECURITY: Verify session belongs to authenticated user
-  const session = await db.session.update({
-    where: {
-      id,
-      userId, // Only allow updating user's own sessions
-    },
-    data: updateData,
-  });
+  // Wrap session update + daily stats update in one transaction so a crash
+  // between the two writes cannot leave the score saved but stats missing.
+  const session = await db.$transaction(async (tx) => {
+    // SECURITY: Verify session belongs to authenticated user
+    const updated = await tx.session.update({
+      where: {
+        id,
+        userId, // Only allow updating user's own sessions
+      },
+      data: updateData,
+    });
 
-  // Update daily stats if session is ending (has score)
-  if (score !== undefined) {
-    await updateDailyStats(session.userId, session.id, session);
-  }
+    // Update daily stats if session is ending (has score)
+    if (score !== undefined) {
+      await updateDailyStats(tx, updated.userId, updated.id, updated);
+    }
+
+    return updated;
+  });
 
   return successResponse({
     id: session.id,
@@ -180,8 +187,12 @@ async function handlePatch(request: NextRequest, context?: { params: Promise<Rec
   });
 }
 
+// Transaction client type — same model operations as PrismaClient but scoped to one transaction
+type Tx = Omit<typeof db, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
+
 // Helper function to update daily stats with proper averaging
 async function updateDailyStats(
+  tx: Tx,
   userId: string,
   sessionId: string,
   session: {
@@ -194,7 +205,7 @@ async function updateDailyStats(
   today.setHours(0, 0, 0, 0);
 
   // Get error counts for THIS session only (not all user sessions)
-  const errorCounts = await db.error.groupBy({
+  const errorCounts = await tx.error.groupBy({
     by: ['category'],
     where: { sessionId },
     _count: true,
@@ -206,7 +217,7 @@ async function updateDailyStats(
   const fluencyErrors = errorCounts.find((e) => e.category === 'FLUENCY')?._count || 0;
 
   // Get current daily stats to calculate proper average
-  const currentStats = await db.dailyStats.findUnique({
+  const currentStats = await tx.dailyStats.findUnique({
     where: {
       userId_date: {
         userId,
@@ -226,14 +237,14 @@ async function updateDailyStats(
   });
 
   // Count new vocabulary words learned in this session
-  const wordsLearnedCount = await db.vocabulary.count({
+  const wordsLearnedCount = await tx.vocabulary.count({
     where: {
       sessionId,
     },
   });
 
   // Upsert daily stats
-  await db.dailyStats.upsert({
+  await tx.dailyStats.upsert({
     where: {
       userId_date: {
         userId,

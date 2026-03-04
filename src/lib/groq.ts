@@ -3,18 +3,13 @@
 
 import Groq from 'groq-sdk';
 import { logger } from './utils';
+import { env } from './env';
 
-if (!process.env.GROQ_API_KEY?.trim()) {
-  throw new Error(
-    'GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com'
-  );
-}
-
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = env.GROQ_MODEL;
 const GROQ_TIMEOUT = 30000; // 30 seconds
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: env.GROQ_API_KEY,
   timeout: GROQ_TIMEOUT,
 });
 

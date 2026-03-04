@@ -39,7 +39,7 @@ export function ProgressChart({ data }: ProgressChartProps) {
           </h3>
           <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#3c83f6]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-primary" />
               Speaking
             </span>
             <span className="flex items-center gap-1.5">
@@ -69,7 +69,7 @@ export function ProgressChart({ data }: ProgressChartProps) {
         </h3>
         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#3c83f6]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-primary" />
             Score
           </span>
           <span className="flex items-center gap-1.5">
@@ -108,11 +108,12 @@ export function ProgressChart({ data }: ProgressChartProps) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #e2e8f0',
+                backgroundColor: 'var(--card, white)',
+                border: '1px solid var(--card-border, #e2e8f0)',
                 borderRadius: '12px',
                 padding: '12px 16px',
                 boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                color: 'var(--foreground, #0f172a)',
               }}
               labelFormatter={(label) => formatDate(String(label))}
             />

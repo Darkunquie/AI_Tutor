@@ -370,10 +370,10 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
 
         <div className="flex items-center gap-3">
           {/* Mode badge */}
-          <div className="flex items-center gap-2 rounded-full bg-[#3c83f6]/10 px-4 py-1.5 text-[#3c83f6]">
+          <div className="flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-primary">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3c83f6] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3c83f6]" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
             </span>
             <span className="text-sm font-semibold">{getModeLabel()}</span>
           </div>
@@ -396,20 +396,20 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
 
       {/* Speaking indicator */}
       {isSpeakingState && (
-        <div className="bg-[#3c83f6]/5 border-b border-[#3c83f6]/20 px-4 py-2 flex items-center justify-between dark:bg-[#3c83f6]/10">
-          <div className="flex items-center gap-2 text-[#3c83f6]">
+        <div className="bg-primary/5 border-b border-primary/20 px-4 py-2 flex items-center justify-between dark:bg-primary/10">
+          <div className="flex items-center gap-2 text-primary">
             <div className="flex gap-0.5 items-end h-4">
-              <span className="w-1 h-[60%] bg-[#3c83f6] rounded-full animate-pulse" />
-              <span className="w-1 h-full bg-[#3c83f6] rounded-full animate-pulse [animation-delay:0.1s]" />
-              <span className="w-1 h-[40%] bg-[#3c83f6] rounded-full animate-pulse [animation-delay:0.2s]" />
-              <span className="w-1 h-[80%] bg-[#3c83f6] rounded-full animate-pulse [animation-delay:0.3s]" />
+              <span className="w-1 h-[60%] bg-primary rounded-full animate-pulse" />
+              <span className="w-1 h-full bg-primary rounded-full animate-pulse [animation-delay:0.1s]" />
+              <span className="w-1 h-[40%] bg-primary rounded-full animate-pulse [animation-delay:0.2s]" />
+              <span className="w-1 h-[80%] bg-primary rounded-full animate-pulse [animation-delay:0.3s]" />
             </div>
             <span className="text-sm font-medium">AI is speaking...</span>
           </div>
           <button
             onClick={handleStopSpeaking}
             aria-label="Stop speaking"
-            className="text-sm text-[#3c83f6] hover:text-[#3c83f6]/80 font-semibold"
+            className="text-sm text-primary hover:text-primary/80 font-semibold"
           >
             Stop
           </button>
@@ -421,8 +421,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         <div className="mx-auto flex max-w-4xl flex-col gap-8" aria-live="polite">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#3c83f6]/10 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-3xl text-[#3c83f6]">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-3xl text-primary">
                   {({ FREE_TALK: 'forum', ROLE_PLAY: 'theater_comedy', DEBATE: 'gavel', PRONUNCIATION: 'mic', GRAMMAR_FIX: 'spellcheck' } as Record<string, string>)[mode ?? ''] ?? 'spellcheck'}
                 </span>
               </div>
@@ -452,7 +452,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
                 </div>
               )}
               {ttsSupported && (
-                <p className={`mt-4 text-xs font-medium ${ttsEnabled ? 'text-[#3c83f6]' : 'text-slate-400'}`}>
+                <p className={`mt-4 text-xs font-medium ${ttsEnabled ? 'text-primary' : 'text-slate-400'}`}>
                   {ttsEnabled ? 'AI voice is enabled' : 'AI voice is muted'}
                 </p>
               )}
@@ -465,7 +465,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
 
           {isLoading && !streamingMessageId && (
             <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#3c83f6] text-white shadow-lg shadow-[#3c83f6]/20">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
                 <span className="material-symbols-outlined">smart_toy</span>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -502,7 +502,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
             {/* Text Input */}
             <div className="relative flex-1">
               <input
-                className="w-full rounded-xl border-none bg-slate-100 px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-[#3c83f6] dark:bg-slate-800 dark:text-slate-100 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="w-full rounded-xl border-none bg-slate-100 px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-primary dark:bg-slate-800 dark:text-slate-100 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 placeholder={mode === 'GRAMMAR_FIX' ? 'Write a sentence to check...' : 'Type your message...'}
                 type="text"
                 value={textInput}
@@ -514,7 +514,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
                 onClick={handleTextSend}
                 disabled={isLoading || !textInput.trim()}
                 aria-label="Send message"
-                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg bg-[#3c83f6] text-white hover:bg-[#3c83f6]/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 <span className="material-symbols-outlined text-[18px]">send</span>
               </button>

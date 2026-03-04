@@ -43,7 +43,7 @@ export default function ReviewPage() {
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-8">
               <Link href="/" className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#3c83f6] rounded-xl text-white">
+                <div className="p-2 bg-primary rounded-xl text-white">
                   <span className="material-symbols-outlined block text-xl">school</span>
                 </div>
                 <span className="text-xl font-bold tracking-tight">Talkivo</span>
@@ -52,7 +52,7 @@ export default function ReviewPage() {
                 <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                   Dashboard
                 </Link>
-                <span className="px-4 py-2 text-sm font-semibold text-[#3c83f6] bg-[#3c83f6]/10 rounded-lg">
+                <span className="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-lg">
                   Review
                 </span>
                 <Link href="/" className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -88,7 +88,7 @@ export default function ReviewPage() {
               </div>
               <button
                 onClick={fetchWords}
-                className="px-6 py-2.5 bg-[#3c83f6] hover:bg-[#2b6bcf] text-white font-semibold rounded-lg transition-colors"
+                className="px-6 py-2.5 bg-primary hover:bg-[#2b6bcf] text-white font-semibold rounded-lg transition-colors"
               >
                 Retry
               </button>
@@ -114,7 +114,7 @@ export default function ReviewPage() {
               <div className="flex gap-4 justify-center">
                 <button
                   onClick={fetchWords}
-                  className="px-6 py-3 rounded-xl bg-[#3c83f6] text-white font-bold text-sm hover:bg-[#3c83f6]/90 transition-colors shadow-lg shadow-[#3c83f6]/20"
+                  className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                 >
                   Review More
                 </button>
@@ -129,8 +129,8 @@ export default function ReviewPage() {
           ) : words.length === 0 ? (
             /* Empty state */
             <div className="text-center py-20">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-[#3c83f6]/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-4xl text-[#3c83f6]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-4xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                   check_circle
                 </span>
               </div>
@@ -140,7 +140,7 @@ export default function ReviewPage() {
               </p>
               <Link
                 href="/"
-                className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-[#3c83f6] text-white text-lg font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:scale-105 transition-all shadow-2xl shadow-primary/40"
               >
                 Start Practicing
               </Link>

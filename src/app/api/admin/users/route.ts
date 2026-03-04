@@ -1,30 +1,31 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/lib/db';
-import { withAdmin, paginatedResponse } from '@/lib/error-handler';
+import { Prisma } from '@/generated/prisma';
+import { withAdmin, paginatedResponse, validateQuery } from '@/lib/error-handler';
+
+const AdminUsersQuerySchema = z.object({
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']).optional(),
+  search: z.string().max(100).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(20),
+});
 
 async function handleGet(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const status = searchParams.get('status');
-  const search = searchParams.get('search') || '';
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
-  const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('pageSize') || '20') || 20));
+  const { status, search, page, pageSize } = validateQuery(request, AdminUsersQuerySchema);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {};
+  const where: Prisma.UserWhereInput = { role: 'USER' };
 
-  if (status && ['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
+  if (status) {
     where.status = status;
   }
 
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: 'insensitive' as const } },
-      { email: { contains: search, mode: 'insensitive' as const } },
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
     ];
   }
-
-  // Exclude admin users from the list
-  where.role = 'USER';
 
   const [users, total] = await Promise.all([
     db.user.findMany({

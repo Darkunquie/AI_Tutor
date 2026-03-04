@@ -75,7 +75,7 @@ export default function DashboardPage() {
         setStats(statsData as Stats);
 
         const progressResult = await api.stats.progress({ userId: user.id, period });
-        setProgressData((progressResult.data || []) as unknown as ProgressData[]);
+        setProgressData(progressResult.data || []);
       } catch (error) {
         logger.error('Failed to fetch dashboard data:', error);
         setFetchError('Failed to load dashboard data. Please try again.');
@@ -101,13 +101,13 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="p-2 bg-[#3c83f6] rounded-xl text-white">
+              <div className="p-2 bg-primary rounded-xl text-white">
                 <span className="material-symbols-outlined block text-xl">school</span>
               </div>
               <span className="text-xl font-bold tracking-tight">Talkivo</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1">
-              <span className="px-4 py-2 text-sm font-semibold text-[#3c83f6] bg-[#3c83f6]/10 rounded-lg">
+              <span className="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-lg">
                 Dashboard
               </span>
               <Link href="/review" className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -120,11 +120,31 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Trial status pill */}
+            {user?.subscriptionStatus === 'TRIAL' && user.trialEndsAt && (() => {
+              const daysLeft = Math.max(0, Math.ceil(
+                (new Date(user.trialEndsAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+              ));
+              const isLow = daysLeft <= 3;
+              return (
+                <Link
+                  href="/subscription"
+                  className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    isLow
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-xs">{isLow ? 'timer' : 'verified'}</span>
+                  Trial: {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                </Link>
+              );
+            })()}
             <button aria-label="Notifications" className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
               <span className="material-symbols-outlined text-xl">notifications</span>
             </button>
             {user && (
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3c83f6] to-[#8b5cf6] flex items-center justify-center text-white text-sm font-bold">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-[#8b5cf6] flex items-center justify-center text-white text-sm font-bold">
                 {user.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -133,7 +153,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-[#3c83f6] to-[#2563eb] text-white">
+      <section className="bg-gradient-to-r from-primary to-[#2563eb] text-white">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
@@ -153,9 +173,10 @@ export default function DashboardPage() {
                 <button
                   key={option.value}
                   onClick={() => setPeriod(option.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  disabled={isLoading}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     period === option.value
-                      ? 'bg-white text-[#3c83f6] shadow-lg'
+                      ? 'bg-white text-primary shadow-lg'
                       : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                 >
@@ -178,8 +199,8 @@ export default function DashboardPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-[#3c83f6]/20 rounded-full" />
-              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#3c83f6] border-t-transparent rounded-full animate-spin" />
+              <div className="w-16 h-16 border-4 border-primary/20 rounded-full" />
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
             <p className="mt-4 text-slate-500 dark:text-slate-400 text-sm font-medium">Loading your progress...</p>
           </div>
@@ -214,8 +235,8 @@ export default function DashboardPage() {
         {/* Empty State */}
         {!isLoading && stats?.totalSessions === 0 && (
           <div className="text-center py-20">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-[#3c83f6]/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-4xl text-[#3c83f6]">school</span>
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-primary">school</span>
             </div>
             <h2 className="text-2xl font-bold tracking-tight mb-2">
               Start Your Learning Journey
@@ -225,7 +246,7 @@ export default function DashboardPage() {
             </p>
             <Link
               href="/"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-[#3c83f6] text-white text-lg font-bold hover:scale-105 transition-all shadow-2xl shadow-[#3c83f6]/40"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:scale-105 transition-all shadow-2xl shadow-primary/40"
             >
               <span className="material-symbols-outlined mr-2">play_arrow</span>
               Start Practicing Now

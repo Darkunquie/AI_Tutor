@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface ExtendTrialDialogProps {
   open: boolean;
@@ -34,12 +35,22 @@ function getTrialInfo(subscriptionStatus: string, currentTrialEnd: string | null
 export default function ExtendTrialDialog({
   open, onClose, onConfirm, userName, currentTrialEnd, subscriptionStatus, loading,
 }: ExtendTrialDialogProps) {
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
   const [days, setDays] = useState(3);
 
   // Reset state when dialog opens
   useEffect(() => {
     if (open) setDays(3);
   }, [open]);
+
+  // Escape key to close
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open && !loading) onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, loading, onClose]);
 
   if (!open) return null;
 
@@ -49,8 +60,14 @@ export default function ExtendTrialDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={loading ? undefined : onClose} />
 
-      <div className="relative w-full max-w-md bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="extend-trial-dialog-title"
+        className="relative w-full max-w-md bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6"
+      >
+        <h3 id="extend-trial-dialog-title" className="text-lg font-bold text-slate-900 dark:text-white mb-1">
           Extend Trial
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -89,7 +106,7 @@ export default function ExtendTrialDialog({
                 value={opt.value}
                 checked={days === opt.value}
                 onChange={() => setDays(opt.value)}
-                className="w-4 h-4 border-slate-300 text-[#3c83f6] focus:ring-[#3c83f6]"
+                className="w-4 h-4 border-slate-300 text-primary focus:ring-primary"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">
                 {opt.label}
@@ -110,7 +127,7 @@ export default function ExtendTrialDialog({
           <button
             onClick={() => onConfirm(days)}
             disabled={loading}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-[#3c83f6] text-white hover:bg-[#3c83f6]/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
