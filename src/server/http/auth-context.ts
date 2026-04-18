@@ -15,6 +15,33 @@ export interface AuthContext {
 
 const AUTH_CACHE_TTL = 60; // seconds
 
+function assertApproved(ctx: AuthContext): void {
+  if (ctx.role !== 'ADMIN' && ctx.status !== 'APPROVED') {
+    throw ApiError.forbidden('Account not approved');
+  }
+}
+
+async function getCachedAuth(userId: string): Promise<AuthContext | null> {
+  const redis = getRedis();
+  if (!redis) { return null; }
+  try {
+    return await redis.get<AuthContext>(`auth:${userId}`);
+  } catch (err) {
+    logger.warn('Redis auth cache miss/error:', err);
+    return null;
+  }
+}
+
+async function setCachedAuth(ctx: AuthContext): Promise<void> {
+  const redis = getRedis();
+  if (!redis) { return; }
+  try {
+    await redis.set(`auth:${ctx.userId}`, ctx, { ex: AUTH_CACHE_TTL });
+  } catch (err) {
+    logger.warn('Redis auth cache set error:', err);
+  }
+}
+
 export async function requireAuth(req: NextRequest): Promise<AuthContext> {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
@@ -28,20 +55,12 @@ export async function requireAuth(req: NextRequest): Promise<AuthContext> {
     throw ApiError.unauthorized('Invalid or expired token');
   }
 
-  // Try Redis cache first
-  const redis = getRedis();
-  if (redis) {
-    try {
-      const cached = await redis.get<AuthContext>(`auth:${payload.userId}`);
-      if (cached) {
-        return cached;
-      }
-    } catch (err) {
-      logger.warn('Redis auth cache miss/error:', err);
-    }
+  const cached = await getCachedAuth(payload.userId);
+  if (cached) {
+    assertApproved(cached);
+    return cached;
   }
 
-  // Fallback to DB
   const user = await db.user.findUnique({
     where: { id: payload.userId },
     select: { id: true, email: true, name: true, role: true, status: true },
@@ -49,10 +68,6 @@ export async function requireAuth(req: NextRequest): Promise<AuthContext> {
 
   if (!user) {
     throw ApiError.unauthorized('User no longer exists');
-  }
-
-  if (user.role !== 'ADMIN' && user.status !== 'APPROVED') {
-    throw ApiError.forbidden('Account not approved');
   }
 
   const ctx: AuthContext = {
@@ -63,14 +78,8 @@ export async function requireAuth(req: NextRequest): Promise<AuthContext> {
     status: user.status,
   };
 
-  // Cache in Redis
-  if (redis) {
-    try {
-      await redis.set(`auth:${user.id}`, JSON.stringify(ctx), { ex: AUTH_CACHE_TTL });
-    } catch (err) {
-      logger.warn('Redis auth cache set error:', err);
-    }
-  }
+  assertApproved(ctx);
+  await setCachedAuth(ctx);
 
   return ctx;
 }

@@ -13,6 +13,9 @@ export const sessionRepo = {
   },
 
   async listForUser(userId: string, page: number, pageSize: number) {
+    if (page < 1 || pageSize < 1) {
+      throw new Error('page and pageSize must be positive integers');
+    }
     const [sessions, total] = await Promise.all([
       db.session.findMany({
         where: { userId },

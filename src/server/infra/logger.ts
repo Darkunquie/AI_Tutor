@@ -21,10 +21,18 @@ function shouldLog(level: LogLevel): boolean {
   return LOG_LEVELS[level] >= LOG_LEVELS[getLevel()];
 }
 
+function safeStringify(obj: unknown): string {
+  try {
+    return JSON.stringify(obj);
+  } catch {
+    return `{"serializationError":true,"raw":"[unserializable]"}`;
+  }
+}
+
 export const logger = {
   debug: (...args: unknown[]) => {
     if (shouldLog('debug')) {
-      console.debug(JSON.stringify({
+      console.debug(safeStringify({
         level: 'debug',
         timestamp: new Date().toISOString(),
         message: args,
@@ -34,7 +42,7 @@ export const logger = {
 
   info: (...args: unknown[]) => {
     if (shouldLog('info')) {
-      console.info(JSON.stringify({
+      console.info(safeStringify({
         level: 'info',
         timestamp: new Date().toISOString(),
         message: args,
@@ -44,7 +52,7 @@ export const logger = {
 
   warn: (...args: unknown[]) => {
     if (shouldLog('warn')) {
-      console.warn(JSON.stringify({
+      console.warn(safeStringify({
         level: 'warn',
         timestamp: new Date().toISOString(),
         message: args,
@@ -56,7 +64,7 @@ export const logger = {
     if (!shouldLog('error')) { return; }
     const err = args[0];
     if (err instanceof Error) {
-      console.error(JSON.stringify({
+      console.error(safeStringify({
         level: 'error',
         timestamp: new Date().toISOString(),
         error: err.message,
@@ -64,7 +72,7 @@ export const logger = {
         extra: args.slice(1),
       }));
     } else {
-      console.error(JSON.stringify({
+      console.error(safeStringify({
         level: 'error',
         timestamp: new Date().toISOString(),
         message: args,

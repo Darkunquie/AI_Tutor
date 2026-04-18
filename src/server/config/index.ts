@@ -23,7 +23,10 @@ const configSchema = z.object({
   // Runtime
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-});
+}).refine(
+  (data) => !!data.REDIS_URL === !!data.REDIS_TOKEN,
+  { message: 'REDIS_URL and REDIS_TOKEN must both be provided or both omitted' },
+);
 
 export const config = configSchema.parse(process.env);
 export type Config = z.infer<typeof configSchema>;

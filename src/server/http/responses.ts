@@ -3,6 +3,9 @@ export function success(data: unknown, status = 200) {
 }
 
 export function paginated(data: unknown[], total: number, page: number, pageSize: number) {
+  if (pageSize <= 0) {
+    throw new Error('pageSize must be greater than 0');
+  }
   return Response.json({
     data,
     meta: {
