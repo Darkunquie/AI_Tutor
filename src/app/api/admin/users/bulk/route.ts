@@ -2,14 +2,24 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/errors/ApiError';
-import { withAdmin, validateBody, successResponse } from '@/lib/error-handler';
+import { withErrorHandling, validateBody, successResponse } from '@/lib/error-handler';
 import { logger } from '@/lib/utils';
+import { requireAdmin } from '@/server/http/auth-context';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 const BulkActionSchema = z.object({
   action: z.enum(['APPROVE_ALL', 'REJECT_ALL']),
 });
 
 async function handlePost(request: NextRequest) {
+  const ctx = await requireAdmin(request);
+
+  // Rate limit admin actions (60 requests/minute per admin)
+  const adminRateLimit = await checkRateLimit(`admin:${ctx.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+  if (!adminRateLimit.allowed) {
+    throw ApiError.rateLimited('Too many admin requests. Please slow down.');
+  }
+
   const body = await validateBody(request, BulkActionSchema);
 
   const pendingUsers = await db.user.findMany({
@@ -29,8 +39,7 @@ async function handlePost(request: NextRequest) {
       data: { status: 'APPROVED' },
     });
 
-    const adminId = request.headers.get('x-user-id');
-    logger.info('admin_action', { action: 'bulk_approve', adminId, processed: result.count });
+    logger.info('admin_action', { action: 'bulk_approve', adminId: ctx.userId, processed: result.count });
 
     return successResponse({
       processed: result.count,
@@ -45,8 +54,7 @@ async function handlePost(request: NextRequest) {
     data: { status: 'REJECTED' },
   });
 
-  const adminId = request.headers.get('x-user-id');
-  logger.info('admin_action', { action: 'bulk_reject', adminId, processed: result.count });
+  logger.info('admin_action', { action: 'bulk_reject', adminId: ctx.userId, processed: result.count });
 
   return successResponse({
     processed: result.count,
@@ -55,4 +63,4 @@ async function handlePost(request: NextRequest) {
   });
 }
 
-export const POST = withAdmin(handlePost);
+export const POST = withErrorHandling(handlePost);

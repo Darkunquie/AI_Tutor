@@ -1,8 +1,18 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { withAdmin, successResponse } from '@/lib/error-handler';
+import { withErrorHandling, successResponse } from '@/lib/error-handler';
+import { requireAdmin } from '@/server/http/auth-context';
+import { checkRateLimit } from '@/lib/rate-limiter';
+import { ApiError } from '@/lib/errors/ApiError';
 
-async function handleGet(_request: NextRequest) {
+async function handleGet(request: NextRequest) {
+  const ctx = await requireAdmin(request);
+
+  // Rate limit admin actions (60 requests/minute per admin)
+  const adminRateLimit = await checkRateLimit(`admin:${ctx.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+  if (!adminRateLimit.allowed) {
+    throw ApiError.rateLimited('Too many admin requests. Please slow down.');
+  }
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
@@ -59,4 +69,4 @@ async function handleGet(_request: NextRequest) {
   });
 }
 
-export const GET = withAdmin(handleGet);
+export const GET = withErrorHandling(handleGet);

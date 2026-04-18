@@ -4,12 +4,13 @@ import { db } from '@/lib/db';
 import { SaveMessageSchema } from '@/lib/schemas/message.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import {
-  withAuth,
+  withErrorHandling,
   validateBody,
   validateQuery,
   successResponse,
 } from '@/lib/error-handler';
 import { safeJsonParse } from '@/lib/utils';
+import { requireAuth } from '@/server/http/auth-context';
 
 // Query schema for GET
 const MessageQuerySchema = z.object({
@@ -18,10 +19,8 @@ const MessageQuerySchema = z.object({
 
 // POST /api/messages - Save a message
 async function handlePost(request: NextRequest) {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
 
   const body = await validateBody(request, SaveMessageSchema);
   const {
@@ -92,10 +91,8 @@ async function handlePost(request: NextRequest) {
 
 // GET /api/messages - Get messages for a session
 async function handleGet(request: NextRequest) {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
 
   const query = validateQuery(request, MessageQuerySchema);
   const { sessionId } = query;
@@ -130,5 +127,5 @@ async function handleGet(request: NextRequest) {
   });
 }
 
-export const POST = withAuth(handlePost);
-export const GET = withAuth(handleGet);
+export const POST = withErrorHandling(handlePost);
+export const GET = withErrorHandling(handleGet);

@@ -2,8 +2,10 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/errors/ApiError';
-import { withAdmin, validateBody, successResponse } from '@/lib/error-handler';
+import { withErrorHandling, validateBody, successResponse } from '@/lib/error-handler';
 import { logger } from '@/lib/utils';
+import { requireAdmin } from '@/server/http/auth-context';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 const UpdateUserSchema = z.object({
   status: z.enum(['APPROVED', 'REJECTED']),
@@ -13,6 +15,14 @@ async function handleGet(
   request: NextRequest,
   context?: { params: Promise<Record<string, string>> }
 ) {
+  const ctx = await requireAdmin(request);
+
+  // Rate limit admin actions (60 requests/minute per admin)
+  const adminRateLimit = await checkRateLimit(`admin:${ctx.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+  if (!adminRateLimit.allowed) {
+    throw ApiError.rateLimited('Too many admin requests. Please slow down.');
+  }
+
   const { id } = await context!.params;
 
   const user = await db.user.findUnique({
@@ -72,6 +82,14 @@ async function handlePatch(
   request: NextRequest,
   context?: { params: Promise<Record<string, string>> }
 ) {
+  const ctx = await requireAdmin(request);
+
+  // Rate limit admin actions (60 requests/minute per admin)
+  const adminRateLimit = await checkRateLimit(`admin:${ctx.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+  if (!adminRateLimit.allowed) {
+    throw ApiError.rateLimited('Too many admin requests. Please slow down.');
+  }
+
   const { id } = await context!.params;
   const body = await validateBody(request, UpdateUserSchema);
 
@@ -83,8 +101,7 @@ async function handlePatch(
   }
 
   // Prevent admin from modifying their own account
-  const requestingUserId = request.headers.get('x-user-id');
-  if (requestingUserId === id) {
+  if (ctx.userId === id) {
     throw ApiError.forbidden('Cannot modify your own account');
   }
 
@@ -99,10 +116,10 @@ async function handlePatch(
     },
   });
 
-  logger.info('admin_action', { action: body.status === 'APPROVED' ? 'approve_user' : 'reject_user', adminId: requestingUserId, targetId: id });
+  logger.info('admin_action', { action: body.status === 'APPROVED' ? 'approve_user' : 'reject_user', adminId: ctx.userId, targetId: id });
 
   return successResponse(updated);
 }
 
-export const GET = withAdmin(handleGet);
-export const PATCH = withAdmin(handlePatch);
+export const GET = withErrorHandling(handleGet);
+export const PATCH = withErrorHandling(handlePatch);

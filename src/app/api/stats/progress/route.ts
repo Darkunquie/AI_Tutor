@@ -1,24 +1,20 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { ApiError } from '@/lib/errors/ApiError';
 import { ProgressQuerySchema } from '@/lib/schemas/stats.schema';
 import {
-  withAuth,
+  withErrorHandling,
   validateQuery,
   successResponse,
 } from '@/lib/error-handler';
+import { requireAuth } from '@/server/http/auth-context';
 
 // GET /api/stats/progress - Get time-series progress data
 async function handleGet(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
+
   const query = validateQuery(request, ProgressQuerySchema);
   const { period = '30d' } = query;
-
-  // Get authenticated user ID from middleware headers
-  const userId = request.headers.get('x-user-id');
-
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
 
   // Calculate date range
   const now = new Date();
@@ -191,4 +187,4 @@ async function handleGet(request: NextRequest) {
   return successResponse({ data, period });
 }
 
-export const GET = withAuth(handleGet);
+export const GET = withErrorHandling(handleGet);

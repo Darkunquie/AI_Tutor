@@ -4,20 +4,19 @@ import { UpdateSessionSchema } from '@/lib/schemas/session.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import { ValidationError } from '@/lib/errors/ValidationError';
 import {
-  withAuth,
+  withErrorHandling,
   validateBody,
   successResponse,
 } from '@/lib/error-handler';
 import { ScoreCalculator } from '@/lib/services/ScoreCalculator';
 import type { FillerWordDetection } from '@/lib/types';
 import { safeJsonParse } from '@/lib/utils';
+import { requireAuth } from '@/server/http/auth-context';
 
 // GET /api/sessions/[id] - Get a specific session
 async function handleGet(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
 
   const params = context!.params;
   const { id } = await params;
@@ -73,10 +72,8 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
 
 // PATCH /api/sessions/[id] - Update a session
 async function handlePatch(request: NextRequest, context?: { params: Promise<Record<string, string>> }) {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
 
   const { id } = await context!.params;
   const body = await validateBody(request, UpdateSessionSchema);
@@ -278,5 +275,5 @@ async function updateDailyStats(
   });
 }
 
-export const GET = withAuth(handleGet);
-export const PATCH = withAuth(handlePatch);
+export const GET = withErrorHandling(handleGet);
+export const PATCH = withErrorHandling(handlePatch);

@@ -1,40 +1,27 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { CreateSessionSchema, SessionQuerySchema } from '@/lib/schemas/session.schema';
-import { ApiError } from '@/lib/errors/ApiError';
 import {
-  withAuth,
+  withErrorHandling,
   validateBody,
   validateQuery,
   successResponse,
   paginatedResponse,
 } from '@/lib/error-handler';
+import { requireAuth } from '@/server/http/auth-context';
 
 // POST /api/sessions - Create a new session
 async function handlePost(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
+
   const body = await validateBody(request, CreateSessionSchema);
   const { mode, level } = body;
-
-  // Get authenticated user ID from middleware headers
-  const userId = request.headers.get('x-user-id');
-
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
-
-  // Verify user exists
-  const user = await db.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    throw ApiError.notFound('User');
-  }
 
   // Create the session
   const session = await db.session.create({
     data: {
-      userId: user.id,
+      userId,
       mode: mode,
       level: level,
       duration: 0,
@@ -47,21 +34,17 @@ async function handlePost(request: NextRequest) {
 
   return successResponse({
     sessionId: session.id,
-    userId: user.id,
+    userId,
   });
 }
 
 // GET /api/sessions - Get sessions for a user
 async function handleGet(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
+
   const query = validateQuery(request, SessionQuerySchema);
   const { page = 1, pageSize = 10 } = query;
-
-  // Get authenticated user ID from middleware headers
-  const userId = request.headers.get('x-user-id');
-
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
 
   // Get total count
   const total = await db.session.count({
@@ -100,5 +83,5 @@ async function handleGet(request: NextRequest) {
   );
 }
 
-export const POST = withAuth(handlePost);
-export const GET = withAuth(handleGet);
+export const POST = withErrorHandling(handlePost);
+export const GET = withErrorHandling(handleGet);

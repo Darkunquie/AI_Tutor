@@ -4,20 +4,19 @@ import { getSystemPrompt } from '@/lib/prompts';
 import { SCENARIOS } from '@/lib/config';
 import { ChatRequestSchema } from '@/lib/schemas/chat.schema';
 import {
-  withAuth,
+  withErrorHandling,
   validateBody,
 } from '@/lib/error-handler';
 import { ApiError } from '@/lib/errors/ApiError';
 import { db } from '@/lib/db';
 import { checkRateLimit } from '@/lib/rate-limiter';
+import { requireAuth } from '@/server/http/auth-context';
 
 const CHAT_RATE_LIMIT = { maxAttempts: 30, windowMs: 60 * 1000 };
 
 async function handlePost(request: NextRequest) {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
 
   // Rate limit chat requests per user
   const rateLimit = await checkRateLimit(`chat:${userId}`, CHAT_RATE_LIMIT);
@@ -101,4 +100,4 @@ async function handlePost(request: NextRequest) {
   });
 }
 
-export const POST = withAuth(handlePost);
+export const POST = withErrorHandling(handlePost);

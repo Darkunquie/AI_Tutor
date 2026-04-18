@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { withAuth, successResponse } from '@/lib/error-handler';
-import { ApiError } from '@/lib/errors/ApiError';
+import { withErrorHandling, successResponse } from '@/lib/error-handler';
+import { requireAuth } from '@/server/http/auth-context';
 
-export const GET = withAuth(async (request: NextRequest) => {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) { throw ApiError.unauthorized('User ID not found'); }
+async function handleGet(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
+
   const limit = Math.min(
     50,
     Math.max(1, Number(request.nextUrl.searchParams.get('limit')) || 20)
@@ -60,4 +61,6 @@ export const GET = withAuth(async (request: NextRequest) => {
       reviewedToday,
     },
   });
-});
+}
+
+export const GET = withErrorHandling(handleGet);

@@ -2,7 +2,10 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { Prisma } from '@/generated/prisma';
-import { withAdmin, paginatedResponse, validateQuery } from '@/lib/error-handler';
+import { withErrorHandling, paginatedResponse, validateQuery } from '@/lib/error-handler';
+import { requireAdmin } from '@/server/http/auth-context';
+import { checkRateLimit } from '@/lib/rate-limiter';
+import { ApiError } from '@/lib/errors/ApiError';
 
 const AdminUsersQuerySchema = z.object({
   status: z.enum(['PENDING', 'APPROVED', 'REJECTED']).optional(),
@@ -12,6 +15,14 @@ const AdminUsersQuerySchema = z.object({
 });
 
 async function handleGet(request: NextRequest) {
+  const ctx = await requireAdmin(request);
+
+  // Rate limit admin actions (60 requests/minute per admin)
+  const adminRateLimit = await checkRateLimit(`admin:${ctx.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+  if (!adminRateLimit.allowed) {
+    throw ApiError.rateLimited('Too many admin requests. Please slow down.');
+  }
+
   const { status, search, page, pageSize } = validateQuery(request, AdminUsersQuerySchema);
 
   const where: Prisma.UserWhereInput = { role: 'USER' };
@@ -50,4 +61,4 @@ async function handleGet(request: NextRequest) {
   return paginatedResponse(users, total, page, pageSize);
 }
 
-export const GET = withAdmin(handleGet);
+export const GET = withErrorHandling(handleGet);

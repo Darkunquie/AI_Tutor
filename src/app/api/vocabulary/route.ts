@@ -6,14 +6,14 @@ import {
   UpdateVocabularySchema,
   VocabularyQuerySchema,
 } from '@/lib/schemas/vocabulary.schema';
-import { ApiError } from '@/lib/errors/ApiError';
 import {
-  withAuth,
+  withErrorHandling,
   validateBody,
   validateQuery,
   successResponse,
   paginatedResponse,
 } from '@/lib/error-handler';
+import { requireAuth } from '@/server/http/auth-context';
 
 // Extended query schema with pagination
 const VocabularyListQuerySchema = VocabularyQuerySchema.extend({
@@ -29,15 +29,11 @@ const VocabularyPatchSchema = UpdateVocabularySchema.extend({
 
 // POST /api/vocabulary - Save a new vocabulary word
 async function handlePost(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
+
   const body = await validateBody(request, SaveVocabularySchema);
   const { sessionId, word, definition, context, source } = body;
-
-  // Get authenticated user ID from middleware headers
-  const userId = request.headers.get('x-user-id');
-
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
 
   // Read current mastery so we can clamp atomically inside the upsert,
   // avoiding a separate clamp update that races with concurrent requests.
@@ -84,15 +80,11 @@ async function handlePost(request: NextRequest) {
 
 // GET /api/vocabulary - Get vocabulary list for a user
 async function handleGet(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
+
   const query = validateQuery(request, VocabularyListQuerySchema);
   const { sessionId, page, pageSize, sortBy, sortOrder } = query;
-
-  // Get authenticated user ID from middleware headers
-  const userId = request.headers.get('x-user-id');
-
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
 
   // Build where clause
   const where: { userId: string; sessionId?: string } = { userId };
@@ -135,10 +127,8 @@ async function handleGet(request: NextRequest) {
 
 // PATCH /api/vocabulary - Update vocabulary mastery
 async function handlePatch(request: NextRequest) {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    throw ApiError.unauthorized('User ID not found');
-  }
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
 
   const body = await validateBody(request, VocabularyPatchSchema);
   const { id, mastery, definition } = body;
@@ -170,6 +160,6 @@ async function handlePatch(request: NextRequest) {
   });
 }
 
-export const POST = withAuth(handlePost);
-export const GET = withAuth(handleGet);
-export const PATCH = withAuth(handlePatch);
+export const POST = withErrorHandling(handlePost);
+export const GET = withErrorHandling(handleGet);
+export const PATCH = withErrorHandling(handlePatch);

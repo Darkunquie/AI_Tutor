@@ -1,24 +1,24 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { withAuth, successResponse, validateBody } from '@/lib/error-handler';
+import { withErrorHandling, successResponse, validateBody } from '@/lib/error-handler';
 import { StreakCalculator } from '@/lib/services/StreakCalculator';
-import { ApiError } from '@/lib/errors/ApiError';
+import { requireAuth } from '@/server/http/auth-context';
 
 const UpdateGoalSchema = z.object({
   dailyGoalMinutes: z.number().int().min(5).max(120),
 });
 
-export const GET = withAuth(async (request: NextRequest) => {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) { throw ApiError.unauthorized('User ID not found'); }
+async function handleGet(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
   const data = await StreakCalculator.getStreakData(userId);
   return successResponse(data);
-});
+}
 
-export const PATCH = withAuth(async (request: NextRequest) => {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) { throw ApiError.unauthorized('User ID not found'); }
+async function handlePatch(request: NextRequest) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
   const { dailyGoalMinutes } = await validateBody(request, UpdateGoalSchema);
 
   await db.user.update({
@@ -27,4 +27,7 @@ export const PATCH = withAuth(async (request: NextRequest) => {
   });
 
   return successResponse({ dailyGoalMinutes });
-});
+}
+
+export const GET = withErrorHandling(handleGet);
+export const PATCH = withErrorHandling(handlePatch);

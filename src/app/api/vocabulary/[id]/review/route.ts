@@ -1,14 +1,16 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { withAuth, successResponse, validateBody } from '@/lib/error-handler';
+import { withErrorHandling, successResponse, validateBody } from '@/lib/error-handler';
 import { ReviewResultSchema } from '@/lib/schemas/review.schema';
 import { ApiError } from '@/lib/errors/ApiError';
+import { requireAuth } from '@/server/http/auth-context';
 
-export const PATCH = withAuth(async (
+async function handlePatch(
   request: NextRequest,
   context?: { params: Promise<Record<string, string>> }
-) => {
-  const userId = request.headers.get('x-user-id')!;
+) {
+  const ctx = await requireAuth(request);
+  const userId = ctx.userId;
   const { id } = await context!.params;
   const { correct } = await validateBody(request, ReviewResultSchema);
 
@@ -40,4 +42,6 @@ export const PATCH = withAuth(async (
     mastery: updated.mastery,
     reviewedAt: updated.reviewedAt?.toISOString() ?? null,
   });
-});
+}
+
+export const PATCH = withErrorHandling(handlePatch);
