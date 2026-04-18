@@ -51,6 +51,7 @@
     "@vitest/ui": "^4.0.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "eslint-plugin-security": "^4.0.0",
     "jsdom": "^28.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",

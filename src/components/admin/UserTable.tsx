@@ -9,8 +9,6 @@ export interface UserRow {
   email: string;
   phone: string;
   status: string;
-  subscriptionStatus: string;
-  trialEndsAt: string | null;
   level: string;
   createdAt: string;
   _count: { sessions: number };
@@ -20,50 +18,10 @@ interface UserTableProps {
   users: UserRow[];
   onApprove: (id: string) => void | Promise<void>;
   onReject: (id: string) => void | Promise<void>;
-  onExtendTrial?: (id: string) => void | Promise<void>;
   loading?: boolean;
 }
 
-function getSubscriptionBadge(subscriptionStatus: string, trialEndsAt: string | null) {
-  if (subscriptionStatus === 'TRIAL') {
-    if (!trialEndsAt) {
-      return {
-        label: 'Trial (no end date)',
-        className: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
-      };
-    }
-    const endTime = new Date(trialEndsAt).getTime();
-    if (Number.isNaN(endTime)) {
-      return {
-        label: 'Trial (invalid date)',
-        className: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
-      };
-    }
-    const daysLeft = Math.ceil((endTime - Date.now()) / (1000 * 60 * 60 * 24));
-    if (daysLeft > 0) {
-      return {
-        label: `Trial (${daysLeft}d left)`,
-        className: 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-      };
-    }
-    return {
-      label: 'Expired',
-      className: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-    };
-  }
-  if (subscriptionStatus === 'EXPIRED') {
-    return {
-      label: 'Expired',
-      className: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-    };
-  }
-  return {
-    label: 'No Trial',
-    className: 'bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-400',
-  };
-}
-
-export default function UserTable({ users, onApprove, onReject, onExtendTrial, loading }: UserTableProps) {
+export default function UserTable({ users, onApprove, onReject, loading }: UserTableProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
@@ -115,9 +73,6 @@ export default function UserTable({ users, onApprove, onReject, onExtendTrial, l
               Status
             </th>
             <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Subscription
-            </th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
               Level
             </th>
             <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
@@ -133,7 +88,6 @@ export default function UserTable({ users, onApprove, onReject, onExtendTrial, l
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
           {users.map((user) => {
-            const badge = getSubscriptionBadge(user.subscriptionStatus, user.trialEndsAt);
             return (
               <tr
                 key={user.id}
@@ -154,11 +108,6 @@ export default function UserTable({ users, onApprove, onReject, onExtendTrial, l
                 </td>
                 <td className="py-3 px-4">
                   <StatusBadge status={user.status} />
-                </td>
-                <td className="py-3 px-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
-                    {badge.label}
-                  </span>
                 </td>
                 <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                   {user.level}
@@ -181,25 +130,6 @@ export default function UserTable({ users, onApprove, onReject, onExtendTrial, l
                           check_circle
                         </span>
                         Approve
-                      </button>
-                    )}
-                    {user.status === 'APPROVED' && onExtendTrial && (
-                      <button
-                        onClick={async () => {
-                          setActionLoading(`${user.id}-extend`);
-                          try {
-                            await onExtendTrial(user.id);
-                          } finally {
-                            setActionLoading(null);
-                          }
-                        }}
-                        disabled={actionLoading === `${user.id}-extend`}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50"
-                      >
-                        <span className="material-symbols-outlined text-sm">
-                          add
-                        </span>
-                        Extend Trial
                       </button>
                     )}
                     {user.status !== 'REJECTED' && (

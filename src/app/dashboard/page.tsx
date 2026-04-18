@@ -120,26 +120,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Trial status pill */}
-            {user?.subscriptionStatus === 'TRIAL' && user.trialEndsAt && (() => {
-              const daysLeft = Math.max(0, Math.ceil(
-                (new Date(user.trialEndsAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-              ));
-              const isLow = daysLeft <= 3;
-              return (
-                <Link
-                  href="/subscription"
-                  className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    isLow
-                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
-                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-xs">{isLow ? 'timer' : 'verified'}</span>
-                  Trial: {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
-                </Link>
-              );
-            })()}
             <button aria-label="Notifications" className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
               <span className="material-symbols-outlined text-xl">notifications</span>
             </button>

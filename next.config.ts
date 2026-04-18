@@ -1,18 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  reactStrictMode: true,
   async headers() {
     return [
       {
         source: "/(.*)",
         headers: [
-          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-XSS-Protection", value: "1; mode=block" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-DNS-Prefetch-Control", value: "on" },
           // Allow microphone access (used for voice input)
-          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self)" },
+          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self), payment=()" },
           {
             key: "Content-Security-Policy",
             value: [
@@ -34,6 +37,10 @@ const nextConfig: NextConfig = {
               "media-src 'self'",
               // Prevent this page from being embedded in iframes
               "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+              "upgrade-insecure-requests",
             ].join("; "),
           },
         ],

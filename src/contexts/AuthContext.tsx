@@ -12,8 +12,6 @@ interface User {
   level: string;
   role: string;
   status: string;
-  subscriptionStatus: string;
-  trialEndsAt: string | null;
 }
 
 interface AuthContextType {
@@ -23,8 +21,6 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   isPending: boolean;
-  hasActiveSubscription: boolean;
-  isTrialExpired: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
 }
@@ -107,16 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
-  const hasActiveSubscription =
-    user?.role === 'ADMIN' ||
-    user?.subscriptionStatus === 'ACTIVE' ||
-    (user?.subscriptionStatus === 'TRIAL' &&
-      user?.trialEndsAt != null &&
-      new Date(user.trialEndsAt) > new Date()) ||
-    false;
-
-  const isTrialExpired = user?.subscriptionStatus === 'EXPIRED' || false;
-
   const value: AuthContextType = {
     user,
     token,
@@ -124,8 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isAdmin: user?.role === 'ADMIN',
     isPending: user?.status === 'PENDING',
-    hasActiveSubscription,
-    isTrialExpired,
     login,
     logout,
   };

@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { withActiveSubscription, successResponse } from '@/lib/error-handler';
+import { withAuth, successResponse } from '@/lib/error-handler';
 import { ApiError } from '@/lib/errors/ApiError';
 
-export const GET = withActiveSubscription(async (request: NextRequest) => {
+export const GET = withAuth(async (request: NextRequest) => {
   const userId = request.headers.get('x-user-id');
   if (!userId) { throw ApiError.unauthorized('User ID not found'); }
   const limit = Math.min(

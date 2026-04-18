@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { comparePassword, generateToken, validateEmail } from '@/lib/auth';
 import { checkRateLimit, LOGIN_RATE_LIMIT, getClientIp } from '@/lib/rate-limiter';
-import { checkAndExpireTrial } from '@/lib/services/trial';
 import { withErrorHandling } from '@/lib/error-handler';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
@@ -88,9 +87,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     );
   }
 
-  // Auto-expire trial if it has ended (only for approved users)
-  user.subscriptionStatus = await checkAndExpireTrial(user.id, user.subscriptionStatus, user.trialEndsAt);
-
   const token = generateToken(
     {
       userId: user.id,
@@ -113,8 +109,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         level: user.level,
         role: user.role,
         status: user.status,
-        subscriptionStatus: user.subscriptionStatus,
-        trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
       },
     },
     { status: 200 }

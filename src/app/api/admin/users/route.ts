@@ -36,8 +36,6 @@ async function handleGet(request: NextRequest) {
         email: true,
         phone: true,
         status: true,
-        subscriptionStatus: true,
-        trialEndsAt: true,
         level: true,
         createdAt: true,
         _count: { select: { sessions: true } },

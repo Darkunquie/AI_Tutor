@@ -4,10 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminStatsCards from '@/components/admin/AdminStatsCards';
-import TrialStatsCards from '@/components/admin/TrialStatsCards';
 import UserTable from '@/components/admin/UserTable';
 import type { UserRow } from '@/components/admin/UserTable';
-import TrialDialog from '@/components/admin/TrialDialog';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { api } from '@/lib/api-client';
 import { useToastStore } from '@/stores/toastStore';
@@ -29,12 +27,6 @@ interface AdminStats {
     averageScore: number;
     totalVocabularyLearned: number;
   };
-  trials: {
-    active: number;
-    expiringSoon: number;
-    expired: number;
-    noTrial: number;
-  };
 }
 
 export default function AdminDashboardPage() {
@@ -44,9 +36,6 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState('');
 
   // Dialog state
-  const [trialDialogOpen, setTrialDialogOpen] = useState(false);
-  const [approveTargetId, setApproveTargetId] = useState<string | null>(null);
-  const [bulkTrialDialogOpen, setBulkTrialDialogOpen] = useState(false);
   const [rejectAllDialogOpen, setRejectAllDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -73,19 +62,11 @@ export default function AdminDashboardPage() {
     fetchData();
   }, [fetchData]);
 
-  // Single user approve — opens trial dialog
-  const handleApprove = (id: string) => {
-    setApproveTargetId(id);
-    setTrialDialogOpen(true);
-  };
-
-  const handleApproveConfirm = async (trial: { enabled: boolean; days: number }) => {
-    if (!approveTargetId) return;
+  // Single user approve
+  const handleApprove = async (id: string) => {
     setActionLoading(true);
     try {
-      await api.admin.updateUserStatus(approveTargetId, 'APPROVED', trial);
-      setTrialDialogOpen(false);
-      setApproveTargetId(null);
+      await api.admin.updateUserStatus(id, 'APPROVED');
       addToast('User approved', 'check_circle', 'success');
       fetchData();
     } catch {
@@ -109,11 +90,10 @@ export default function AdminDashboardPage() {
   };
 
   // Bulk approve
-  const handleBulkApprove = async (trial: { enabled: boolean; days: number }) => {
+  const handleBulkApprove = async () => {
     setActionLoading(true);
     try {
-      const result = await api.admin.bulkAction({ action: 'APPROVE_ALL', trial });
-      setBulkTrialDialogOpen(false);
+      const result = await api.admin.bulkAction({ action: 'APPROVE_ALL' });
       if (result.processed < result.total) {
         addToast(`Approved ${result.processed}/${result.total} users`, 'warning', 'warning');
       } else {
@@ -171,16 +151,6 @@ export default function AdminDashboardPage() {
                 <AdminStatsCards stats={stats} />
               </section>
 
-              {/* Trial Analytics */}
-              {stats.trials && (
-                <section>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                    Trial Analytics
-                  </h2>
-                  <TrialStatsCards trials={stats.trials} />
-                </section>
-              )}
-
               {/* Pending Users */}
               <section>
                 <div className="flex items-center justify-between mb-4">
@@ -197,8 +167,9 @@ export default function AdminDashboardPage() {
                   {stats.users.pending > 0 && (
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setBulkTrialDialogOpen(true)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors"
+                        onClick={handleBulkApprove}
+                        disabled={actionLoading}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors disabled:opacity-50"
                       >
                         <span className="material-symbols-outlined text-sm">done_all</span>
                         Approve All ({stats.users.pending})
@@ -227,24 +198,6 @@ export default function AdminDashboardPage() {
         </main>
 
         {/* Dialogs */}
-        <TrialDialog
-          open={trialDialogOpen}
-          onClose={() => { setTrialDialogOpen(false); setApproveTargetId(null); }}
-          onConfirm={handleApproveConfirm}
-          title="Approve User"
-          description="Choose trial settings for this user."
-          loading={actionLoading}
-        />
-
-        <TrialDialog
-          open={bulkTrialDialogOpen}
-          onClose={() => setBulkTrialDialogOpen(false)}
-          onConfirm={handleBulkApprove}
-          title={`Approve All (${stats?.users.pending ?? 0}) Users`}
-          description="Choose trial settings for all pending users."
-          loading={actionLoading}
-        />
-
         <ConfirmDialog
           open={rejectAllDialogOpen}
           onClose={() => setRejectAllDialogOpen(false)}

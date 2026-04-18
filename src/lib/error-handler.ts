@@ -8,7 +8,6 @@ import { ValidationError } from './errors/ValidationError';
 import { verifyToken } from './auth';
 import { db } from './db';
 import { checkRateLimit } from './rate-limiter';
-import { checkAndExpireTrial } from './services/trial';
 import { logger } from './utils';
 
 // Type for route handler functions
@@ -293,45 +292,3 @@ export function withAdmin(handler: RouteHandler): RouteHandler {
   });
 }
 
-/**
- * Wraps a route handler with JWT auth + active subscription check.
- * Admins always bypass. For regular users, verifies they have an active trial.
- * Auto-expires trials that have ended.
- */
-export function withActiveSubscription(handler: RouteHandler): RouteHandler {
-  return withAuth(async (request, context) => {
-    const role = request.headers.get('x-user-role');
-
-    // Admins always have full access
-    if (role === 'ADMIN') {
-      return handler(request, context);
-    }
-
-    const userId = request.headers.get('x-user-id');
-    if (!userId) {
-      throw ApiError.unauthorized('User ID not found');
-    }
-
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { subscriptionStatus: true, trialEndsAt: true },
-    });
-
-    if (!user) {
-      throw ApiError.unauthorized('User no longer exists');
-    }
-
-    // Auto-expire trial if ended, then check status
-    const status = await checkAndExpireTrial(userId, user.subscriptionStatus, user.trialEndsAt);
-
-    if (status === 'TRIAL') {
-      return handler(request, context);
-    }
-
-    if (status === 'EXPIRED') {
-      throw ApiError.forbidden('Your trial has expired. Please contact admin for a subscription.');
-    }
-
-    throw ApiError.forbidden('No active subscription. Please contact admin.');
-  });
-}

@@ -3,7 +3,7 @@
 // Config constants are in ./config/
 
 // Re-export all enum types (single source of truth: Zod schemas)
-export type { Level, Mode, Role, ErrorType, VocabSource, SubscriptionStatus } from './schemas/enums';
+export type { Level, Mode, Role, ErrorType, VocabSource } from './schemas/enums';
 
 import type { ErrorType, Role, VocabSource, Mode, Level } from './schemas/enums';
 

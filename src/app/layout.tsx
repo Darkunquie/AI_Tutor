@@ -3,7 +3,6 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastContainer } from "@/components/ui/Toast";
 import { SpeechWarmUpProvider } from "@/components/SpeechWarmUpProvider";
-import TrialGuard from "@/components/auth/TrialGuard";
 
 export const metadata: Metadata = {
   title: "Talkivo - Practice English with AI",
@@ -36,11 +35,9 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
         <AuthProvider>
-          <TrialGuard>
-            <SpeechWarmUpProvider>
-              {children}
-            </SpeechWarmUpProvider>
-          </TrialGuard>
+          <SpeechWarmUpProvider>
+            {children}
+          </SpeechWarmUpProvider>
           <ToastContainer />
         </AuthProvider>
       </body>

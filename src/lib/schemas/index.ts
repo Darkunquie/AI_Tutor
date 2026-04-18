@@ -7,13 +7,11 @@ export {
   RoleSchema,
   ErrorTypeSchema,
   VocabSourceSchema,
-  SubscriptionStatusSchema,
   type Level,
   type Mode,
   type Role,
   type ErrorType,
   type VocabSource,
-  type SubscriptionStatus,
 } from './enums';
 
 // Chat schemas

@@ -43,9 +43,6 @@ export default function LoginPage() {
         return;
       }
 
-      const subscriptionStatus = data.user.subscriptionStatus || 'NONE';
-      const trialEndsAt = data.user.trialEndsAt || null;
-
       // Update auth context (this also stores in localStorage)
       login(data.token, {
         id: data.user.id,
@@ -55,19 +52,13 @@ export default function LoginPage() {
         level: data.user.level,
         role: data.user.role,
         status: data.user.status,
-        subscriptionStatus,
-        trialEndsAt,
       });
 
       // Role-based redirect
       if (data.user.role === 'ADMIN') {
         router.push('/admin');
-      } else if (
-        subscriptionStatus === 'EXPIRED' ||
-        subscriptionStatus === 'NONE' ||
-        (subscriptionStatus === 'TRIAL' && trialEndsAt && new Date(trialEndsAt) <= new Date())
-      ) {
-        router.push('/subscription');
+      } else if (data.user.status === 'PENDING') {
+        router.push('/pending');
       } else {
         router.push('/dashboard');
       }

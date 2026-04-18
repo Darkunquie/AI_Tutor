@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { withActiveSubscription, successResponse, validateBody } from '@/lib/error-handler';
+import { withAuth, successResponse, validateBody } from '@/lib/error-handler';
 import { ReviewResultSchema } from '@/lib/schemas/review.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 
-export const PATCH = withActiveSubscription(async (
+export const PATCH = withAuth(async (
   request: NextRequest,
   context?: { params: Promise<Record<string, string>> }
 ) => {

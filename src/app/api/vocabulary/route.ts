@@ -8,7 +8,7 @@ import {
 } from '@/lib/schemas/vocabulary.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import {
-  withActiveSubscription,
+  withAuth,
   validateBody,
   validateQuery,
   successResponse,
@@ -170,6 +170,6 @@ async function handlePatch(request: NextRequest) {
   });
 }
 
-export const POST = withActiveSubscription(handlePost);
-export const GET = withActiveSubscription(handleGet);
-export const PATCH = withActiveSubscription(handlePatch);
+export const POST = withAuth(handlePost);
+export const GET = withAuth(handleGet);
+export const PATCH = withAuth(handlePatch);

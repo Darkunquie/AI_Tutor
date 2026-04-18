@@ -5,8 +5,6 @@ import RequireAdmin from '@/components/auth/RequireAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import UserTable from '@/components/admin/UserTable';
 import type { UserRow } from '@/components/admin/UserTable';
-import TrialDialog from '@/components/admin/TrialDialog';
-import ExtendTrialDialog from '@/components/admin/ExtendTrialDialog';
 import { api } from '@/lib/api-client';
 import { useToastStore } from '@/stores/toastStore';
 
@@ -26,11 +24,6 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  // Dialog state
-  const [trialDialogOpen, setTrialDialogOpen] = useState(false);
-  const [approveTargetId, setApproveTargetId] = useState<string | null>(null);
-  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const addToast = useToastStore((s) => s.addToast);
@@ -69,19 +62,11 @@ export default function AdminUsersPage() {
     setPage(1);
   }, [statusFilter, search]);
 
-  // Approve — opens trial dialog
-  const handleApprove = (id: string) => {
-    setApproveTargetId(id);
-    setTrialDialogOpen(true);
-  };
-
-  const handleApproveConfirm = async (trial: { enabled: boolean; days: number }) => {
-    if (!approveTargetId) return;
+  // Approve — directly update status
+  const handleApprove = async (id: string) => {
     setActionLoading(true);
     try {
-      await api.admin.updateUserStatus(approveTargetId, 'APPROVED', trial);
-      setTrialDialogOpen(false);
-      setApproveTargetId(null);
+      await api.admin.updateUserStatus(id, 'APPROVED');
       addToast('User approved', 'check_circle', 'success');
       fetchUsers();
     } catch {
@@ -99,31 +84,6 @@ export default function AdminUsersPage() {
       fetchUsers();
     } catch {
       addToast('Failed to reject user', 'error', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Extend trial
-  const handleExtendTrial = (id: string) => {
-    const user = users.find((u) => u.id === id);
-    if (user) {
-      setSelectedUser(user);
-      setExtendDialogOpen(true);
-    }
-  };
-
-  const handleExtendConfirm = async (days: number) => {
-    if (!selectedUser) return;
-    setActionLoading(true);
-    try {
-      await api.admin.extendTrial(selectedUser.id, days);
-      setExtendDialogOpen(false);
-      setSelectedUser(null);
-      addToast(`Extended trial for ${selectedUser.name}`, 'timer', 'success');
-      fetchUsers();
-    } catch {
-      addToast('Failed to extend trial', 'error', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -184,7 +144,6 @@ export default function AdminUsersPage() {
               users={users}
               onApprove={handleApprove}
               onReject={handleReject}
-              onExtendTrial={handleExtendTrial}
               loading={loading}
             />
           </div>
@@ -213,25 +172,6 @@ export default function AdminUsersPage() {
           )}
         </main>
 
-        {/* Dialogs */}
-        <TrialDialog
-          open={trialDialogOpen}
-          onClose={() => { setTrialDialogOpen(false); setApproveTargetId(null); }}
-          onConfirm={handleApproveConfirm}
-          title="Approve User"
-          description="Choose trial settings for this user."
-          loading={actionLoading}
-        />
-
-        <ExtendTrialDialog
-          open={extendDialogOpen}
-          onClose={() => { setExtendDialogOpen(false); setSelectedUser(null); }}
-          onConfirm={handleExtendConfirm}
-          userName={selectedUser?.name ?? ''}
-          currentTrialEnd={selectedUser?.trialEndsAt ?? null}
-          subscriptionStatus={selectedUser?.subscriptionStatus ?? 'NONE'}
-          loading={actionLoading}
-        />
       </div>
     </RequireAdmin>
   );

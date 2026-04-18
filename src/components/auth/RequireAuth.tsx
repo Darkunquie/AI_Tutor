@@ -9,7 +9,7 @@ interface RequireAuthProps {
 }
 
 export default function RequireAuth({ children }: RequireAuthProps) {
-  const { isAuthenticated, isLoading, user, hasActiveSubscription } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -20,12 +20,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     if (!isLoading && isAuthenticated && user && user.status !== 'APPROVED' && user.role !== 'ADMIN') {
       router.push('/pending');
     }
-    // Redirect approved users without active subscription to subscription page
-    if (!isLoading && isAuthenticated && user && user.role !== 'ADMIN' &&
-        user.status === 'APPROVED' && !hasActiveSubscription) {
-      router.push('/subscription');
-    }
-  }, [isAuthenticated, isLoading, user, hasActiveSubscription, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -45,11 +40,6 @@ export default function RequireAuth({ children }: RequireAuthProps) {
 
   // Block non-approved, non-admin users
   if (user && user.status !== 'APPROVED' && user.role !== 'ADMIN') {
-    return null;
-  }
-
-  // Block users without active subscription
-  if (user && user.role !== 'ADMIN' && user.status === 'APPROVED' && !hasActiveSubscription) {
     return null;
   }
 

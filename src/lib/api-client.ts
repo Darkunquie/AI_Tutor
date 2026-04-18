@@ -116,17 +116,6 @@ function createApiClient(config: ApiClientConfig = {}) {
             window.location.href = '/login';
           }
         }
-        // On 403 subscription errors, redirect to subscription page
-        if (response.status === 403 && typeof window !== 'undefined') {
-          const errBody = responseBody as { error?: { message?: string } };
-          const msg = errBody?.error?.message || '';
-          if (msg.includes('trial has expired') || msg.includes('No active subscription')) {
-            if (!window.location.pathname.startsWith('/subscription')) {
-              window.location.href = '/subscription';
-              return undefined as never; // Stop execution after redirect
-            }
-          }
-        }
         throw ApiClientError.fromResponse(response, responseBody);
       }
 
@@ -237,16 +226,6 @@ export const api = {
             }
           }
           const body = await response.json().catch(() => ({}));
-          // On 403 subscription errors, redirect to subscription page
-          if (response.status === 403 && typeof window !== 'undefined') {
-            const msg = (body as { error?: { message?: string } })?.error?.message || '';
-            if (msg.includes('trial has expired') || msg.includes('No active subscription')) {
-              if (!window.location.pathname.startsWith('/subscription')) {
-                window.location.href = '/subscription';
-                return undefined as never;
-              }
-            }
-          }
           throw ApiClientError.fromResponse(response, body);
         }
 
@@ -398,7 +377,6 @@ export const api = {
       apiClient.get<{
         users: { total: number; pending: number; approved: number; rejected: number; newThisWeek: number; newThisMonth: number };
         activity: { totalSessions: number; sessionsThisWeek: number; activeUsersThisWeek: number; totalPracticeDuration: number; averageScore: number; totalVocabularyLearned: number };
-        trials: { active: number; expiringSoon: number; expired: number; noTrial: number };
       }>('/api/admin/stats'),
 
     getUsers: (params?: { status?: string; search?: string; page?: number; pageSize?: number }) =>
@@ -409,17 +387,12 @@ export const api = {
     getUser: (id: string) =>
       apiClient.get<Record<string, unknown>>(`/api/admin/users/${id}`),
 
-    updateUserStatus: (id: string, status: 'APPROVED' | 'REJECTED', trial?: { enabled: boolean; days: number }) =>
-      apiClient.patch<{ id: string; name: string; email: string; status: string; subscriptionStatus: string; trialEndsAt: string | null }>(
-        `/api/admin/users/${id}`, { status, ...(trial ? { trial } : {}) }
+    updateUserStatus: (id: string, status: 'APPROVED' | 'REJECTED') =>
+      apiClient.patch<{ id: string; name: string; email: string; status: string }>(
+        `/api/admin/users/${id}`, { status }
       ),
 
-    extendTrial: (id: string, days: number) =>
-      apiClient.patch<{ id: string; name: string; email: string; status: string; subscriptionStatus: string; trialEndsAt: string | null }>(
-        `/api/admin/users/${id}`, { extendTrial: { days } }
-      ),
-
-    bulkAction: (data: { action: 'APPROVE_ALL' | 'REJECT_ALL'; trial?: { enabled: boolean; days: number } }) =>
+    bulkAction: (data: { action: 'APPROVE_ALL' | 'REJECT_ALL' }) =>
       apiClient.post<{ processed: number; total: number; action: string }>(
         '/api/admin/users/bulk', data
       ),

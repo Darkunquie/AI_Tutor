@@ -23,6 +23,3 @@ export type UserRole = z.infer<typeof UserRoleSchema>;
 
 export const UserStatusSchema = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
 export type UserStatus = z.infer<typeof UserStatusSchema>;
-
-export const SubscriptionStatusSchema = z.enum(['NONE', 'TRIAL', 'EXPIRED']);
-export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>;

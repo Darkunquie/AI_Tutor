@@ -1,27 +1,12 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { Prisma } from '@/generated/prisma';
 import { ApiError } from '@/lib/errors/ApiError';
 import { withAdmin, validateBody, successResponse } from '@/lib/error-handler';
 import { logger } from '@/lib/utils';
-import { TRIAL_DAYS, type TrialDays } from '@/lib/config';
 
 const UpdateUserSchema = z.object({
-  status: z.enum(['APPROVED', 'REJECTED']).optional(),
-  trial: z.object({
-    enabled: z.boolean(),
-    days: z.number().refine((d) => TRIAL_DAYS.includes(d as TrialDays), {
-      message: 'Trial days must be 3, 6, or 14',
-    }),
-  }).optional(),
-  extendTrial: z.object({
-    days: z.number().refine((d) => TRIAL_DAYS.includes(d as TrialDays), {
-      message: 'Trial days must be 3, 6, or 14',
-    }),
-  }).optional(),
-}).refine((data) => data.status || data.extendTrial, {
-  message: 'Must provide status update or trial extension',
+  status: z.enum(['APPROVED', 'REJECTED']),
 });
 
 async function handleGet(
@@ -39,8 +24,6 @@ async function handleGet(
       phone: true,
       role: true,
       status: true,
-      subscriptionStatus: true,
-      trialEndsAt: true,
       level: true,
       dailyGoalMinutes: true,
       createdAt: true,
@@ -105,75 +88,18 @@ async function handlePatch(
     throw ApiError.forbidden('Cannot modify your own account');
   }
 
-  // Handle extend trial (no status change)
-  if (body.extendTrial && !body.status) {
-    if (user.status !== 'APPROVED') {
-      throw ApiError.badRequest('Can only extend trial for approved users');
-    }
-
-    const now = new Date();
-    const msToAdd = body.extendTrial.days * 24 * 60 * 60 * 1000;
-    let newTrialEnd: Date;
-
-    // If active trial, add days to existing end date
-    if (user.subscriptionStatus === 'TRIAL' && user.trialEndsAt && new Date(user.trialEndsAt) > now) {
-      newTrialEnd = new Date(new Date(user.trialEndsAt).getTime() + msToAdd);
-    } else {
-      // Expired or no trial — start fresh from now
-      newTrialEnd = new Date(now.getTime() + msToAdd);
-    }
-
-    const updated = await db.user.update({
-      where: { id },
-      data: {
-        subscriptionStatus: 'TRIAL',
-        trialEndsAt: newTrialEnd,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        status: true,
-        subscriptionStatus: true,
-        trialEndsAt: true,
-      },
-    });
-
-    logger.info('admin_action', { action: 'extend_trial', adminId: requestingUserId, targetId: id, days: body.extendTrial.days, newTrialEnd: newTrialEnd.toISOString() });
-
-    return successResponse(updated);
-  }
-
-  // Handle approve/reject with optional trial
-  const data: Prisma.UserUpdateInput = { status: body.status };
-
-  if (body.status === 'APPROVED') {
-    if (body.trial?.enabled) {
-      data.subscriptionStatus = 'TRIAL';
-      data.trialEndsAt = new Date(Date.now() + body.trial.days * 24 * 60 * 60 * 1000);
-    } else {
-      data.subscriptionStatus = 'NONE';
-      data.trialEndsAt = null;
-    }
-  } else if (body.status === 'REJECTED') {
-    data.subscriptionStatus = 'NONE';
-    data.trialEndsAt = null;
-  }
-
   const updated = await db.user.update({
     where: { id },
-    data,
+    data: { status: body.status },
     select: {
       id: true,
       name: true,
       email: true,
       status: true,
-      subscriptionStatus: true,
-      trialEndsAt: true,
     },
   });
 
-  logger.info('admin_action', { action: body.status === 'APPROVED' ? 'approve_user' : 'reject_user', adminId: requestingUserId, targetId: id, trial: body.trial });
+  logger.info('admin_action', { action: body.status === 'APPROVED' ? 'approve_user' : 'reject_user', adminId: requestingUserId, targetId: id });
 
   return successResponse(updated);
 }
