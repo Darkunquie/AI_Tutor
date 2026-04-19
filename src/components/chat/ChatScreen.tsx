@@ -16,6 +16,7 @@ import { api } from '@/lib/api-client';
 import type { Message, PronunciationResult, FillerWordDetection, Correction } from '@/lib/types';
 import { CorrectionParser } from '@/lib/services/CorrectionParser';
 import { logger } from '@/lib/utils';
+import { AiOrb } from './AiOrb';
 
 interface ChatScreenProps {
   onEndSession?: () => void;
@@ -360,13 +361,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       {/* Speaking indicator */}
       {isSpeakingState && (
         <div className="flex items-center justify-between border-b border-[#2A2A2E] bg-[#D4A373]/5 px-8 py-2 text-[12px] text-[#D4A373]">
-          <div className="flex items-center gap-2">
-            <span className="flex items-end gap-0.5">
-              <span className="h-2 w-0.5 animate-pulse bg-[#D4A373]" />
-              <span className="h-3 w-0.5 animate-pulse bg-[#D4A373] [animation-delay:0.1s]" />
-              <span className="h-2 w-0.5 animate-pulse bg-[#D4A373] [animation-delay:0.2s]" />
-              <span className="h-4 w-0.5 animate-pulse bg-[#D4A373] [animation-delay:0.3s]" />
-            </span>
+          <div className="flex items-center gap-3">
+            <AiOrb state="speaking" size={28} />
             <span>Tutor is speaking…</span>
           </div>
           <button
@@ -382,11 +378,12 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[760px] px-8 py-20" aria-live="polite">
           {messages.length === 0 && (
-            <div className="max-w-[520px]">
+            <div className="flex flex-col items-center text-center">
+              <AiOrb state={isLoading ? 'thinking' : 'idle'} size={140} className="mb-8" />
               <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
                 {modeLabel}
               </div>
-              <h2 className="font-serif-display text-[32px] leading-[1.15] tracking-[-0.01em] text-[#F5F2EC]">
+              <h2 className="font-serif-display text-[32px] leading-[1.15] tracking-[-0.01em] text-[#F5F2EC] max-w-[520px]">
                 {mode === 'FREE_TALK' && 'Say anything. The tutor is listening.'}
                 {mode === 'ROLE_PLAY' && 'The scene has started. Jump in.'}
                 {mode === 'DEBATE' && 'Make your opening argument.'}
@@ -394,7 +391,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
                 {mode === 'PRONUNCIATION' && 'Speak clearly. Your tutor will listen.'}
               </h2>
               {(context.topic || context.scenario || context.debateTopic) && (
-                <div className="mt-6 border-l border-[#D4A373] pl-4 text-[14px] italic leading-[1.5] text-[#9A948A] font-serif-display">
+                <div className="mt-6 border-l border-[#D4A373] pl-4 text-left text-[14px] italic leading-[1.5] text-[#9A948A] font-serif-display">
                   {context.topic && <>Topic: <span className="text-[#F5F2EC]">{context.topic}</span></>}
                   {context.scenario && <>Scenario: <span className="text-[#F5F2EC]">{context.scenario}</span></>}
                   {context.debateTopic && (
@@ -411,19 +408,11 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
             ))}
 
             {isLoading && !streamingMessageId && (
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
-                  <span className="h-1 w-1 rounded-full bg-[#D4A373]" />
-                  Tutor
-                </div>
-                <div className="flex items-center gap-1.5 pt-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.15s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.3s]" />
-                  <span className="ml-3 text-[12px] italic text-[#9A948A] font-serif-display">
-                    thinking…
-                  </span>
-                </div>
+              <div className="flex items-center gap-4">
+                <AiOrb state="thinking" size={48} />
+                <span className="text-[13px] italic text-[#9A948A] font-serif-display">
+                  thinking…
+                </span>
               </div>
             )}
 
@@ -492,14 +481,18 @@ function EditorialMessage({ message, streaming }: { message: Message; streaming?
 
   if (isTutor) {
     return (
-      <div>
-        <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
-          <span className="h-1 w-1 rounded-full bg-[#D4A373]" />
-          Tutor
+      <div className="flex gap-4">
+        <div className="shrink-0 pt-1">
+          <AiOrb state={streaming ? 'speaking' : 'idle'} size={36} />
         </div>
-        <p className="font-serif-display text-[19px] leading-[1.55] text-[#F5F2EC]">
-          {message.content || (streaming ? '…' : '')}
-        </p>
+        <div>
+          <div className="mb-2 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+            Tutor
+          </div>
+          <p className="font-serif-display text-[19px] leading-[1.55] text-[#F5F2EC]">
+            {message.content || (streaming ? '…' : '')}
+          </p>
+        </div>
       </div>
     );
   }
