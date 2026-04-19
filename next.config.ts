@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
               // Google Fonts stylesheets + inline styles used by Tailwind
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Google Fonts woff2 files
-              "font-src 'self' https://fonts.gstatic.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
               // Images: self, data URIs (base64 avatars), blobs
               "img-src 'self' data: blob:",
               // API calls go to same origin only (Groq called server-side, not from browser)
