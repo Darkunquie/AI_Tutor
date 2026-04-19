@@ -32,7 +32,7 @@ export const chatService = {
     // 3. Build system prompt and call Groq
     const systemPrompt = getSystemPrompt(params.mode, params.level, params.context, SCENARIOS);
     const trimmedHistory = (params.history || []).slice(-20);
-    const reply = await chat(systemPrompt, params.message, trimmedHistory);
+    const reply = await chat(systemPrompt, params.message, trimmedHistory, params.userId);
 
     // 4. Save AI message
     if (reply.trim()) {
@@ -42,7 +42,7 @@ export const chatService = {
       });
     }
 
-    logger.info('Chat turn completed', { sessionId: params.sessionId, userId: params.userId });
+    logger.debug('Chat turn completed', { sessionId: params.sessionId, userId: params.userId });
     return { reply, sessionId: params.sessionId };
   },
 
@@ -75,7 +75,7 @@ export const chatService = {
     let fullReply = '';
 
     try {
-      for await (const token of chatStream(systemPrompt, params.message, trimmedHistory)) {
+      for await (const token of chatStream(systemPrompt, params.message, trimmedHistory, params.userId)) {
         fullReply += token;
         yield token;
       }

@@ -7,20 +7,7 @@
 //      NOT effective in PM2 cluster mode (each worker has its own counter).
 
 import { NextRequest } from 'next/server';
-import { Redis } from '@upstash/redis';
-
-// ── Redis client (lazy-initialised, only if env vars present) ─────────────
-let redis: Redis | null = null;
-
-function getRedis(): Redis | null {
-  if (redis !== null) { return redis; }
-  const url = process.env.REDIS_URL;
-  const token = process.env.REDIS_TOKEN;
-  if (url && token) {
-    redis = new Redis({ url, token });
-  }
-  return redis;
-}
+import { getRedis } from '@/server/infra/redis';
 
 /**
  * Extract client IP from request headers in a spoof-resistant way.

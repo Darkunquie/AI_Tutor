@@ -15,6 +15,8 @@ const configSchema = z.object({
   GROQ_API_KEY: z.string().min(1, 'GROQ_API_KEY is required'),
   GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
   GROQ_MAX_CONCURRENT: z.coerce.number().int().positive().default(25),
+  GROQ_RPM_LIMIT: z.coerce.number().int().positive().default(25),
+  GROQ_MAX_PER_USER: z.coerce.number().int().positive().default(3),
 
   // Redis — Upstash (optional; falls back to in-memory rate limiting)
   REDIS_URL: z.string().optional(),
