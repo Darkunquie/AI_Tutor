@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
         api.admin.getUsers({ status: 'PENDING', pageSize: 10 }),
       ]);
       setStats(statsData as AdminStats);
-      setPendingUsers(usersData.data as unknown as UserRow[]);
+      setPendingUsers((usersData.data || []) as unknown as UserRow[]);
     } catch {
       setError('Failed to load admin data');
     } finally {

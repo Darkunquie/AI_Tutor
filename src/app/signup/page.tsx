@@ -30,7 +30,13 @@ export default function SignupPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        setError('Server returned an invalid response. Please try again.');
+        return;
+      }
 
       if (!response.ok) {
         setError(data.error || 'Signup failed');

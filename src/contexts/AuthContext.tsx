@@ -47,7 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedToken && storedUser) {
       try {
         // Check if token is expired by decoding the JWT payload
-        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        const parts = storedToken.split('.');
+        if (parts.length !== 3) {
+          throw new Error('Malformed token');
+        }
+        const payload = JSON.parse(atob(parts[1]));
         if (payload.exp && payload.exp * 1000 < Date.now()) {
           // Token expired — clear auth
           localStorage.removeItem('auth_token');
@@ -85,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout?.(5000),
         });
       }
     } catch (error) {
