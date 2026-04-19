@@ -1,19 +1,33 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { MessageBubble } from './MessageBubble';
 import { VoiceInput } from './VoiceInput';
 import { useChatStore, messagesToHistory } from '@/stores/chatStore';
 import { useSessionStore, formatDuration } from '@/stores/sessionStore';
-import { speakText, stopSpeaking, loadVoices, isTTSSupported, warmUpSpeechEngine, isSpeechWarmedUp } from '@/lib/speech';
+import {
+  speakText,
+  stopSpeaking,
+  loadVoices,
+  isTTSSupported,
+  warmUpSpeechEngine,
+  isSpeechWarmedUp,
+} from '@/lib/speech';
 import { api } from '@/lib/api-client';
-import type { Message, PronunciationResult, FillerWordDetection } from '@/lib/types';
+import type { Message, PronunciationResult, FillerWordDetection, Correction } from '@/lib/types';
 import { CorrectionParser } from '@/lib/services/CorrectionParser';
 import { logger } from '@/lib/utils';
 
 interface ChatScreenProps {
   onEndSession?: () => void;
 }
+
+const MODE_LABEL: Record<string, string> = {
+  FREE_TALK: 'Free Talk',
+  ROLE_PLAY: 'Role Play',
+  DEBATE: 'Debate',
+  GRAMMAR_FIX: 'Grammar Fix',
+  PRONUNCIATION: 'Pronunciation',
+};
 
 export function ChatScreen({ onEndSession }: ChatScreenProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -53,41 +67,32 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     addPronunciationScore,
   } = useSessionStore();
 
-  // Initialize TTS on mount
   useEffect(() => {
     const initTTS = async () => {
       const supported = isTTSSupported();
       setTtsSupported(supported);
-      if (supported) {
-        await loadVoices();
-      }
+      if (supported) await loadVoices();
     };
     initTTS();
   }, []);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Update timer every second
   useEffect(() => {
     if (!isActive) return;
     const interval = setInterval(updateDuration, 1000);
     return () => clearInterval(interval);
   }, [isActive, updateDuration]);
 
-  // Cleanup TTS on unmount
   useEffect(() => {
     return () => {
-      if (stopSpeakingRef.current) {
-        stopSpeakingRef.current();
-      }
+      if (stopSpeakingRef.current) stopSpeakingRef.current();
       stopSpeaking();
     };
   }, []);
 
-  // Grammar Fix: auto-send greeting with topic hint on session start
   useEffect(() => {
     if (
       mode === 'GRAMMAR_FIX' &&
@@ -121,13 +126,11 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         timestamp: new Date(),
       };
       addMessage(aiMessage);
-      // Save only AI message to DB (no fake user message)
       api.messages.save({ sessionId, role: 'AI', content: reply })
         .catch(err => logger.error('Failed to save greeting:', err));
       handleSpeak(reply);
     } catch (err) {
       logger.error('Failed to get greeting:', err);
-      // Non-fatal — user can still type normally
     } finally {
       setLoading(false);
     }
@@ -135,16 +138,11 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
 
   const handleSpeak = (text: string) => {
     if (!ttsEnabled || !ttsSupported || !text) return;
-
-    // On tablets, skip auto-speaking if the engine hasn't been warmed up
-    // by a user gesture yet. The text is still visible to the user.
     if (!isSpeechWarmedUp()) return;
-
     if (stopSpeakingRef.current) {
       stopSpeakingRef.current();
       stopSpeakingRef.current = null;
     }
-
     const { stop } = speakText(text, level, {
       onStart: () => setIsSpeakingState(true),
       onEnd: () => {
@@ -156,7 +154,6 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         stopSpeakingRef.current = null;
       },
     });
-
     stopSpeakingRef.current = stop;
   };
 
@@ -188,8 +185,6 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     const aiMessageId = `ai-${Date.now()}`;
 
     try {
-      // Use getState() to avoid stale closure -- messages from render scope
-      // doesn't include the userMessage we just added above
       const currentMessages = useChatStore.getState().messages;
       const aiMessage: Message = {
         id: aiMessageId,
@@ -200,7 +195,6 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       addMessage(aiMessage);
       startStreaming(aiMessageId);
 
-      // Stream tokens from the API
       let reply = '';
       try {
         for await (const token of api.chat.stream({
@@ -215,7 +209,6 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
           appendStreamToken(token);
         }
       } catch {
-        // Fallback to non-streaming if SSE fails
         if (!reply) {
           const result = await api.chat.send({
             message: text,
@@ -233,26 +226,21 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       }
 
       const corrections = CorrectionParser.parse(reply);
-      // Always mark as checked so UI can show "correct" or correction tips
       useChatStore.getState().updateMessage(userMessage.id, {
         corrections,
         hasBeenChecked: true,
       });
       if (corrections.length > 0) {
         corrections.forEach(addCorrection);
-        // Extract corrected words as vocabulary for review
         corrections.forEach(c => {
           if (c.corrected && c.corrected.trim()) {
-            // Split multi-word corrections into individual tokens
-            const tokens = c.corrected.trim().split(/\s+/);
-            tokens.forEach(token => {
+            c.corrected.trim().split(/\s+/).forEach(token => {
               if (token) addVocabulary(token);
             });
           }
         });
       }
 
-      // Save messages to DB (awaited to prevent silent data loss)
       const fillerCount = fillerWords?.reduce((sum, f) => sum + f.count, 0) || 0;
       try {
         await Promise.all([
@@ -274,21 +262,12 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
         logger.error('Failed to save messages:', saveErr);
       }
 
-      // Track filler words and pronunciation in store for client-side score preview
-      if (fillerCount > 0) {
-        addFillerCount(fillerCount);
-      }
-      if (pronunciationData?.score !== undefined) {
-        addPronunciationScore(pronunciationData.score);
-      }
-
-      if (reply) {
-        handleSpeak(reply);
-      }
+      if (fillerCount > 0) addFillerCount(fillerCount);
+      if (pronunciationData?.score !== undefined) addPronunciationScore(pronunciationData.score);
+      if (reply) handleSpeak(reply);
     } catch (err) {
       logger.error('Chat error:', err);
       setError('Failed to send message. Please try again.');
-      // Remove empty placeholder AI message on failure
       useChatStore.getState().removeMessage(aiMessageId);
     } finally {
       setLoading(false);
@@ -339,204 +318,249 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
     setIsSpeakingState(false);
   };
 
-  const getModeLabel = () => {
-    switch (mode) {
-      case 'FREE_TALK': return 'Free Talk';
-      case 'ROLE_PLAY': return 'Role Play';
-      case 'DEBATE': return 'Debate';
-      case 'GRAMMAR_FIX': return 'Grammar Fix';
-      case 'PRONUNCIATION': return 'Pronunciation';
-      default: return 'Practice';
-    }
-  };
+  const modeLabel = MODE_LABEL[mode ?? ''] ?? 'Practice';
 
   return (
-    <div className="flex h-screen flex-col bg-[#f5f7f8] dark:bg-[#101722] text-slate-900 dark:text-slate-100">
-      {/* Header */}
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-[#101722]/80 md:px-10">
-        <div className="flex items-center gap-4">
+    <div className="flex h-screen flex-col bg-[#0E0E10] text-[#F5F2EC] font-geist antialiased">
+      {/* Top bar */}
+      <header className="flex h-[64px] shrink-0 items-center justify-between border-b border-[#2A2A2E] bg-[#0E0E10] px-8">
+        <div className="flex items-center gap-3">
+          <span className="font-serif-display text-[18px] tracking-tight">Talkivo</span>
+          <span className="h-[5px] w-[5px] rounded-full bg-[#D4A373]" />
+          <span className="ml-2 text-[12px] uppercase tracking-[0.14em] text-[#6B665F]">
+            {modeLabel}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2.5 text-[13px]">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D4A373] opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#D4A373]" />
+            </span>
+            <span className="tabular-nums text-[#D4A373]">{formatDuration(duration)}</span>
+          </div>
+          {ttsSupported && (
+            <button
+              onClick={toggleTTS}
+              className="text-[12px] uppercase tracking-[0.12em] text-[#9A948A] transition-colors hover:text-[#F5F2EC]"
+            >
+              {ttsEnabled ? 'Voice · on' : 'Voice · off'}
+            </button>
+          )}
           <button
             onClick={onEndSession}
-            aria-label="Go back"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+            className="text-[13px] text-[#B5564C] transition-colors hover:text-[#C56A60]"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            End session
           </button>
-          <div className="hidden md:block">
-            <h1 className="text-lg font-bold tracking-tight">Talkivo</h1>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Your AI English Tutor</p>
-          </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          {/* Mode badge */}
-          <div className="flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-primary">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-            <span className="text-sm font-semibold">{getModeLabel()}</span>
-          </div>
-
-          {/* Timer */}
-          <div className="flex h-10 items-center gap-2 rounded-xl bg-slate-100 px-4 text-sm font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-            <span className="material-symbols-outlined text-[18px]">schedule</span>
-            <span>{formatDuration(duration)}</span>
-          </div>
-        </div>
-
-        {/* End Session */}
-        <button
-          onClick={onEndSession}
-          className="flex h-10 items-center justify-center rounded-xl bg-red-50 px-4 text-sm font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 transition-colors"
-        >
-          <span className="truncate">End Session</span>
-        </button>
       </header>
 
       {/* Speaking indicator */}
       {isSpeakingState && (
-        <div className="bg-primary/5 border-b border-primary/20 px-4 py-2 flex items-center justify-between dark:bg-primary/10">
-          <div className="flex items-center gap-2 text-primary">
-            <div className="flex gap-0.5 items-end h-4">
-              <span className="w-1 h-[60%] bg-primary rounded-full animate-pulse" />
-              <span className="w-1 h-full bg-primary rounded-full animate-pulse [animation-delay:0.1s]" />
-              <span className="w-1 h-[40%] bg-primary rounded-full animate-pulse [animation-delay:0.2s]" />
-              <span className="w-1 h-[80%] bg-primary rounded-full animate-pulse [animation-delay:0.3s]" />
-            </div>
-            <span className="text-sm font-medium">AI is speaking...</span>
+        <div className="flex items-center justify-between border-b border-[#2A2A2E] bg-[#D4A373]/5 px-8 py-2 text-[12px] text-[#D4A373]">
+          <div className="flex items-center gap-2">
+            <span className="flex items-end gap-0.5">
+              <span className="h-2 w-0.5 animate-pulse bg-[#D4A373]" />
+              <span className="h-3 w-0.5 animate-pulse bg-[#D4A373] [animation-delay:0.1s]" />
+              <span className="h-2 w-0.5 animate-pulse bg-[#D4A373] [animation-delay:0.2s]" />
+              <span className="h-4 w-0.5 animate-pulse bg-[#D4A373] [animation-delay:0.3s]" />
+            </span>
+            <span>Tutor is speaking…</span>
           </div>
           <button
             onClick={handleStopSpeaking}
-            aria-label="Stop speaking"
-            className="text-sm text-primary hover:text-primary/80 font-semibold"
+            className="text-[11px] uppercase tracking-[0.12em] hover:text-[#F2C38E]"
           >
             Stop
           </button>
         </div>
       )}
 
-      {/* Messages area */}
-      <main className="custom-scrollbar flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="mx-auto flex max-w-4xl flex-col gap-8" aria-live="polite">
+      {/* Transcript */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-[760px] px-8 py-20" aria-live="polite">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-3xl text-primary">
-                  {({ FREE_TALK: 'forum', ROLE_PLAY: 'theater_comedy', DEBATE: 'gavel', PRONUNCIATION: 'mic', GRAMMAR_FIX: 'spellcheck' } as Record<string, string>)[mode ?? ''] ?? 'spellcheck'}
-                </span>
+            <div className="max-w-[520px]">
+              <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+                {modeLabel}
               </div>
-              <h2 className="text-xl font-bold tracking-tight mb-2">Start Your Practice!</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-                {mode === 'FREE_TALK' && 'Talk about anything you like. Speak or type to begin the conversation.'}
-                {mode === 'ROLE_PLAY' && 'Play out the scenario naturally. The AI will stay in character.'}
-                {mode === 'DEBATE' && 'State your position on the topic. The AI will argue the opposing side.'}
-                {mode === 'GRAMMAR_FIX' && 'Write any sentence and get instant grammar feedback.'}
-              </p>
-              {context.topic && (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-[16px]">topic</span>
-                  {context.topic}
+              <h2 className="font-serif-display text-[32px] leading-[1.15] tracking-[-0.01em] text-[#F5F2EC]">
+                {mode === 'FREE_TALK' && 'Say anything. The tutor is listening.'}
+                {mode === 'ROLE_PLAY' && 'The scene has started. Jump in.'}
+                {mode === 'DEBATE' && 'Make your opening argument.'}
+                {mode === 'GRAMMAR_FIX' && 'Write a sentence. Any sentence.'}
+              </h2>
+              {(context.topic || context.scenario || context.debateTopic) && (
+                <div className="mt-6 border-l border-[#D4A373] pl-4 text-[14px] italic leading-[1.5] text-[#9A948A] font-serif-display">
+                  {context.topic && <>Topic: <span className="text-[#F5F2EC]">{context.topic}</span></>}
+                  {context.scenario && <>Scenario: <span className="text-[#F5F2EC]">{context.scenario}</span></>}
+                  {context.debateTopic && (
+                    <>Position: <span className="text-[#F5F2EC]">{context.debatePosition}</span> — {context.debateTopic}</>
+                  )}
                 </div>
-              )}
-              {context.scenario && (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-[16px]">theaters</span>
-                  {context.scenario}
-                </div>
-              )}
-              {context.debateTopic && (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-[16px]">gavel</span>
-                  {context.debateTopic}
-                </div>
-              )}
-              {ttsSupported && (
-                <p className={`mt-4 text-xs font-medium ${ttsEnabled ? 'text-primary' : 'text-slate-400'}`}>
-                  {ttsEnabled ? 'AI voice is enabled' : 'AI voice is muted'}
-                </p>
               )}
             </div>
           )}
 
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
+          <div className="space-y-12">
+            {messages.map((msg) => (
+              <EditorialMessage key={msg.id} message={msg} streaming={msg.id === streamingMessageId} />
+            ))}
 
-          {isLoading && !streamingMessageId && (
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
-                <span className="material-symbols-outlined">smart_toy</span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 ml-1">Talkivo</p>
-                <div className="rounded-2xl rounded-tl-none bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
-                  <div className="flex gap-1.5">
-                    <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce" />
-                    <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce [animation-delay:0.15s]" />
-                    <span className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full animate-bounce [animation-delay:0.3s]" />
-                  </div>
+            {isLoading && !streamingMessageId && (
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+                  <span className="h-1 w-1 rounded-full bg-[#D4A373]" />
+                  Tutor
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.15s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.3s]" />
+                  <span className="ml-3 text-[12px] italic text-[#9A948A] font-serif-display">
+                    thinking…
+                  </span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {error && (
-            <div className="flex items-center justify-center gap-2 text-red-500 dark:text-red-400 text-sm font-medium">
-              <span className="material-symbols-outlined text-lg">error</span>
-              {error}
-              <button onClick={() => setError(null)} className="ml-1 underline hover:no-underline">
-                Dismiss
-              </button>
-            </div>
-          )}
+            {error && (
+              <div className="flex items-center justify-between border-l-2 border-[#B5564C] bg-[#B5564C]/10 px-4 py-3 text-[13px] text-[#F5F2EC]">
+                <span>{error}</span>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-[12px] text-[#9A948A] hover:text-[#F5F2EC]"
+                >
+                  dismiss
+                </button>
+              </div>
+            )}
+          </div>
 
           <div ref={messagesEndRef} />
         </div>
       </main>
 
-      {/* Voice & Input Footer */}
-      <footer className="border-t border-slate-200 bg-white px-4 py-6 dark:border-slate-800 dark:bg-[#101722] md:px-10">
-        <div className="mx-auto flex max-w-4xl flex-col gap-4">
-          <div className="flex items-center gap-4">
-            {/* Text Input */}
-            <div className="relative flex-1">
-              <input
-                className="w-full rounded-xl border-none bg-slate-100 px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-primary dark:bg-slate-800 dark:text-slate-100 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                placeholder={mode === 'GRAMMAR_FIX' ? 'Write a sentence to check...' : 'Type your message...'}
-                type="text"
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                onKeyDown={handleTextKeyDown}
-                disabled={isLoading}
-              />
-              <button
-                onClick={handleTextSend}
-                disabled={isLoading || !textInput.trim()}
-                aria-label="Send message"
-                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              >
-                <span className="material-symbols-outlined text-[18px]">send</span>
-              </button>
-            </div>
-
-            {/* Voice Button */}
-            <VoiceInput
-              onTranscript={handleVoiceTranscript}
-              disabled={isLoading || isSpeakingState}
+      {/* Input row */}
+      <footer className="shrink-0 border-t border-[#2A2A2E] bg-[#0E0E10] px-8 py-5">
+        <div className="mx-auto flex max-w-[760px] items-center gap-4">
+          <VoiceInput
+            onTranscript={handleVoiceTranscript}
+            disabled={isLoading || isSpeakingState}
+          />
+          <div className="relative flex-1">
+            <input
+              className="w-full border-0 border-b border-[#3A3A3F] bg-transparent px-0 py-3 text-[15px] text-[#F5F2EC] placeholder-[#6B665F] outline-none transition-colors focus:border-[#D4A373]"
+              placeholder={
+                mode === 'GRAMMAR_FIX' ? 'Write a sentence to check…' : 'Or type your reply…'
+              }
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={handleTextKeyDown}
+              disabled={isLoading}
             />
-
-            {/* Settings/Tune Button */}
-            <button
-              onClick={toggleTTS}
-              className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 transition-colors"
-              aria-label={ttsEnabled ? 'Mute AI voice' : 'Enable AI voice'}
-            >
-              <span className="material-symbols-outlined">{ttsEnabled ? 'volume_up' : 'volume_off'}</span>
-            </button>
           </div>
+          <button
+            onClick={handleTextSend}
+            disabled={isLoading || !textInput.trim()}
+            className={
+              'text-[11px] uppercase tracking-[0.14em] transition-colors ' +
+              (textInput.trim() && !isLoading
+                ? 'text-[#D4A373] hover:text-[#DDB389]'
+                : 'text-[#3A3A3F]')
+            }
+          >
+            Send
+          </button>
         </div>
       </footer>
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Editorial message — serif for Tutor, sans for User, marginalia     */
+/* corrections in the right gutter                                    */
+/* ------------------------------------------------------------------ */
+
+function EditorialMessage({ message, streaming }: { message: Message; streaming?: boolean }) {
+  const isTutor = message.role === 'AI';
+  const corrections: Correction[] = message.corrections ?? [];
+
+  if (isTutor) {
+    return (
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+          <span className="h-1 w-1 rounded-full bg-[#D4A373]" />
+          Tutor
+        </div>
+        <p className="font-serif-display text-[19px] leading-[1.55] text-[#F5F2EC]">
+          {message.content || (streaming ? '…' : '')}
+        </p>
+      </div>
+    );
+  }
+
+  // User message with optional marginalia corrections
+  return (
+    <div className="grid grid-cols-12 gap-6">
+      <div className="col-span-8">
+        <div className="mb-2 text-[11px] uppercase tracking-[0.14em] text-[#6B665F]">You</div>
+        <p className="text-[17px] leading-[1.6] text-[#F5F2EC]">
+          {renderUserContent(message.content, corrections)}
+        </p>
+        {message.hasBeenChecked && corrections.length === 0 && (
+          <div className="mt-2 text-[11px] uppercase tracking-[0.14em] text-[#7A9A6B]">
+            · Clean
+          </div>
+        )}
+      </div>
+      {corrections.length > 0 && (
+        <div className="col-span-4 pt-7">
+          <div className="border-l border-[#D4A373] pl-4 space-y-3">
+            {corrections.map((c, i) => (
+              <p
+                key={i}
+                className="font-serif-display text-[13px] italic leading-[1.5] text-[#9A948A]"
+              >
+                <span className="text-[#F5F2EC]">“{c.corrected}”</span>
+                {c.explanation ? ` — ${c.explanation}` : ''}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function renderUserContent(content: string, corrections: Correction[]): React.ReactNode {
+  if (!corrections.length) return content;
+  // Find original phrases in the content and underline them
+  let rendered: React.ReactNode[] = [content];
+  corrections.forEach((c) => {
+    if (!c.original) return;
+    const next: React.ReactNode[] = [];
+    rendered.forEach((chunk) => {
+      if (typeof chunk !== 'string') {
+        next.push(chunk);
+        return;
+      }
+      const parts = chunk.split(c.original);
+      parts.forEach((p, i) => {
+        if (i > 0) {
+          next.push(
+            <span key={`c-${c.original}-${i}`} className="border-b border-[#D4A373]/60">
+              {c.original}
+            </span>,
+          );
+        }
+        next.push(p);
+      });
+    });
+    rendered = next;
+  });
+  return rendered;
 }

@@ -170,14 +170,12 @@ export function VoiceInput({
 
     recognition.onerror = (event: Event & { error: string }) => {
       // "aborted" and "no-speech" are benign — don't log them as errors
-      if (event.error === 'no-speech') {
-        setInterimText('No speech detected — try again');
-        setTimeout(() => setInterimText(''), 2000);
-      } else if (event.error !== 'aborted') {
+      if (event.error !== 'aborted' && event.error !== 'no-speech') {
         logger.error('Speech recognition error:', event.error);
       }
       recognitionRef.current = null;
       setIsListening(false);
+      setInterimText('');
     };
 
     recognition.onend = () => {

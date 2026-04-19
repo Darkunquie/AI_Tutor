@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthShell } from '@/components/auth/AuthShell';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,31 +26,26 @@ export default function LoginPage() {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        setError('Server returned an invalid response. Please try again.');
-        return;
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        // Redirect pending users to the pending page
         if (response.status === 403 && data.status === 'PENDING') {
           router.push('/pending');
           return;
         }
-        setError(data.error || 'Login failed');
+        const msg =
+          (typeof data.error === 'string' && data.error) ||
+          data.error?.message ||
+          data.message ||
+          'Login failed';
+        setError(msg);
         return;
       }
 
-      // Update auth context (this also stores in localStorage)
       login(data.token, {
         id: data.user.id,
         name: data.user.name,
@@ -60,7 +56,6 @@ export default function LoginPage() {
         status: data.user.status,
       });
 
-      // Role-based redirect
       if (data.user.role === 'ADMIN') {
         router.push('/admin');
       } else if (data.user.status === 'PENDING') {
@@ -68,7 +63,7 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -83,140 +78,101 @@ export default function LoginPage() {
     }));
   };
 
+  const inputCls =
+    'w-full bg-transparent border-0 border-b border-[#3A3A3F] px-0 py-3 text-[16px] text-[#F5F2EC] placeholder-[#6B665F] outline-none transition-colors focus:border-[#D4A373]';
+  const labelCls = 'mb-2 block text-[11px] uppercase tracking-[0.12em] text-[#9A948A]';
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f7f8] dark:bg-[#101722] px-4">
-      <div className="w-full max-w-md">
-        {/* Logo/Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <span className="material-symbols-outlined text-3xl text-primary">
-              school
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-            Welcome Back
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Continue your English learning journey
-          </p>
-        </div>
-
-        {/* Login Form */}
-        <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Field */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="you@example.com"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 pr-11 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Enter your password"
-                  required
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-xl">
-                    {showPassword ? 'visibility_off' : 'visibility'}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* Remember Me Checkbox */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-                  disabled={isLoading}
-                />
-                <label
-                  htmlFor="rememberMe"
-                  className="ml-2 text-sm text-slate-600 dark:text-slate-400"
-                >
-                  Remember me
-                </label>
-              </div>
-              {/* Password reset can be added here later */}
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full px-6 py-3 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isLoading ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin mr-2">
-                    progress_activity
-                  </span>
-                  Signing in...
-                </>
-              ) : (
-                'Log In'
-              )}
-            </button>
-          </form>
-
-          {/* Signup Link */}
-          <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-            Don't have an account?{' '}
-            <Link
-              href="/signup"
-              className="font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              Sign up
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Log in to continue."
+      subtitle="Pick up where you left off. Your sessions, streaks and vocabulary are waiting."
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span>
+            Don&apos;t have an account?{' '}
+            <Link href="/signup" className="text-[#D4A373] hover:text-[#DDB389]">
+              Create one
             </Link>
-          </p>
+          </span>
+          <Link href="/" className="text-[13px] text-[#6B665F] hover:text-[#9A948A]">
+            ← Back to home
+          </Link>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="email" className={labelCls}>
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className={inputCls}
+            placeholder="you@example.com"
+            required
+            disabled={isLoading}
+            autoComplete="email"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className={labelCls}>
+            Password
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className={inputCls + ' pr-14'}
+              placeholder="Your password"
+              required
+              disabled={isLoading}
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-[11px] uppercase tracking-[0.1em] text-[#6B665F] transition-colors hover:text-[#F5F2EC]"
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
+        </div>
+
+        <label className="flex cursor-pointer items-center gap-3 text-[14px] text-[#9A948A]">
+          <input
+            type="checkbox"
+            name="rememberMe"
+            checked={formData.rememberMe}
+            onChange={handleChange}
+            className="h-4 w-4 rounded border border-[#3A3A3F] bg-transparent accent-[#D4A373]"
+            disabled={isLoading}
+          />
+          Keep me signed in for 30 days
+        </label>
+
+        {error && (
+          <div className="border-l-2 border-[#B5564C] bg-[#B5564C]/10 px-4 py-3 text-[13px] text-[#F5F2EC]">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full rounded-md bg-[#D4A373] px-6 py-[14px] text-[15px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? 'Signing in…' : 'Log in'}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

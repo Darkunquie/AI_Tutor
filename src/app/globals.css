@@ -22,11 +22,55 @@
   --muted-dark: #94a3b8;
 }
 
+/* Quiet Confidence — premium redesign tokens */
+:root {
+  --qc-bg: #0E0E10;
+  --qc-surface: #17171A;
+  --qc-surface-2: #1E1E22;
+  --qc-border: #2A2A2E;
+  --qc-border-strong: #3A3A3F;
+  --qc-text: #F5F2EC;
+  --qc-text-muted: #9A948A;
+  --qc-text-subtle: #6B665F;
+  --qc-amber: #D4A373;
+  --qc-amber-hover: #DDB389;
+  --qc-amber-muted: #8A6B4A;
+  --qc-success: #7A9A6B;
+  --qc-warning: #C89B5C;
+  --qc-danger: #B5564C;
+}
+
 @theme inline {
   --color-primary: var(--primary);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-qc-bg: var(--qc-bg);
+  --color-qc-surface: var(--qc-surface);
+  --color-qc-surface-2: var(--qc-surface-2);
+  --color-qc-border: var(--qc-border);
+  --color-qc-text: var(--qc-text);
+  --color-qc-text-muted: var(--qc-text-muted);
+  --color-qc-text-subtle: var(--qc-text-subtle);
+  --color-qc-amber: var(--qc-amber);
   --font-sans: 'Lexend', sans-serif;
+  --font-serif: 'Newsreader', serif;
+  --font-geist: 'Geist', sans-serif;
+}
+
+/* Utility font classes for the redesign */
+.font-serif-display { font-family: 'Newsreader', serif; font-feature-settings: 'ss01'; }
+.font-geist { font-family: 'Geist', 'Lexend', sans-serif; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Kill browser autofill yellow — keep dark inputs in sign-in / sign-up */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #F5F2EC !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  caret-color: #F5F2EC !important;
+  transition: background-color 5000s ease-in-out 0s !important;
 }
 
 /* Base styles */

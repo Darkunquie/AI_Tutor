@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import { Flashcard } from '@/components/review/Flashcard';
 import RequireAuth from '@/components/auth/RequireAuth';
+import { AppShell } from '@/components/app/AppShell';
 import type { ReviewWord, ReviewStats } from '@/lib/types';
 
 export default function ReviewPage() {
@@ -23,9 +24,7 @@ export default function ReviewPage() {
       setWords(data.words);
       setStats(data.stats);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-      console.error('Failed to fetch review words:', err);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -37,120 +36,114 @@ export default function ReviewPage() {
 
   return (
     <RequireAuth>
-      <div className="min-h-screen bg-[#f5f7f8] dark:bg-[#101722] text-slate-900 dark:text-white">
-        {/* Header */}
-        <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#101722]/80 backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-2.5">
-                <div className="p-2 bg-primary rounded-xl text-white">
-                  <span className="material-symbols-outlined block text-xl">school</span>
-                </div>
-                <span className="text-xl font-bold tracking-tight">Talkivo</span>
-              </Link>
-              <nav className="hidden md:flex items-center gap-1">
-                <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                  Dashboard
-                </Link>
-                <span className="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-lg">
-                  Review
-                </span>
-                <Link href="/" className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                  Practice
-                </Link>
-              </nav>
+      <AppShell>
+        <div className="mx-auto max-w-[960px] px-10 pt-16 pb-16">
+          <div className="flex items-end justify-between border-b border-[#2A2A2E] pb-8">
+            <div>
+              <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+                Vocabulary review
+              </div>
+              <h1 className="font-serif-display text-[48px] leading-[1.05] tracking-[-0.02em] text-[#F5F2EC]">
+                The words that stuck.
+              </h1>
+              <p className="mt-3 text-[15px] leading-[1.55] text-[#9A948A]">
+                Spaced-repetition review. A few minutes a day quietly builds a vocabulary
+                you can actually reach for in a conversation.
+              </p>
             </div>
-          </div>
-        </header>
 
-        {/* Hero */}
-        <section className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
-          <div className="max-w-7xl mx-auto px-6 py-8">
-            <h1 className="text-2xl font-bold tracking-tight">Vocabulary Review</h1>
             {stats && (
-              <div className="flex items-center gap-6 mt-2 text-sm text-purple-100">
-                <span><strong className="text-white">{stats.totalDue}</strong> due</span>
-                <span><strong className="text-white">{stats.reviewedToday}</strong> reviewed today</span>
-                <span><strong className="text-white">{stats.totalWords}</strong> total words</span>
+              <div className="flex items-center gap-10 text-right">
+                {[
+                  { label: 'Due', value: stats.totalDue },
+                  { label: 'Today', value: stats.reviewedToday },
+                  { label: 'Total', value: stats.totalWords },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+                      {s.label}
+                    </div>
+                    <div className="font-serif-display tabular-nums mt-1 text-[28px] leading-none text-[#F5F2EC]">
+                      {s.value}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        </section>
 
-        {/* Main */}
-        <main className="max-w-7xl mx-auto px-6 py-10">
-          {error ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="text-center">
-                <span className="material-symbols-outlined text-6xl text-red-500 mb-4">error</span>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Failed to Load</h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-4">{error}</p>
-              </div>
-              <button
-                onClick={fetchWords}
-                className="px-6 py-2.5 bg-primary hover:bg-[#2b6bcf] text-white font-semibold rounded-lg transition-colors"
-              >
-                Retry
-              </button>
-            </div>
-          ) : loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="relative">
-                <div className="w-16 h-16 border-4 border-purple-500/20 rounded-full" />
-                <div className="absolute top-0 left-0 w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-              <p className="mt-4 text-slate-500 dark:text-slate-400 text-sm">Loading words...</p>
-            </div>
-          ) : completed ? (
-            /* Completed state */
-            <div className="text-center py-20">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-4xl text-emerald-500" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  celebration
-                </span>
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight mb-2">Session Complete!</h2>
-              <p className="text-slate-500 dark:text-slate-400 mb-8">Great job reviewing your vocabulary.</p>
-              <div className="flex gap-4 justify-center">
+          <div className="pt-14">
+            {error ? (
+              <div className="max-w-[480px]">
+                <h2 className="font-serif-display text-[24px] leading-[1.2] text-[#F5F2EC]">
+                  Could not load words.
+                </h2>
+                <p className="mt-3 text-[14px] text-[#9A948A]">{error}</p>
                 <button
                   onClick={fetchWords}
-                  className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                  className="mt-6 inline-flex rounded-md bg-[#D4A373] px-6 py-[12px] text-[14px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
                 >
-                  Review More
+                  Retry
                 </button>
+              </div>
+            ) : loading ? (
+              <div className="space-y-3">
+                <div className="h-[320px] w-full bg-[#17171A]/40" />
+              </div>
+            ) : completed ? (
+              <div className="max-w-[520px]">
+                <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+                  Session complete
+                </div>
+                <h2 className="font-serif-display text-[32px] leading-[1.15] tracking-[-0.01em] text-[#F5F2EC]">
+                  You&rsquo;re done for now.
+                </h2>
+                <p className="mt-4 text-[15px] leading-[1.6] text-[#9A948A]">
+                  Every word you just saw is scheduled for review at the right moment.
+                  Come back tomorrow.
+                </p>
+                <div className="mt-8 flex items-center gap-6">
+                  <button
+                    onClick={fetchWords}
+                    className="rounded-md bg-[#D4A373] px-6 py-[12px] text-[14px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
+                  >
+                    Review more →
+                  </button>
+                  <Link
+                    href="/dashboard"
+                    className="text-[14px] text-[#9A948A] hover:text-[#F5F2EC]"
+                  >
+                    View dashboard
+                  </Link>
+                </div>
+              </div>
+            ) : words.length === 0 ? (
+              <div className="max-w-[480px]">
+                <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+                  All caught up
+                </div>
+                <h2 className="font-serif-display text-[32px] leading-[1.15] tracking-[-0.01em] text-[#F5F2EC]">
+                  No words due.
+                </h2>
+                <p className="mt-4 text-[15px] leading-[1.6] text-[#9A948A]">
+                  Start a practice session and the tutor will quietly feed new vocabulary
+                  into your review queue.
+                </p>
                 <Link
-                  href="/dashboard"
-                  className="px-6 py-3 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  href="/app"
+                  className="mt-8 inline-flex rounded-md bg-[#D4A373] px-6 py-[12px] text-[14px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
                 >
-                  Dashboard
+                  Start a session →
                 </Link>
               </div>
-            </div>
-          ) : words.length === 0 ? (
-            /* Empty state */
-            <div className="text-center py-20">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-4xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  check_circle
-                </span>
+            ) : (
+              <div className="rounded-xl border border-[#2A2A2E] bg-[#17171A] p-8">
+                <Flashcard words={words} onComplete={() => setCompleted(true)} />
               </div>
-              <h2 className="text-2xl font-bold tracking-tight mb-2">All caught up!</h2>
-              <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">
-                No words due for review. Start a practice session to learn new vocabulary!
-              </p>
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:scale-105 transition-all shadow-2xl shadow-primary/40"
-              >
-                Start Practicing
-              </Link>
-            </div>
-          ) : (
-            /* Flashcard UI */
-            <Flashcard words={words} onComplete={() => setCompleted(true)} />
-          )}
-        </main>
-      </div>
+            )}
+          </div>
+        </div>
+      </AppShell>
     </RequireAuth>
   );
 }

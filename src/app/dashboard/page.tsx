@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { logger } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { StatsOverview } from '@/components/dashboard/StatsOverview';
-import { ProgressChart } from '@/components/dashboard/ProgressChart';
-import { ErrorAnalysis } from '@/components/dashboard/ErrorAnalysis';
-import { SessionHistory } from '@/components/dashboard/SessionHistory';
-import { StreakWidget } from '@/components/streaks/StreakWidget';
-import { AchievementGrid } from '@/components/achievements/AchievementGrid';
 import RequireAuth from '@/components/auth/RequireAuth';
+import { AppShell } from '@/components/app/AppShell';
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface Stats {
   totalSessions: number;
@@ -42,8 +45,32 @@ interface ProgressData {
   fillerWords: number;
 }
 
+const PERIODS = [
+  { value: '7d', label: '7 days' },
+  { value: '30d', label: '30 days' },
+  { value: '90d', label: '90 days' },
+];
+
+function formatDuration(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="py-5">
+      <div className="mb-2 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">{label}</div>
+      <div className="font-serif-display tabular-nums text-[40px] leading-[1.05] tracking-[-0.02em] text-[#F5F2EC]">
+        {value}
+      </div>
+      {sub && <div className="mt-1 text-[12px] text-[#6B665F]">{sub}</div>}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-  const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
@@ -51,203 +78,334 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Auth redirect is handled by <RequireAuth> wrapper below
-
   useEffect(() => {
-    // Don't fetch data if not authenticated or still loading auth
-    if (authLoading || !isAuthenticated || !user) {
-      return;
-    }
-
-    // Extra safety check: ensure token is in localStorage
+    if (authLoading || !isAuthenticated || !user) return;
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (!token) {
-      logger.warn('Auth token not found in localStorage, skipping data fetch');
       setIsLoading(false);
       return;
     }
-
     const fetchData = async () => {
       setIsLoading(true);
       setFetchError(null);
       try {
         const statsData = await api.stats.overview({ userId: user.id, period });
         setStats(statsData as Stats);
-
         const progressResult = await api.stats.progress({ userId: user.id, period });
         setProgressData(progressResult.data || []);
       } catch (error) {
         logger.error('Failed to fetch dashboard data:', error);
-        setFetchError('Failed to load dashboard data. Please try again.');
+        setFetchError('Failed to load dashboard data.');
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [period, authLoading, isAuthenticated, user]);
 
-  const periodOptions = [
-    { value: '7d', label: '7 Days' },
-    { value: '30d', label: '30 Days' },
-    { value: '90d', label: '90 Days' },
-  ];
+  const errorTotal = useMemo(() => {
+    if (!stats) return 0;
+    const e = stats.errorBreakdown;
+    return e.GRAMMAR + e.VOCABULARY + e.STRUCTURE + e.FLUENCY;
+  }, [stats]);
 
   return (
     <RequireAuth>
-    <div className="min-h-screen bg-[#f5f7f8] dark:bg-[#101722] text-slate-900 dark:text-white transition-colors duration-300">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#101722]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="p-2 bg-primary rounded-xl text-white">
-                <span className="material-symbols-outlined block text-xl">school</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight">Talkivo</span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-1">
-              <span className="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-lg">
-                Dashboard
-              </span>
-              <Link href="/review" className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                Review
-              </Link>
-              <Link href="/" className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                Practice
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button aria-label="Notifications" className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-              <span className="material-symbols-outlined text-xl">notifications</span>
-            </button>
-            {user && (
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-[#8b5cf6] flex items-center justify-center text-white text-sm font-bold">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-primary to-[#2563eb] text-white">
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <AppShell>
+        <div className="mx-auto max-w-[1100px] px-10 pt-16 pb-16">
+          {/* Header */}
+          <div className="flex items-end justify-between border-b border-[#2A2A2E] pb-8">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Progress Dashboard</h1>
-              <p className="text-blue-100 mt-2 text-sm">
-                Welcome back! Your English skills have improved by{' '}
-                <span className="font-bold text-white">
-                  {stats?.weeklyChange ? `${stats.weeklyChange}%` : '—'}
-                </span>{' '}
-                this week.
+              <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+                Your progress
+              </div>
+              <h1 className="font-serif-display text-[48px] leading-[1.05] tracking-[-0.02em] text-[#F5F2EC]">
+                Dashboard.
+              </h1>
+              <p className="mt-3 text-[15px] leading-[1.55] text-[#9A948A]">
+                {stats && stats.weeklyChange > 0
+                  ? `Your speaking score is up ${stats.weeklyChange}% this week.`
+                  : 'Speak for a few minutes today and your score will start moving.'}
               </p>
             </div>
 
-            {/* Period selector - glass morphism */}
-            <div className="flex p-1 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-              {periodOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setPeriod(option.value)}
-                  disabled={isLoading}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                    period === option.value
-                      ? 'bg-white text-primary shadow-lg'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {option.label}
-                </button>
+            <div className="flex items-center gap-5">
+              <span className="text-[11px] uppercase tracking-[0.14em] text-[#6B665F]">Period</span>
+              {PERIODS.map((p) => {
+                const active = period === p.value;
+                return (
+                  <button
+                    key={p.value}
+                    onClick={() => setPeriod(p.value)}
+                    disabled={isLoading}
+                    className={
+                      'text-[14px] transition-colors ' +
+                      (active
+                        ? 'text-[#F5F2EC] underline decoration-[#D4A373] decoration-2 underline-offset-[6px]'
+                        : 'text-[#9A948A] hover:text-[#F5F2EC]')
+                    }
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {fetchError && (
+            <div className="mt-6 border-l-2 border-[#B5564C] bg-[#B5564C]/10 px-4 py-3 text-[13px] text-[#F5F2EC]">
+              {fetchError}
+            </div>
+          )}
+
+          {/* Loading state */}
+          {isLoading ? (
+            <div className="mt-16 grid grid-cols-6 gap-x-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="py-5">
+                  <div className="mb-3 h-[11px] w-20 rounded bg-[#2A2A2E]" />
+                  <div className="h-[40px] w-full rounded bg-[#17171A]" />
+                </div>
               ))}
             </div>
-          </div>
+          ) : stats && stats.totalSessions === 0 ? (
+            <div className="mt-20 max-w-[520px]">
+              <h2 className="font-serif-display text-[28px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
+                Nothing to show yet.
+              </h2>
+              <p className="mt-4 text-[15px] leading-[1.6] text-[#9A948A]">
+                One session is enough to populate this dashboard. Metrics update the moment
+                you end a conversation.
+              </p>
+              <Link
+                href="/app"
+                className="mt-8 inline-flex rounded-md bg-[#D4A373] px-6 py-[14px] text-[15px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
+              >
+                Start your first session
+              </Link>
+            </div>
+          ) : stats ? (
+            <>
+              {/* Stats grid */}
+              <div className="mt-8 grid grid-cols-3 gap-x-10 divide-x divide-[#2A2A2E] border-b border-[#2A2A2E] md:grid-cols-6">
+                <div className="pl-0">
+                  <Stat label="Sessions" value={stats.totalSessions} />
+                </div>
+                <div className="pl-8">
+                  <Stat label="Time practised" value={formatDuration(stats.totalDuration)} />
+                </div>
+                <div className="pl-8">
+                  <Stat label="Avg. score" value={`${Math.round(stats.averageScore)}/100`} />
+                </div>
+                <div className="pl-8">
+                  <Stat label="Words learned" value={stats.wordsLearned} />
+                </div>
+                <div className="pl-8">
+                  <Stat
+                    label="Pronunciation"
+                    value={`${Math.round(stats.avgPronunciation)}%`}
+                  />
+                </div>
+                <div className="pl-8">
+                  <Stat label="Filler words" value={stats.totalFillerWords} sub="total occurrences" />
+                </div>
+              </div>
+
+              {/* Chart + errors */}
+              <div className="mt-16 grid grid-cols-3 gap-10">
+                <div className="col-span-2">
+                  <div className="mb-6 flex items-baseline justify-between">
+                    <h3 className="font-serif-display text-[24px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
+                      Score over time.
+                    </h3>
+                    <span className="text-[12px] text-[#6B665F]">
+                      {progressData.length} data points
+                    </span>
+                  </div>
+                  <div className="h-[280px] border border-[#2A2A2E] bg-[#17171A]/40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={progressData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                        <CartesianGrid stroke="#2A2A2E" strokeDasharray="2 4" />
+                        <XAxis
+                          dataKey="date"
+                          stroke="#6B665F"
+                          fontSize={11}
+                          tickLine={false}
+                          axisLine={{ stroke: '#2A2A2E' }}
+                        />
+                        <YAxis
+                          stroke="#6B665F"
+                          fontSize={11}
+                          tickLine={false}
+                          axisLine={{ stroke: '#2A2A2E' }}
+                          domain={[0, 100]}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: '#17171A',
+                            border: '1px solid #2A2A2E',
+                            borderRadius: 4,
+                            fontSize: 12,
+                            color: '#F5F2EC',
+                          }}
+                          labelStyle={{ color: '#9A948A' }}
+                          cursor={{ stroke: '#D4A373', strokeWidth: 1, strokeDasharray: '2 4' }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="score"
+                          stroke="#D4A373"
+                          strokeWidth={1.6}
+                          dot={{ r: 2.5, fill: '#D4A373', stroke: '#D4A373' }}
+                          activeDot={{ r: 4, fill: '#F2C38E' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h3 className="font-serif-display mb-6 text-[24px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
+                    Where the mistakes live.
+                  </h3>
+                  <div className="space-y-5">
+                    {(['GRAMMAR', 'VOCABULARY', 'STRUCTURE', 'FLUENCY'] as const).map((key) => {
+                      const val = stats.errorBreakdown[key];
+                      const pct = errorTotal > 0 ? Math.round((val / errorTotal) * 100) : 0;
+                      return (
+                        <div key={key}>
+                          <div className="mb-1.5 flex items-baseline justify-between text-[12px]">
+                            <span className="uppercase tracking-[0.12em] text-[#9A948A]">
+                              {key.toLowerCase()}
+                            </span>
+                            <span className="tabular-nums text-[#6B665F]">
+                              {val} · {pct}%
+                            </span>
+                          </div>
+                          <div className="h-[2px] w-full bg-[#2A2A2E]">
+                            <div
+                              className="h-full bg-[#D4A373]"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Session history */}
+              <div className="mt-16">
+                <h3 className="font-serif-display mb-6 text-[24px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
+                  Recent sessions.
+                </h3>
+                {user && <SessionHistoryTable userId={user.id} />}
+              </div>
+            </>
+          ) : null}
         </div>
-      </section>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {fetchError && (
-          <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-4 py-3 text-red-700 dark:text-red-400">
-            <span className="material-symbols-outlined text-lg">error</span>
-            <span className="text-sm font-medium">{fetchError}</span>
-          </div>
-        )}
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-primary/20 rounded-full" />
-              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-            <p className="mt-4 text-slate-500 dark:text-slate-400 text-sm font-medium">Loading your progress...</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* Stats Overview */}
-            {stats && <StatsOverview stats={stats} />}
-
-            {/* Streak & Achievements */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <StreakWidget />
-              <div className="lg:col-span-2">
-                <AchievementGrid />
-              </div>
-            </div>
-
-            {/* Analytics Row - 2/3 + 1/3 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <ProgressChart data={progressData} />
-              </div>
-              <div className="lg:col-span-1">
-                {stats && <ErrorAnalysis errorBreakdown={stats.errorBreakdown} />}
-              </div>
-            </div>
-
-            {/* Session History */}
-            {user && <SessionHistory userId={user.id} />}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && stats?.totalSessions === 0 && (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-4xl text-primary">school</span>
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight mb-2">
-              Start Your Learning Journey
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">
-              Complete your first practice session to see your progress here. Every conversation helps you improve!
-            </p>
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:scale-105 transition-all shadow-2xl shadow-primary/40"
-            >
-              <span className="material-symbols-outlined mr-2">play_arrow</span>
-              Start Practicing Now
-            </Link>
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 py-6 mt-8">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
-            <span className="material-symbols-outlined text-lg">school</span>
-            <span>&copy; {new Date().getFullYear()} Talkivo</span>
-          </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">
-            Powered by AI
-          </div>
-        </div>
-      </footer>
-    </div>
+      </AppShell>
     </RequireAuth>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Inline session history table — minimal, editorial                  */
+/* ------------------------------------------------------------------ */
+
+interface SessionItem {
+  id: string;
+  mode: string;
+  level: string;
+  duration: number;
+  score: number;
+  createdAt: string;
+}
+
+function SessionHistoryTable({ userId }: { userId: string }) {
+  const [items, setItems] = useState<SessionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.sessions.list({ userId, page: 1, pageSize: 10 });
+        if (!cancelled) setItems((res?.data ?? []) as SessionItem[]);
+      } catch (e) {
+        if (!cancelled) setErr(e instanceof Error ? e.message : 'Could not load sessions');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-[52px] w-full bg-[#17171A]/60" />
+        ))}
+      </div>
+    );
+  }
+  if (err) {
+    return <div className="text-[13px] text-[#9A948A]">Could not load sessions: {err}</div>;
+  }
+  if (!items.length) {
+    return <div className="text-[13px] text-[#9A948A]">No sessions yet.</div>;
+  }
+
+  return (
+    <div className="border-t border-[#2A2A2E]">
+      <div className="grid grid-cols-12 gap-4 border-b border-[#2A2A2E] py-3 text-[11px] uppercase tracking-[0.14em] text-[#6B665F]">
+        <div className="col-span-3">Mode</div>
+        <div className="col-span-2">Level</div>
+        <div className="col-span-3">Date</div>
+        <div className="col-span-2 text-right">Duration</div>
+        <div className="col-span-2 text-right">Score</div>
+      </div>
+      <ul>
+        {items.map((s, i) => (
+          <li
+            key={s.id ?? i}
+            className="grid grid-cols-12 gap-4 border-b border-[#2A2A2E] py-4 text-[14px] text-[#F5F2EC] transition-colors hover:bg-[#17171A]"
+          >
+            <div className="col-span-3 font-medium">{humanMode(s.mode)}</div>
+            <div className="col-span-2 text-[#9A948A]">{titleCase(s.level)}</div>
+            <div className="col-span-3 tabular-nums text-[#9A948A]">
+              {s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+            </div>
+            <div className="col-span-2 tabular-nums text-right text-[#9A948A]">
+              {formatDuration(s.duration ?? 0)}
+            </div>
+            <div className="col-span-2 tabular-nums text-right text-[#D4A373]">
+              {Math.round(s.score ?? 0)}/100
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function humanMode(m: string) {
+  const map: Record<string, string> = {
+    FREE_TALK: 'Free Talk',
+    ROLE_PLAY: 'Role Play',
+    DEBATE: 'Debate',
+    GRAMMAR_FIX: 'Grammar Fix',
+    PRONUNCIATION: 'Pronunciation',
+  };
+  return map[m] ?? m;
+}
+
+function titleCase(s: string) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }

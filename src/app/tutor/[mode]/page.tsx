@@ -74,6 +74,7 @@ export default function TutorPage() {
       api.sessions.update(sessionId, {
         duration: data.duration,
         score: data.score,
+        vocabularyJson: data.vocabularyGained,
       }).catch(logBackgroundError('update session'));
 
       // Save vocabulary words to DB
@@ -124,10 +125,19 @@ export default function TutorPage() {
           onViewDashboard={handleViewDashboard}
         />
       ) : !sessionId || !mode ? (
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center bg-[#0E0E10] text-[#F5F2EC] font-geist">
           <div className="text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto" />
-            <p className="mt-4 text-gray-600">Loading session...</p>
+            <div className="mb-4 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
+              Session
+            </div>
+            <p className="font-serif-display text-[22px] leading-[1.3] text-[#F5F2EC]">
+              Preparing the room…
+            </p>
+            <div className="mt-6 flex justify-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.15s]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.3s]" />
+            </div>
           </div>
         </div>
       ) : mode === 'PRONUNCIATION' ? (
