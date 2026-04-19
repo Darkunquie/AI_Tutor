@@ -88,9 +88,9 @@ export function SessionHistory({ userId }: SessionHistoryProps) {
       setIsLoading(true);
       try {
         const result = await api.sessions.list({ userId, page, pageSize });
-        const typed = result as unknown as { data: Session[]; meta: { total: number } };
-        setSessions(typed.data || []);
-        setTotal(typed.meta?.total || 0);
+        const typedResult = result as unknown as { data: Session[]; meta: { total: number } };
+        setSessions(typedResult.data || []);
+        setTotal(typedResult.meta?.total || 0);
       } catch (error) {
         logger.error('Failed to fetch sessions:', error);
       } finally {
