@@ -160,7 +160,7 @@ export const sessionService = {
     // 3. Update streak (StreakCalculator reads from dailyStats, so it
     //    automatically reflects the newly upserted stats above)
     //    Note: streak is computed on-read, no separate write needed.
-    logger.debug('Post-session work completed', { sessionId, userId });
+    logger.debug('Post-session work completed', { sessionId });
   },
 
   /**
