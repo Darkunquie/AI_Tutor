@@ -91,7 +91,9 @@ export default function Landing() {
           </Link>
           <button
             type="button"
+            disabled
             className="flex items-center gap-2 rounded-md border border-[#2A2A2E] px-6 py-[13px] text-[15px] text-[#F5F2EC] transition-colors hover:border-[#3A3A3F] hover:bg-[#17171A]"
+            aria-disabled="true"
           >
             <svg width="11" height="12" viewBox="0 0 11 12" fill="none" aria-hidden>
               <path d="M10 5.13397C10.6667 5.51887 10.6667 6.48113 10 6.86603L1.75 11.6292C1.08333 12.0141 0.25 11.5329 0.25 10.7631L0.25 1.23686C0.25 0.467059 1.08333 -0.0140659 1.75 0.37083L10 5.13397Z" fill="#F5F2EC"/>
@@ -101,7 +103,7 @@ export default function Landing() {
         </div>
 
         <p className="mt-8 text-[13px] text-[#6B665F]">
-          7-day free trial · No credit card · Cancel anytime
+          Free to use · No credit card required
         </p>
 
         {/* Hero demo panel */}
@@ -413,10 +415,10 @@ export default function Landing() {
                 Company
               </div>
               <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-[#9A948A]">
-                <li><span className="hover:text-[#F5F2EC]">About</span></li>
-                <li><span className="hover:text-[#F5F2EC]">Support</span></li>
-                <li><span className="hover:text-[#F5F2EC]">Privacy</span></li>
-                <li><span className="hover:text-[#F5F2EC]">Terms</span></li>
+                <li><span className="text-[#6B665F]">About</span></li>
+                <li><span className="text-[#6B665F]">Support</span></li>
+                <li><span className="text-[#6B665F]">Privacy</span></li>
+                <li><span className="text-[#6B665F]">Terms</span></li>
               </ul>
             </div>
           </div>

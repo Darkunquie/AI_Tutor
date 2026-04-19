@@ -80,27 +80,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (authLoading || !isAuthenticated || !user) return;
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
+    let cancelled = false;
     const fetchData = async () => {
       setIsLoading(true);
       setFetchError(null);
       try {
         const statsData = await api.stats.overview({ userId: user.id, period });
-        setStats(statsData as Stats);
         const progressResult = await api.stats.progress({ userId: user.id, period });
-        setProgressData(progressResult.data || []);
+        if (!cancelled) {
+          setStats(statsData as Stats);
+          setProgressData(progressResult.data || []);
+        }
       } catch (error) {
-        logger.error('Failed to fetch dashboard data:', error);
-        setFetchError('Failed to load dashboard data.');
+        if (!cancelled) {
+          logger.error('Failed to fetch dashboard data:', error);
+          setFetchError('Failed to load dashboard data.');
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) { setIsLoading(false); }
       }
     };
     fetchData();
+    return () => { cancelled = true; };
   }, [period, authLoading, isAuthenticated, user]);
 
   const errorTotal = useMemo(() => {
@@ -379,7 +380,11 @@ function SessionHistoryTable({ userId }: { userId: string }) {
             <div className="col-span-3 font-medium">{humanMode(s.mode)}</div>
             <div className="col-span-2 text-[#9A948A]">{titleCase(s.level)}</div>
             <div className="col-span-3 tabular-nums text-[#9A948A]">
-              {s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+              {(() => {
+                if (!s.createdAt) return '—';
+                const d = new Date(s.createdAt);
+                return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+              })()}
             </div>
             <div className="col-span-2 tabular-nums text-right text-[#9A948A]">
               {formatDuration(s.duration ?? 0)}
