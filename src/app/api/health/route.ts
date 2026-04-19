@@ -29,7 +29,7 @@ export async function GET() {
           rss: Math.round(mem.rss / 1024 / 1024) + 'MB',
           heap: Math.round(mem.heapUsed / 1024 / 1024) + 'MB',
         },
-        groqQueue: await getActiveGroqRequests(),
+        groqQueue: await getActiveGroqRequests().catch(() => null),
         db: { status: 'disconnected' },
         timestamp: new Date().toISOString(),
       },

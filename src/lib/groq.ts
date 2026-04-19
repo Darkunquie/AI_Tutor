@@ -52,7 +52,16 @@ async function releaseGroqSlot(): Promise<void> {
   const redis = getRedis();
   if (redis) {
     try {
-      await redis.decr(SEM_KEY);
+      // Use Lua script to prevent negative values
+      await redis.eval(
+        `local val = redis.call('GET', KEYS[1])
+         if val and tonumber(val) > 0 then
+           return redis.call('DECR', KEYS[1])
+         end
+         return 0`,
+        [SEM_KEY],
+        []
+      );
       return;
     } catch (err) {
       logger.warn('Redis semaphore release error:', err);

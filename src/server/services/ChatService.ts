@@ -35,10 +35,12 @@ export const chatService = {
     const reply = await chat(systemPrompt, params.message, trimmedHistory);
 
     // 4. Save AI message
-    await messageRepo.createAiMessage({
-      sessionId: params.sessionId,
-      content: reply,
-    });
+    if (reply.trim()) {
+      await messageRepo.createAiMessage({
+        sessionId: params.sessionId,
+        content: reply,
+      });
+    }
 
     logger.info('Chat turn completed', { sessionId: params.sessionId, userId: params.userId });
     return { reply, sessionId: params.sessionId };
@@ -72,19 +74,24 @@ export const chatService = {
     const trimmedHistory = (params.history || []).slice(-20);
     let fullReply = '';
 
-    for await (const token of chatStream(systemPrompt, params.message, trimmedHistory)) {
-      fullReply += token;
-      yield token;
-    }
-
-    // 4. Save AI message after stream completes
-    if (fullReply.trim()) {
-      await messageRepo.createAiMessage({
+    try {
+      for await (const token of chatStream(systemPrompt, params.message, trimmedHistory)) {
+        fullReply += token;
+        yield token;
+      }
+    } finally {
+      // Save whatever was accumulated, even if caller aborted early
+      if (fullReply.trim()) {
+        await messageRepo.createAiMessage({
+          sessionId: params.sessionId,
+          content: fullReply,
+        });
+      }
+      logger.info('Chat stream turn completed', {
         sessionId: params.sessionId,
-        content: fullReply,
+        userId: params.userId,
+        partial: fullReply.length > 0,
       });
     }
-
-    logger.info('Chat stream turn completed', { sessionId: params.sessionId, userId: params.userId });
   },
 };
