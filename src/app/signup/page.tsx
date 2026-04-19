@@ -30,7 +30,13 @@ export default function SignupPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        setError('Unexpected server response. Please try again.');
+        return;
+      }
 
       if (!response.ok) {
         const msg =
@@ -193,8 +199,8 @@ export default function SignupPage() {
 
         <p className="text-[12px] leading-[1.5] text-[#6B665F]">
           By continuing you agree to Talkivo&rsquo;s{' '}
-          <span className="underline underline-offset-2">Terms</span> and{' '}
-          <span className="underline underline-offset-2">Privacy Policy</span>.
+          <span className="text-[#9A948A]">Terms</span> and{' '}
+          <span className="text-[#9A948A]">Privacy Policy</span>.
         </p>
       </form>
     </AuthShell>

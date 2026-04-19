@@ -31,7 +31,9 @@ export const TestimonialSlider = ({ reviews, className }: TestimonialSliderProps
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isPaused, setIsPaused] = useState(false);
-  const tickRef = useRef(0); // bump to reset autoplay timer after manual nav
+  const tickRef = useRef(0);
+
+  if (reviews.length === 0) { return null; }
 
   const activeReview = reviews[currentIndex];
 
