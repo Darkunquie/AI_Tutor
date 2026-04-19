@@ -173,38 +173,41 @@ export function Ai3DOrb({ state, className = '' }: Ai3DOrbProps) {
 
       // Smooth transition to target values
       if (s === 'speaking') {
-        targetIntensity = 0.45;
-        targetSpeed = 1.8;
-        targetRotSpeed = 0.003;
+        targetIntensity = 0.28;
+        targetSpeed = 0.9;
+        targetRotSpeed = 0.0015;
       } else if (s === 'thinking') {
-        targetIntensity = 0.25;
-        targetSpeed = 0.8;
-        targetRotSpeed = 0.002;
-      } else if (s === 'listening') {
         targetIntensity = 0.2;
         targetSpeed = 0.6;
-        targetRotSpeed = 0.001;
+        targetRotSpeed = 0.0012;
+      } else if (s === 'listening') {
+        targetIntensity = 0.18;
+        targetSpeed = 0.5;
+        targetRotSpeed = 0.0008;
       } else {
-        targetIntensity = 0.12;
-        targetSpeed = 0.3;
-        targetRotSpeed = 0.0004;
+        targetIntensity = 0.1;
+        targetSpeed = 0.25;
+        targetRotSpeed = 0.0003;
       }
 
-      // Lerp uniforms for smooth transitions
-      material.uniforms.intensity.value += (targetIntensity - material.uniforms.intensity.value) * 0.05;
-      material.uniforms.speed.value += (targetSpeed - material.uniforms.speed.value) * 0.05;
-      material.uniforms.time.value = t * 0.0003;
+      // Very smooth lerp (0.02 = slow blend, no jitter)
+      material.uniforms.intensity.value += (targetIntensity - material.uniforms.intensity.value) * 0.02;
+      material.uniforms.speed.value += (targetSpeed - material.uniforms.speed.value) * 0.02;
+      material.uniforms.time.value = t * 0.00025;
 
-      const currentRotSpeed = mesh.rotation.y;
       mesh.rotation.y += targetRotSpeed;
-      mesh.rotation.x += targetRotSpeed * 0.4;
+      mesh.rotation.x += targetRotSpeed * 0.3;
 
-      // Pulsing scale for speaking
+      // Gentle breathing scale — smooth sine, no sudden jumps
       if (s === 'speaking') {
-        const pulse = 1.0 + Math.sin(t * 0.006) * 0.04 + Math.sin(t * 0.015) * 0.02;
+        // Layered slow sine waves for organic rhythm
+        const pulse = 1.0
+          + Math.sin(t * 0.002) * 0.03
+          + Math.sin(t * 0.005) * 0.015
+          + Math.sin(t * 0.0008) * 0.02;
         mesh.scale.setScalar(pulse);
       } else {
-        const breathe = 1.0 + Math.sin(t * 0.001) * 0.015;
+        const breathe = 1.0 + Math.sin(t * 0.0008) * 0.012;
         mesh.scale.setScalar(breathe);
       }
 

@@ -326,10 +326,10 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
   return (
     <div className="flex h-screen bg-[#0E0E10] text-[#F5F2EC] font-geist antialiased">
       {/* 3D Orb — left side */}
-      <div className="hidden lg:flex w-[280px] shrink-0 items-center justify-center border-r border-[#2A2A2E]">
+      <div className="hidden lg:flex w-[380px] shrink-0 items-center justify-center border-r border-[#2A2A2E]">
         <Ai3DOrb
           state={isSpeakingState ? 'speaking' : streamingMessageId ? 'speaking' : isLoading ? 'thinking' : 'idle'}
-          className="w-[240px] h-[240px]"
+          className="w-[340px] h-[340px]"
         />
       </div>
 
