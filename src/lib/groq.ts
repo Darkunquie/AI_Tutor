@@ -2,7 +2,8 @@
 // Using Llama 3.3 70B - completely free!
 
 import Groq from 'groq-sdk';
-import { logger } from './utils';
+import { getRedis } from '@/server/infra/redis';
+import { logger } from '@/server/infra/logger';
 import { env } from './env';
 
 const GROQ_MODEL = env.GROQ_MODEL;
@@ -13,31 +14,65 @@ const groq = new Groq({
   timeout: GROQ_TIMEOUT,
 });
 
-// ── Concurrency semaphore ──────────────────────────────────────────────────
-// Caps simultaneous Groq calls to avoid pile-ups under load.
-// Configurable via GROQ_MAX_CONCURRENT env var (default: 25).
-let activeGroqRequests = 0;
+// ── Redis-backed concurrency semaphore ─────────────────────────────────────
+// Caps simultaneous Groq calls cluster-wide (across all PM2 workers).
+// Falls back to in-memory if Redis is unavailable.
 const MAX_CONCURRENT = Number.parseInt(process.env.GROQ_MAX_CONCURRENT ?? '25', 10);
-const waitQueue: Array<() => void> = [];
+const SEM_KEY = 'groq:inflight';
+const SEM_TTL = 120; // seconds — heals after worker crash
+
+// Fallback in-memory semaphore (used when Redis unavailable)
+let inMemoryActive = 0;
 
 async function acquireGroqSlot(): Promise<void> {
-  if (activeGroqRequests < MAX_CONCURRENT) {
-    activeGroqRequests++;
-    return;
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const count = await redis.incr(SEM_KEY);
+      // Set TTL on first increment (or refresh if it was missing)
+      if (count === 1) {
+        await redis.expire(SEM_KEY, SEM_TTL);
+      }
+      if (count > MAX_CONCURRENT) {
+        await redis.decr(SEM_KEY);
+        throw new Error('AI_BUSY');
+      }
+      return;
+    } catch (err) {
+      if (err instanceof Error && err.message === 'AI_BUSY') { throw err; }
+      logger.warn('Redis semaphore fallback to in-memory:', err);
+    }
   }
-  await new Promise<void>(resolve => waitQueue.push(resolve));
-  activeGroqRequests++;
+  // Fallback to in-memory
+  if (inMemoryActive >= MAX_CONCURRENT) { throw new Error('AI_BUSY'); }
+  inMemoryActive++;
 }
 
-function releaseGroqSlot(): void {
-  activeGroqRequests--;
-  const next = waitQueue.shift();
-  if (next) { next(); }
+async function releaseGroqSlot(): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    try {
+      await redis.decr(SEM_KEY);
+      return;
+    } catch (err) {
+      logger.warn('Redis semaphore release error:', err);
+    }
+  }
+  inMemoryActive = Math.max(0, inMemoryActive - 1);
 }
 
 /** Current number of in-flight Groq requests (exported for health endpoint). */
-export function getActiveGroqRequests(): number {
-  return activeGroqRequests;
+export async function getActiveGroqRequests(): Promise<number> {
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const count = await redis.get<number>(SEM_KEY);
+      return count ?? 0;
+    } catch {
+      // Fall through to in-memory
+    }
+  }
+  return inMemoryActive;
 }
 
 // ── Retry with exponential backoff ────────────────────────────────────────
@@ -93,13 +128,16 @@ export async function chat(
       return result;
     });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'AI_BUSY') {
+      throw new Error('AI service is busy. Please wait a moment and try again.');
+    }
     logger.error('Groq API error:', error);
     if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
       throw new Error('AI service is busy. Please wait a moment and try again.');
     }
     throw new Error('Failed to get response from AI. Please try again.');
   } finally {
-    releaseGroqSlot();
+    await releaseGroqSlot();
   }
 }
 
@@ -136,9 +174,12 @@ export async function* chatStream(
       }
     }
   } catch (error) {
+    if (error instanceof Error && error.message === 'AI_BUSY') {
+      throw new Error('AI service is busy. Please wait a moment and try again.');
+    }
     logger.error('Groq API streaming error:', error);
     throw new Error('Failed to get response from AI. Please try again.');
   } finally {
-    releaseGroqSlot();
+    await releaseGroqSlot();
   }
 }

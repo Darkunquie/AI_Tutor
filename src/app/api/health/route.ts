@@ -16,7 +16,7 @@ export async function GET() {
         rss: Math.round(mem.rss / 1024 / 1024) + 'MB',
         heap: Math.round(mem.heapUsed / 1024 / 1024) + 'MB',
       },
-      groqQueue: getActiveGroqRequests(),
+      groqQueue: await getActiveGroqRequests(),
       db: { status: 'connected', latency: dbLatency },
       timestamp: new Date().toISOString(),
     });
@@ -29,7 +29,7 @@ export async function GET() {
           rss: Math.round(mem.rss / 1024 / 1024) + 'MB',
           heap: Math.round(mem.heapUsed / 1024 / 1024) + 'MB',
         },
-        groqQueue: getActiveGroqRequests(),
+        groqQueue: await getActiveGroqRequests(),
         db: { status: 'disconnected' },
         timestamp: new Date().toISOString(),
       },

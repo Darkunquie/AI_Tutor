@@ -11,13 +11,15 @@ import {
 } from '@/lib/error-handler';
 import { safeJsonParse } from '@/lib/utils';
 import { requireAuth } from '@/server/http/auth-context';
+import { errorRepo } from '@/server/repositories/ErrorRepository';
+import type { ErrorType } from '@/generated/prisma';
 
 // Query schema for GET
 const MessageQuerySchema = z.object({
   sessionId: z.string().min(1, 'Session ID is required'),
 });
 
-// POST /api/messages - Save a message
+// POST /api/messages - Save a message (backward compat) + corrections/errors
 async function handlePost(request: NextRequest) {
   const ctx = await requireAuth(request);
   const userId = ctx.userId;
@@ -53,17 +55,17 @@ async function handlePost(request: NextRequest) {
     },
   });
 
-  // If there are corrections, also save them as errors for tracking
+  // If there are corrections, save them as Error records for tracking
   if (corrections && corrections.length > 0) {
-    await db.error.createMany({
-      data: corrections.map((c) => ({
+    await errorRepo.createMany(
+      corrections.map((c) => ({
         sessionId,
-        category: c.type,
+        category: c.type as ErrorType,
         original: c.original,
         corrected: c.corrected,
         explanation: c.explanation,
-      })),
-    });
+      }))
+    );
   }
 
   // Update session filler word count if this is a user message

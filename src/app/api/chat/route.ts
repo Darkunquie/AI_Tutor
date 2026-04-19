@@ -1,16 +1,14 @@
 import { NextRequest } from 'next/server';
-import { chatStream } from '@/lib/groq';
-import { getSystemPrompt } from '@/lib/prompts';
-import { SCENARIOS } from '@/lib/config';
 import { ChatRequestSchema } from '@/lib/schemas/chat.schema';
 import {
   withErrorHandling,
   validateBody,
 } from '@/lib/error-handler';
 import { ApiError } from '@/lib/errors/ApiError';
-import { db } from '@/lib/db';
 import { checkRateLimit } from '@/lib/rate-limiter';
 import { requireAuth } from '@/server/http/auth-context';
+import { chatService } from '@/server/services/ChatService';
+import { logger } from '@/server/infra/logger';
 
 const CHAT_RATE_LIMIT = { maxAttempts: 30, windowMs: 60 * 1000 };
 
@@ -39,41 +37,30 @@ async function handlePost(request: NextRequest) {
     debatePosition: sanitize(body.context.debatePosition),
   } : undefined;
 
-  // SECURITY: Verify session belongs to authenticated user
-  if (sessionId) {
-    const session = await db.session.findFirst({
-      where: {
-        id: sessionId,
-        userId, // Verify ownership
-      },
-    });
-
-    if (!session) {
-      throw ApiError.notFound('Session');
-    }
-  }
-
-  // Get the appropriate system prompt
-  const systemPrompt = getSystemPrompt(mode, level, context, SCENARIOS);
-
   // Check if client wants streaming
   const acceptsStream = request.headers.get('accept')?.includes('text/event-stream');
 
   if (acceptsStream) {
-    // Streaming response via SSE
-    const trimmedHistory = (history || []).slice(-20);
+    // Streaming response via SSE — ChatService persists both user + AI messages
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of chatStream(systemPrompt, message, trimmedHistory)) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: chunk })}\n\n`));
+          for await (const token of chatService.streamTurn({
+            userId,
+            sessionId,
+            message,
+            mode,
+            level,
+            context,
+            history,
+          })) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
           }
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, sessionId })}\n\n`));
           controller.close();
         } catch (error) {
-          const { logger } = await import('@/lib/utils');
           logger.error('Chat stream error:', error);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`));
           controller.close();
@@ -90,13 +77,19 @@ async function handlePost(request: NextRequest) {
     });
   }
 
-  // Non-streaming fallback (for backwards compatibility)
-  const { chat } = await import('@/lib/groq');
-  const trimmedHistory = (history || []).slice(-20);
-  const reply = await chat(systemPrompt, message, trimmedHistory);
+  // Non-streaming fallback — ChatService persists both user + AI messages
+  const result = await chatService.turn({
+    userId,
+    sessionId,
+    message,
+    mode,
+    level,
+    context,
+    history,
+  });
 
   return Response.json({
-    data: { reply, sessionId },
+    data: { reply: result.reply, sessionId: result.sessionId },
   });
 }
 
