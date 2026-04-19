@@ -1,236 +1,203 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
- * Layered sine-wave ribbon, amber on black — the hero background flourish.
- * Pure SVG + CSS, no runtime deps.
+ * Animated waveform — amber sine ribbons with floating data nodes.
+ * Canvas-based for smooth rendering across all viewports.
  */
 export function Waveform() {
-  const { paths, nodes } = useMemo(() => {
-    const WIDTH = 1600;
-    const HEIGHT = 560;
-    const CENTER_Y = HEIGHT / 2;
-    const LINES = 36;
-    const STEPS = 220;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
 
-    // Data-node positions along the main line (x fractions)
-    const NODE_X = [0.12, 0.23, 0.34, 0.44, 0.56, 0.68, 0.82, 0.93];
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    // Generate a single sine-ish path — mild envelope so it peaks in the middle and tapers at the sides
-    const buildPath = (
-      amplitude: number,
-      period: number,
-      phase: number,
-      yOffset: number,
-    ) => {
-      let d = '';
-      for (let i = 0; i <= STEPS; i++) {
-        const t = i / STEPS;
-        const x = t * WIDTH;
-        const envelope = Math.sin(t * Math.PI); // 0 at edges, 1 at middle
-        const wobble =
-          Math.sin((x / period) * Math.PI * 2 + phase) +
-          0.35 * Math.sin((x / (period * 0.43)) * Math.PI * 2 + phase * 1.6);
-        const y = CENTER_Y + yOffset + amplitude * envelope * wobble;
-        d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(2)} `;
-      }
-      return d;
+    // Reduced motion check
+    const prefersReduced = globalThis.window?.matchMedia?.(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    const resize = () => {
+      const dpr = globalThis.window?.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
     };
 
-    // Build ribbon — lines stacked with subtly varying amplitude, period, phase, y-offset
-    const paths = Array.from({ length: LINES }, (_, i) => {
-      const t = (i - LINES / 2) / (LINES / 2); // -1 … 1
-      // Deterministic jitter — Math.random() would cause SSR/CSR hydration mismatch
-      const amp = 110 * (1 - Math.abs(t) * 0.25) + Math.sin(i * 1.93) * 2;
-      const period = 280 + i * 6;
-      const phase = i * 0.22;
-      const yOffset = t * 36; // spread vertically
-      const opacity = 0.55 * (1 - Math.abs(t) * 0.7);
-      const strokeWidth = 1 + (1 - Math.abs(t)) * 0.4;
-      const duration = 11 + (i % 5) * 1.0;
-      const delay = -i * 0.35;
-      return {
-        d: buildPath(amp, period, phase, yOffset),
-        opacity,
-        strokeWidth,
-        duration,
-        delay,
-      };
-    });
+    resize();
+    globalThis.window?.addEventListener('resize', resize);
 
-    // Node positions on the main (center-most) line
-    const mainAmp = 110;
-    const mainPeriod = 280 + 18 * 6;
-    const mainPhase = 18 * 0.22;
-    const nodes = NODE_X.map((fx, i) => {
-      const x = fx * WIDTH;
-      const t = fx;
-      const envelope = Math.sin(t * Math.PI);
-      const wobble =
-        Math.sin((x / mainPeriod) * Math.PI * 2 + mainPhase) +
-        0.35 * Math.sin((x / (mainPeriod * 0.43)) * Math.PI * 2 + mainPhase * 1.6);
-      const y = CENTER_Y + mainAmp * envelope * wobble;
-      // Realistic-looking decimal labels, pseudo-random but deterministic per index
-      const label = (fx * 99.3 + i * 7.21).toFixed(2);
-      return { x, y, label, i };
-    });
+    // Wave config
+    const LINES = 28;
+    const NODES = [
+      { xFrac: 0.12, label: '1.92' },
+      { xFrac: 0.23, label: '30.05' },
+      { xFrac: 0.34, label: '48.18' },
+      { xFrac: 0.44, label: '65.32' },
+      { xFrac: 0.56, label: '84.45' },
+      { xFrac: 0.68, label: '103.57' },
+      { xFrac: 0.82, label: '124.69' },
+    ];
 
-    return { paths, nodes };
+    const draw = (time: number) => {
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+      const CY = H * 0.5;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Ambient glow — radial gradient behind ribbon
+      const glow = ctx.createRadialGradient(W * 0.5, CY, 0, W * 0.5, CY, W * 0.4);
+      glow.addColorStop(0, 'rgba(212, 163, 115, 0.12)');
+      glow.addColorStop(0.5, 'rgba(212, 163, 115, 0.04)');
+      glow.addColorStop(1, 'rgba(14, 14, 16, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+
+      const t = prefersReduced ? 0 : time * 0.0003;
+
+      // Draw ribbon lines
+      for (let i = 0; i < LINES; i++) {
+        const norm = (i - LINES / 2) / (LINES / 2); // -1 to 1
+        const amp = H * 0.28 * (1 - Math.abs(norm) * 0.3);
+        const period = W * 0.35 + i * W * 0.008;
+        const phase = i * 0.25 + t;
+        const yOff = norm * H * 0.06;
+        const alpha = 0.45 * (1 - Math.abs(norm) * 0.65);
+        const lineW = 0.8 + (1 - Math.abs(norm)) * 0.6;
+
+        ctx.beginPath();
+        const steps = Math.max(100, Math.floor(W / 4));
+
+        for (let s = 0; s <= steps; s++) {
+          const frac = s / steps;
+          const x = frac * W;
+          const envelope = Math.sin(frac * Math.PI);
+          const wave =
+            Math.sin((x / period) * Math.PI * 2 + phase) +
+            0.3 * Math.sin((x / (period * 0.45)) * Math.PI * 2 + phase * 1.5);
+          const y = CY + yOff + amp * envelope * wave;
+
+          if (s === 0) { ctx.moveTo(x, y); }
+          else { ctx.lineTo(x, y); }
+        }
+
+        // Gradient stroke — fade at edges
+        const grad = ctx.createLinearGradient(0, 0, W, 0);
+        grad.addColorStop(0, 'rgba(212, 163, 115, 0)');
+        grad.addColorStop(0.15, `rgba(212, 163, 115, ${alpha})`);
+        grad.addColorStop(0.5, `rgba(242, 195, 142, ${alpha * 1.3})`);
+        grad.addColorStop(0.85, `rgba(212, 163, 115, ${alpha})`);
+        grad.addColorStop(1, 'rgba(212, 163, 115, 0)');
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = lineW;
+        ctx.stroke();
+      }
+
+      // Draw glow layer (thicker, blurred center lines)
+      ctx.save();
+      ctx.filter = 'blur(6px)';
+      for (let i = 10; i < 18; i++) {
+        const norm = (i - LINES / 2) / (LINES / 2);
+        const amp = H * 0.28 * (1 - Math.abs(norm) * 0.3);
+        const period = W * 0.35 + i * W * 0.008;
+        const phase = i * 0.25 + t;
+        const yOff = norm * H * 0.06;
+
+        ctx.beginPath();
+        const steps = Math.max(60, Math.floor(W / 6));
+        for (let s = 0; s <= steps; s++) {
+          const frac = s / steps;
+          const x = frac * W;
+          const envelope = Math.sin(frac * Math.PI);
+          const wave =
+            Math.sin((x / period) * Math.PI * 2 + phase) +
+            0.3 * Math.sin((x / (period * 0.45)) * Math.PI * 2 + phase * 1.5);
+          const y = CY + yOff + amp * envelope * wave;
+          if (s === 0) { ctx.moveTo(x, y); }
+          else { ctx.lineTo(x, y); }
+        }
+        ctx.strokeStyle = 'rgba(212, 163, 115, 0.12)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Data nodes — positioned on center line
+      const centerAmp = H * 0.28;
+      const centerPeriod = W * 0.35 + 14 * W * 0.008;
+      const centerPhase = 14 * 0.25 + t;
+
+      for (const node of NODES) {
+        const x = node.xFrac * W;
+        const envelope = Math.sin(node.xFrac * Math.PI);
+        const wave =
+          Math.sin((x / centerPeriod) * Math.PI * 2 + centerPhase) +
+          0.3 * Math.sin((x / (centerPeriod * 0.45)) * Math.PI * 2 + centerPhase * 1.5);
+        const y = CY + centerAmp * envelope * wave;
+
+        // Drop line
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + (y > CY ? -50 : 50));
+        ctx.strokeStyle = 'rgba(212, 163, 115, 0.2)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // Outer ring
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(212, 163, 115, 0.35)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        // Inner dot — pulse
+        const pulse = prefersReduced ? 1 : 0.7 + 0.3 * Math.sin(time * 0.002 + node.xFrac * 10);
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(242, 195, 142, ${0.6 + 0.4 * pulse})`;
+        ctx.fill();
+
+        // Label
+        ctx.font = '9px Geist, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(242, 195, 142, 0.7)';
+        ctx.fillText(node.label, x + 12, y + 3);
+      }
+
+      // Edge fade — top and bottom blend into page background
+      const fadeTop = ctx.createLinearGradient(0, 0, 0, H);
+      fadeTop.addColorStop(0, 'rgba(14, 14, 16, 1)');
+      fadeTop.addColorStop(0.18, 'rgba(14, 14, 16, 0.3)');
+      fadeTop.addColorStop(0.4, 'rgba(14, 14, 16, 0)');
+      fadeTop.addColorStop(0.6, 'rgba(14, 14, 16, 0)');
+      fadeTop.addColorStop(0.82, 'rgba(14, 14, 16, 0.3)');
+      fadeTop.addColorStop(1, 'rgba(14, 14, 16, 1)');
+      ctx.fillStyle = fadeTop;
+      ctx.fillRect(0, 0, W, H);
+
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    animRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      globalThis.window?.removeEventListener('resize', resize);
+    };
   }, []);
 
   return (
-    <div aria-hidden className="waveform-root pointer-events-none absolute inset-0 overflow-hidden">
-      <svg
-        viewBox="0 0 1600 560"
-        preserveAspectRatio="xMidYMid slice"
-        className="absolute inset-0 h-full w-full"
-      >
-        <defs>
-          <linearGradient id="wv-grad" x1="0" x2="1" y1="0.5" y2="0.5">
-            <stop offset="0%" stopColor="#D4A373" stopOpacity="0" />
-            <stop offset="18%" stopColor="#D4A373" stopOpacity="0.7" />
-            <stop offset="50%" stopColor="#F2C38E" stopOpacity="1" />
-            <stop offset="82%" stopColor="#D4A373" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#D4A373" stopOpacity="0" />
-          </linearGradient>
-
-          <radialGradient id="wv-core" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%" stopColor="#F2C38E" stopOpacity="0.22" />
-            <stop offset="60%" stopColor="#D4A373" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#0E0E10" stopOpacity="0" />
-          </radialGradient>
-
-          <filter id="wv-glow" x="-10%" y="-50%" width="120%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="blur1" />
-            <feMerge>
-              <feMergeNode in="blur1" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-
-          <filter id="wv-glow-strong" x="-20%" y="-100%" width="140%" height="300%">
-            <feGaussianBlur stdDeviation="8" />
-          </filter>
-        </defs>
-
-        {/* Soft amber halo behind the ribbon */}
-        <rect x="0" y="0" width="1600" height="560" fill="url(#wv-core)" />
-
-        {/* Blurred ghost ribbon for atmospheric glow */}
-        <g filter="url(#wv-glow-strong)" opacity="0.5">
-          {paths.slice(12, 24).map((p, i) => (
-            <path
-              key={`ghost-${i}`}
-              d={p.d}
-              stroke="#D4A373"
-              strokeWidth={2}
-              fill="none"
-              opacity={0.25}
-            />
-          ))}
-        </g>
-
-        {/* Main ribbon */}
-        <g filter="url(#wv-glow)">
-          {paths.map((p, i) => (
-            <path
-              key={i}
-              d={p.d}
-              stroke="url(#wv-grad)"
-              strokeWidth={p.strokeWidth}
-              fill="none"
-              opacity={p.opacity}
-              className="wv-line"
-              style={{
-                animationDuration: `${p.duration}s`,
-                animationDelay: `${p.delay}s`,
-                transformOrigin: 'center',
-              }}
-            />
-          ))}
-        </g>
-
-        {/* Data nodes */}
-        <g>
-          {nodes.map((n) => (
-            <g key={n.i} transform={`translate(${n.x}, ${n.y})`}>
-              {/* Connecting drop-line (subtle) */}
-              <line
-                x1="0"
-                y1="0"
-                x2="0"
-                y2={n.y > 280 ? -60 : 60}
-                stroke="#D4A373"
-                strokeWidth="0.6"
-                opacity="0.25"
-              />
-              {/* Node core */}
-              <circle r="4" fill="#F2C38E" className="wv-node" />
-              <circle r="8" fill="none" stroke="#D4A373" strokeWidth="0.8" opacity="0.4" />
-              {/* Label */}
-              <text
-                x="10"
-                y="3"
-                fontSize="9"
-                fontFamily="Geist, sans-serif"
-                fill="#F2C38E"
-                opacity="0.75"
-                style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
-              >
-                {n.label}
-              </text>
-            </g>
-          ))}
-        </g>
-      </svg>
-
-      {/* Background bleed — fades the waveform into page bg top & bottom */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(180deg, #0E0E10 0%, rgba(14,14,16,0.1) 22%, rgba(14,14,16,0) 50%, rgba(14,14,16,0.2) 72%, #0E0E10 100%)',
-        }}
-      />
-
-      <style jsx>{`
-        .wv-line {
-          animation-name: wv-drift;
-          animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite;
-          will-change: transform, opacity;
-        }
-        .wv-node {
-          animation: wv-pulse 2.8s ease-in-out infinite;
-        }
-        @keyframes wv-drift {
-          0%,
-          100% {
-            transform: translate3d(0, 0, 0) scaleY(1);
-          }
-          50% {
-            transform: translate3d(-28px, -8px, 0) scaleY(1.05);
-          }
-        }
-        @keyframes wv-pulse {
-          0%,
-          100% {
-            opacity: 0.55;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.4);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .wv-line,
-          .wv-node {
-            animation: none !important;
-          }
-        }
-      `}</style>
-    </div>
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+    />
   );
 }
