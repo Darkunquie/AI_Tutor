@@ -17,6 +17,7 @@ import type { Message, PronunciationResult, FillerWordDetection, Correction } fr
 import { CorrectionParser } from '@/lib/services/CorrectionParser';
 import { logger } from '@/lib/utils';
 import { AiOrb } from './AiOrb';
+import { ChatWaveform } from './ChatWaveform';
 
 interface ChatScreenProps {
   onEndSession?: () => void;
@@ -375,7 +376,8 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
       )}
 
       {/* Transcript */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="relative flex-1 overflow-y-auto">
+        <ChatWaveform active={!!streamingMessageId || isSpeakingState} />
         <div className="mx-auto max-w-[760px] px-8 py-20" aria-live="polite">
           {messages.length === 0 && (
             <div className="flex flex-col items-center text-center">
