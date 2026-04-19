@@ -99,10 +99,8 @@ export default function AppHome() {
         (err as { statusCode?: number; status?: number })?.statusCode ??
         (err as { status?: number })?.status;
       if (status === 401) {
-        setError('Please log in to start a session');
         router.push('/login');
       } else {
-        setError('Failed to create session. Please try again.');
       }
     } finally {
       setIsStarting(false);
@@ -133,7 +131,7 @@ export default function AppHome() {
     setShowTopicModal(false);
   };
 
-  const firstName = user?.name?.split(' ')[0] ?? 'friend';
+  const firstName = user?.name?.split(' ')[0] || 'friend';
 
   return (
     <AppShell>
@@ -268,7 +266,7 @@ export default function AppHome() {
             className="absolute inset-0 bg-[#0E0E10]/80 backdrop-blur-sm"
             onClick={() => setShowTopicModal(false)}
           />
-          <div className="relative flex max-h-[85vh] w-full max-w-[640px] flex-col overflow-hidden rounded-xl border border-[#2A2A2E] bg-[#17171A] text-[#F5F2EC] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]">
+          <div role="dialog" aria-modal="true" aria-labelledby="modal-title" className="relative flex max-h-[85vh] w-full max-w-[640px] flex-col overflow-hidden rounded-xl border border-[#2A2A2E] bg-[#17171A] text-[#F5F2EC] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]">
             <div className="border-b border-[#2A2A2E] p-8">
               <div className="text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
                 {selectedMode === 'FREE_TALK' && 'Free Talk'}
