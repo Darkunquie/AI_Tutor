@@ -28,6 +28,7 @@ model User {
   updatedAt        DateTime      @updatedAt
 
   @@index([status])
+  @@index([role, status, createdAt])
 }
 
 model Session {
@@ -40,16 +41,14 @@ model Session {
   messages          Message[]
   errors            Error[]
   vocabulary        Vocabulary[]
-  score             Int?         // 0-100
-  vocabularyJson    String       @default("[]") // JSON array of new words (legacy)
+  score             Int?         @db.SmallInt // 0-100
   fillerWordCount   Int          @default(0)
-  fillerDetails     String       @default("[]") // JSON array of filler word detections
   avgPronunciation  Float?       // Average pronunciation score 0-100
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
   @@index([userId])
-  @@index([userId, createdAt])
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model Message {
@@ -98,6 +97,8 @@ model Vocabulary {
 
   @@unique([userId, word])
   @@index([userId])
+  @@index([userId, reviewedAt])
+  @@index([userId, mastery])
 }
 
 // Daily aggregated stats for progress dashboard
@@ -105,7 +106,7 @@ model DailyStats {
   id              String   @id @default(cuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date            DateTime
+  date            DateTime @db.Date
   sessionsCount   Int      @default(0)
   totalDuration   Int      @default(0) // seconds
   avgScore        Float    @default(0)
@@ -118,6 +119,7 @@ model DailyStats {
 
   @@unique([userId, date])
   @@index([userId])
+  @@index([userId, date(sort: Desc)])
 }
 
 enum Level {

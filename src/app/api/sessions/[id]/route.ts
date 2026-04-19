@@ -7,7 +7,6 @@ import {
   validateBody,
   successResponse,
 } from '@/lib/error-handler';
-import type { FillerWordDetection } from '@/lib/types';
 import { safeJsonParse } from '@/lib/utils';
 import { requireAuth } from '@/server/http/auth-context';
 import { sessionService } from '@/server/services/SessionService';
@@ -39,10 +38,6 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
     throw ApiError.notFound('Session');
   }
 
-  // Parse JSON fields safely (with logging enabled to catch data corruption)
-  const fillerDetails = safeJsonParse<FillerWordDetection[]>(session.fillerDetails, [], true);
-  const vocabularyJson = safeJsonParse<string[]>(session.vocabularyJson, [], true);
-
   return successResponse({
     id: session.id,
     mode: session.mode,
@@ -50,9 +45,7 @@ async function handleGet(request: NextRequest, context?: { params: Promise<Recor
     duration: session.duration,
     score: session.score,
     fillerWordCount: session.fillerWordCount,
-    fillerDetails,
     avgPronunciation: session.avgPronunciation,
-    vocabularyJson,
     vocabulary: session.vocabulary,
     messages: session.messages.map((m) => ({
       id: m.id,

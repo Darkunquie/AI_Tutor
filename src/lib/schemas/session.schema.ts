@@ -10,21 +10,12 @@ export const CreateSessionSchema = z.object({
   level: LevelSchema,
 });
 
-// Filler word detail schema
-export const FillerWordDetailSchema = z.object({
-  word: z.string(),
-  count: z.number().int().min(0),
-  positions: z.array(z.number().int()),
-});
-
 // Update session request schema
 export const UpdateSessionSchema = z.object({
   duration: z.number().int().min(0).optional(),
   score: z.number().int().min(0).max(100).optional(),
   fillerWordCount: z.number().int().min(0).optional(),
-  fillerDetails: z.array(FillerWordDetailSchema).optional(),
   avgPronunciation: z.number().min(0).max(100).optional(),
-  vocabularyJson: z.array(z.string()).optional(),
 });
 
 // Session query params schema

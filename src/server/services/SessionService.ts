@@ -17,9 +17,7 @@ interface EndSessionInput {
   duration?: number;
   score?: number;
   fillerWordCount?: number;
-  fillerDetails?: unknown;
   avgPronunciation?: number;
-  vocabularyJson?: string[];
 }
 
 export const sessionService = {
@@ -44,12 +42,6 @@ export const sessionService = {
     }
     if (input.fillerWordCount !== undefined) {
       updateData.fillerWordCount = input.fillerWordCount;
-    }
-    if (input.fillerDetails !== undefined) {
-      updateData.fillerDetails = JSON.stringify(input.fillerDetails);
-    }
-    if (input.vocabularyJson !== undefined) {
-      updateData.vocabularyJson = JSON.stringify(input.vocabularyJson);
     }
     if (input.avgPronunciation !== undefined) {
       updateData.avgPronunciation = input.avgPronunciation;

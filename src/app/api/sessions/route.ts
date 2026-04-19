@@ -27,8 +27,6 @@ async function handlePost(request: NextRequest) {
       duration: 0,
       score: null,
       fillerWordCount: 0,
-      fillerDetails: '[]',
-      vocabularyJson: '[]',
     },
   });
 

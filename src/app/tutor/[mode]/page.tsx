@@ -74,7 +74,6 @@ export default function TutorPage() {
       api.sessions.update(sessionId, {
         duration: data.duration,
         score: data.score,
-        vocabularyJson: data.vocabularyGained,
       }).catch(logBackgroundError('update session'));
 
       // Save vocabulary words to DB

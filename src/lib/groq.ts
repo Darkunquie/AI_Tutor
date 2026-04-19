@@ -127,11 +127,6 @@ async function releaseUserSlot(userId: string): Promise<void> {
     // best-effort release
   }
 }
-    );
-  } catch {
-    // best-effort release
-  }
-}
 
 // ── Redis-backed concurrency semaphore ───────────────────────────────────────
 // Caps simultaneous Groq calls cluster-wide (across all PM2 workers).
