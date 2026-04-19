@@ -72,7 +72,7 @@ export function AppShell({ children }: AppShellProps) {
                 href="/admin"
                 className={
                   'group mt-1 flex items-center gap-3 rounded-md px-2 py-2 text-[14px] transition-colors ' +
-                  (pathname?.startsWith('/admin')
+                  (pathname === '/admin' || pathname?.startsWith('/admin/')
                     ? 'text-[#F5F2EC]'
                     : 'text-[#9A948A] hover:bg-[#1E1E22] hover:text-[#F5F2EC]')
                 }
@@ -80,7 +80,7 @@ export function AppShell({ children }: AppShellProps) {
                 <span
                   className={
                     'h-[5px] w-[5px] rounded-full transition-colors ' +
-                    (pathname?.startsWith('/admin') ? 'bg-[#D4A373]' : 'bg-transparent group-hover:bg-[#6B665F]')
+                    (pathname === '/admin' || pathname?.startsWith('/admin/') ? 'bg-[#D4A373]' : 'bg-transparent group-hover:bg-[#6B665F]')
                   }
                 />
                 Admin
