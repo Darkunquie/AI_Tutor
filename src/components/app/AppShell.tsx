@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ReactNode } from 'react';
@@ -35,9 +36,9 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside className="sticky top-0 flex h-screen w-[240px] flex-col border-r border-[#2A2A2E] bg-[#17171A] px-6 py-8">
-          <Link href="/app" className="flex items-center gap-2">
-            <span className="font-serif-display text-[20px] tracking-tight">Talkivo</span>
-            <span className="h-[6px] w-[6px] rounded-full bg-[#D4A373]" />
+          <Link href="/app" className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="Talkivo" width={32} height={32} className="object-contain" />
+            <span className="font-serif text-[20px] tracking-tight text-[#f2be8c]">Talkivo</span>
           </Link>
 
           <div className="mt-10 mb-3 text-[11px] uppercase tracking-[0.14em] text-[#6B665F]">

@@ -6,49 +6,53 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminHeader() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: 'dashboard' },
+    { href: '/admin', label: 'Dashboard', icon: 'health_and_safety' },
     { href: '/admin/users', label: 'Users', icon: 'group' },
   ];
 
+  const initials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+    : 'AD';
+
   return (
-    <header className="sticky top-0 z-50 bg-[#131315]/80 backdrop-blur-md border-b border-[#50453B]/15">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            <span className="font-serif text-xl text-[#D4A373] tracking-tight">Talkivo</span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-[#9A948A] border-l border-[#50453B] pl-3">Admin</span>
-          </div>
+    <header className="sticky top-0 z-50 flex justify-between items-center px-8 h-20 bg-[#0E0E10]/70 backdrop-blur-xl border-b border-[#50453B]/30 shadow-[0_20px_50px_rgba(212,163,115,0.05)]">
+      <div className="flex items-center gap-8">
+        <div className="flex flex-col">
+          <span className="text-2xl font-serif italic tracking-tight text-[#D4A373]">The Scholar</span>
+          <span className="text-[10px] uppercase tracking-widest text-[#9A948A]">Admin Command</span>
+        </div>
+        <nav className="hidden md:flex gap-6 ml-8">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== '/admin' && pathname?.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-sm transition-colors ${
+                  isActive
+                    ? 'text-[#D4A373] border-b-2 border-[#D4A373] pb-1 font-serif'
+                    : 'text-[#9A948A] hover:text-[#E5E1E4]'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
-          <nav className="flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 px-4 py-2 rounded text-sm transition-all duration-300 ${
-                    isActive
-                      ? 'bg-[#D4A373]/10 text-[#f2be8c] text-[11px] tracking-widest uppercase font-bold'
-                      : 'text-[#D4C4B7] opacity-60 text-[11px] tracking-widest uppercase hover:text-[#f2be8c] hover:bg-[#201F21]'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-lg">{item.icon}</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-3 py-2 rounded text-[11px] tracking-widest uppercase text-[#D4C4B7] opacity-60 hover:text-[#ffb4ab] hover:bg-[#ffb4ab]/5 transition-all duration-300"
-          >
-            <span className="material-symbols-outlined text-lg">logout</span>
-            Logout
-          </button>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={logout}
+          className="px-4 py-2 rounded-full bg-[#1B1B1D] border border-[#50453B]/20 text-[#9A948A] hover:text-[#ffb4ab] transition-colors"
+        >
+          <span className="material-symbols-outlined text-sm">logout</span>
+        </button>
+        <div className="h-10 w-10 rounded-full bg-[#353437] flex items-center justify-center text-[#D4A373] text-xs font-bold border border-[#D4A373]/30">
+          {initials}
         </div>
       </div>
     </header>
