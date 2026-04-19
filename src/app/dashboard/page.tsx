@@ -7,15 +7,7 @@ import { logger } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import RequireAuth from '@/components/auth/RequireAuth';
 import { AppShell } from '@/components/app/AppShell';
-import {
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+
 
 interface Stats {
   totalSessions: number;
@@ -46,30 +38,113 @@ interface ProgressData {
 }
 
 const PERIODS = [
-  { value: '7d', label: '7 days' },
-  { value: '30d', label: '30 days' },
-  { value: '90d', label: '90 days' },
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+  { value: '90d', label: 'All' },
 ];
 
 function formatDuration(seconds: number) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
+  if (h > 0) { return `${h}h ${m}m`; }
   return `${m}m`;
 }
 
-function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function humanMode(m: string) {
+  const map: Record<string, string> = {
+    FREE_TALK: 'Free Talk',
+    ROLE_PLAY: 'Role Play',
+    DEBATE: 'Debate',
+    GRAMMAR_FIX: 'Grammar Fix',
+    PRONUNCIATION: 'Pronunciation',
+  };
+  return map[m] ?? m;
+}
+
+function titleCase(s: string) {
+  if (!s) { return ''; }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+/* ------------------------------------------------------------------ */
+/* Academic Seal icon                                                  */
+/* ------------------------------------------------------------------ */
+function AcademicSeal({ icon, className = '' }: { icon: string; className?: string }) {
   return (
-    <div className="py-5">
-      <div className="mb-2 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">{label}</div>
-      <div className="font-serif-display tabular-nums text-[40px] leading-[1.05] tracking-[-0.02em] text-[#F5F2EC]">
-        {value}
-      </div>
-      {sub && <div className="mt-1 text-[12px] text-[#6B665F]">{sub}</div>}
+    <div
+      className={`relative flex items-center justify-center rounded-full border-[1.5px] border-[#f2be8c] ${className}`}
+      style={{
+        width: 42,
+        height: 42,
+        background: 'radial-gradient(circle, rgba(242,190,140,0.1) 0%, transparent 70%)',
+      }}
+    >
+      <div
+        className="absolute inset-[2px] rounded-full border-[0.5px] border-dashed border-[#f2be8c] opacity-50"
+      />
+      <span
+        className="material-symbols-outlined text-[20px] text-[#f2be8c]"
+        style={{ textShadow: '0 0 8px rgba(242,190,140,0.3)' }}
+      >
+        {icon}
+      </span>
     </div>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Stat card (glassmorphism)                                           */
+/* ------------------------------------------------------------------ */
+function GlassStatCard({
+  icon,
+  label,
+  value,
+  change,
+}: {
+  icon: string;
+  label: string;
+  value: string | number;
+  change?: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-4 rounded-xl p-4"
+      style={{
+        background: 'rgba(53,52,55,0.4)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(80,69,59,0.15)',
+        boxShadow: '0 0 20px rgba(242,190,140,0.05)',
+      }}
+    >
+      <AcademicSeal icon={icon} />
+      <div>
+        <p className="text-[10px] uppercase tracking-widest leading-none mb-1 text-[#d4c4b7]">
+          {label}
+        </p>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-2xl font-serif text-[#f2be8c]">{value}</h3>
+          {change && (
+            <span className="text-[#a7ccea] text-[10px] font-bold">{change}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Error bar row                                                       */
+/* ------------------------------------------------------------------ */
+const ERROR_CONFIG = [
+  { key: 'GRAMMAR' as const, label: 'Grammar Accuracy', color: '#ffb4ab', suffix: '% Errors' },
+  { key: 'VOCABULARY' as const, label: 'Vocab Variety', color: '#d4a373', suffix: '% Imp.' },
+  { key: 'STRUCTURE' as const, label: 'Sentence Structure', color: '#a7ccea', suffix: '% Complex' },
+  { key: 'FLUENCY' as const, label: 'Speech Fluency', color: '#b19cd9', suffix: '% Hes.' },
+];
+
+/* ------------------------------------------------------------------ */
+/* Main dashboard page                                                 */
+/* ------------------------------------------------------------------ */
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -79,7 +154,7 @@ export default function DashboardPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading || !isAuthenticated || !user) return;
+    if (authLoading || !isAuthenticated || !user) { return; }
     let cancelled = false;
     const fetchData = async () => {
       setIsLoading(true);
@@ -105,206 +180,314 @@ export default function DashboardPage() {
   }, [period, authLoading, isAuthenticated, user]);
 
   const errorTotal = useMemo(() => {
-    if (!stats) return 0;
+    if (!stats) { return 0; }
     const e = stats.errorBreakdown;
     return e.GRAMMAR + e.VOCABULARY + e.STRUCTURE + e.FLUENCY;
   }, [stats]);
 
+  const streakDays = 5; // TODO: wire to /api/streaks
+
   return (
     <RequireAuth>
       <AppShell>
-        <div className="mx-auto max-w-[1100px] px-10 pt-16 pb-16">
-          {/* Header */}
-          <div className="flex items-end justify-between border-b border-[#2A2A2E] pb-8">
-            <div>
-              <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
-                Your progress
+        {/* ── Top bar with period selector ── */}
+        <header className="sticky top-0 z-40 border-b border-[#50453b]/20 bg-[#131315]/90 px-6 py-3 backdrop-blur-2xl">
+          <div className="mx-auto flex max-w-[1400px] items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div>
+                <h1 className="font-serif text-xl font-bold leading-none text-[#f2be8c]">
+                  The Scholar
+                </h1>
+                <span className="font-serif text-[9px] italic uppercase tracking-widest text-[#f2be8c]/60">
+                  Command Center
+                </span>
               </div>
-              <h1 className="font-serif-display text-[48px] leading-[1.05] tracking-[-0.02em] text-[#F5F2EC]">
-                Dashboard.
-              </h1>
-              <p className="mt-3 text-[15px] leading-[1.55] text-[#9A948A]">
-                {stats && stats.weeklyChange > 0
-                  ? `Your speaking score is up ${stats.weeklyChange}% this week.`
-                  : 'Speak for a few minutes today and your score will start moving.'}
-              </p>
+
+              <nav className="flex items-center gap-1">
+                <Link
+                  href="/dashboard"
+                  className="rounded-lg border border-[#f2be8c]/20 bg-[#d4a373]/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#f2be8c]"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/review"
+                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-500 transition-colors hover:text-[#f2be8c]"
+                >
+                  Review
+                </Link>
+              </nav>
+
+              <div className="mx-2 h-6 w-px bg-[#50453b]/20" />
+
+              {/* Period selector pills */}
+              <div className="flex rounded-lg border border-[#50453b]/10 bg-[#1b1b1d] p-0.5">
+                {PERIODS.map((p) => {
+                  const active = period === p.value;
+                  return (
+                    <button
+                      key={p.value}
+                      onClick={() => setPeriod(p.value)}
+                      disabled={isLoading}
+                      className={
+                        'px-3 py-1 text-[10px] uppercase tracking-widest font-sans transition-colors ' +
+                        (active
+                          ? 'rounded-md bg-[#353437]/30 text-[#f2be8c]'
+                          : 'text-gray-400 hover:text-[#f2be8c]')
+                      }
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="flex items-center gap-5">
-              <span className="text-[11px] uppercase tracking-[0.14em] text-[#6B665F]">Period</span>
-              {PERIODS.map((p) => {
-                const active = period === p.value;
-                return (
-                  <button
-                    key={p.value}
-                    onClick={() => setPeriod(p.value)}
-                    disabled={isLoading}
-                    className={
-                      'text-[14px] transition-colors ' +
-                      (active
-                        ? 'text-[#F5F2EC] underline decoration-[#D4A373] decoration-2 underline-offset-[6px]'
-                        : 'text-[#9A948A] hover:text-[#F5F2EC]')
-                    }
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-4">
+              <Link
+                href="/app"
+                className="rounded-lg bg-gradient-to-r from-[#f2be8c] to-[#d4a373] px-5 py-2 text-xs font-bold uppercase tracking-wider text-[#0E0E10] transition-transform active:scale-95"
+              >
+                New Session
+              </Link>
             </div>
           </div>
+        </header>
 
+        <div className="mx-auto max-w-[1400px] px-6 pb-12 pt-8">
           {fetchError && (
-            <div className="mt-6 border-l-2 border-[#B5564C] bg-[#B5564C]/10 px-4 py-3 text-[13px] text-[#F5F2EC]">
-              {fetchError}
+            <div className="mb-6 rounded-xl border border-red-800 bg-red-900/20 p-4">
+              <p className="text-sm text-red-400">{fetchError}</p>
             </div>
           )}
 
-          {/* Loading state */}
+          {/* ── Loading skeleton ── */}
           {isLoading ? (
-            <div className="mt-16 grid grid-cols-6 gap-x-8">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="py-5">
-                  <div className="mb-3 h-[11px] w-20 rounded bg-[#2A2A2E]" />
-                  <div className="h-[40px] w-full rounded bg-[#17171A]" />
-                </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[88px] animate-pulse rounded-xl"
+                  style={{ background: 'rgba(53,52,55,0.4)' }}
+                />
               ))}
             </div>
           ) : stats && stats.totalSessions === 0 ? (
+            /* ── Empty state ── */
             <div className="mt-20 max-w-[520px]">
-              <h2 className="font-serif-display text-[28px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
+              <h2 className="font-serif text-[28px] leading-[1.2] text-[#f2be8c]">
                 Nothing to show yet.
               </h2>
               <p className="mt-4 text-[15px] leading-[1.6] text-[#9A948A]">
-                One session is enough to populate this dashboard. Metrics update the moment
-                you end a conversation.
+                One session is enough to populate this dashboard.
               </p>
               <Link
                 href="/app"
-                className="mt-8 inline-flex rounded-md bg-[#D4A373] px-6 py-[14px] text-[15px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
+                className="mt-8 inline-flex rounded-lg bg-gradient-to-r from-[#f2be8c] to-[#d4a373] px-6 py-3 text-[15px] font-medium text-[#0E0E10] transition-colors"
               >
                 Start your first session
               </Link>
             </div>
           ) : stats ? (
             <>
-              {/* Stats grid */}
-              <div className="mt-8 grid grid-cols-3 gap-x-10 divide-x divide-[#2A2A2E] border-b border-[#2A2A2E] md:grid-cols-6">
-                <div className="pl-0">
-                  <Stat label="Sessions" value={stats.totalSessions} />
-                </div>
-                <div className="pl-8">
-                  <Stat label="Time practised" value={formatDuration(stats.totalDuration)} />
-                </div>
-                <div className="pl-8">
-                  <Stat label="Avg. score" value={`${Math.round(stats.averageScore)}/100`} />
-                </div>
-                <div className="pl-8">
-                  <Stat label="Words learned" value={stats.wordsLearned} />
-                </div>
-                <div className="pl-8">
-                  <Stat
-                    label="Pronunciation"
-                    value={`${Math.round(stats.avgPronunciation)}%`}
-                  />
-                </div>
-                <div className="pl-8">
-                  <Stat label="Filler words" value={stats.totalFillerWords} sub="total occurrences" />
-                </div>
+              {/* ── Stat cards row ── */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <GlassStatCard
+                  icon="menu_book"
+                  label="Sessions"
+                  value={stats.totalSessions}
+                  change={stats.weeklyChange > 0 ? `+${stats.weeklyChange}%` : undefined}
+                />
+                <GlassStatCard
+                  icon="hourglass_top"
+                  label="Time Invested"
+                  value={formatDuration(stats.totalDuration)}
+                />
+                <GlassStatCard
+                  icon="workspace_premium"
+                  label="Avg Score"
+                  value={`${Math.round(stats.averageScore)}%`}
+                />
+                <GlassStatCard
+                  icon="translate"
+                  label="New Words"
+                  value={stats.wordsLearned}
+                />
               </div>
 
-              {/* Chart + errors */}
-              <div className="mt-16 grid grid-cols-3 gap-10">
-                <div className="col-span-2">
-                  <div className="mb-6 flex items-baseline justify-between">
-                    <h3 className="font-serif-display text-[24px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
-                      Score over time.
-                    </h3>
-                    <span className="text-[12px] text-[#6B665F]">
-                      {progressData.length} data points
-                    </span>
+              {/* ── Three-column layout ── */}
+              <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
+                {/* Left column — Fluency chart + Streak + Tip */}
+                <div className="space-y-6 lg:col-span-4">
+                  {/* Fluency Progress bar chart */}
+                  <div className="rounded-xl border border-[#50453b]/15 bg-[#1b1b1d] p-6">
+                    <div className="mb-6 flex items-start justify-between">
+                      <h4 className="font-serif text-lg italic text-[#f2be8c]">Fluency Progress</h4>
+                      <span className="material-symbols-outlined text-[#f2be8c]/30">analytics</span>
+                    </div>
+                    <div className="mb-4 flex h-32 items-end gap-1.5 px-1">
+                      {progressData.slice(-8).map((d, i) => {
+                        const maxScore = 100;
+                        const h = Math.max(5, (d.score / maxScore) * 100);
+                        const isLast = i === Math.min(progressData.length, 8) - 1;
+                        return (
+                          <div
+                            key={d.date}
+                            className={`flex-1 rounded-t-sm ${
+                              isLast
+                                ? 'bg-gradient-to-t from-[#f2be8c] to-[#d4a373]'
+                                : 'bg-[#f2be8c]'
+                            }`}
+                            style={{ height: `${h}%`, opacity: isLast ? 1 : 0.2 + (i / 8) * 0.4 }}
+                          />
+                        );
+                      })}
+                      {progressData.length === 0 &&
+                        Array.from({ length: 8 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="flex-1 rounded-t-sm bg-[#f2be8c]"
+                            style={{ height: `${15 + i * 8}%`, opacity: 0.15 + i * 0.05 }}
+                          />
+                        ))}
+                    </div>
+                    <div className="flex justify-between text-[9px] uppercase tracking-tight text-[#d4c4b7]">
+                      <span>{progressData[0]?.date || '—'}</span>
+                      <span>Today</span>
+                    </div>
                   </div>
-                  <div className="h-[280px] border border-[#2A2A2E] bg-[#17171A]/40">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={progressData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                        <CartesianGrid stroke="#2A2A2E" strokeDasharray="2 4" />
-                        <XAxis
-                          dataKey="date"
-                          stroke="#6B665F"
-                          fontSize={11}
-                          tickLine={false}
-                          axisLine={{ stroke: '#2A2A2E' }}
+
+                  {/* Streak widget */}
+                  <div className="rounded-xl border border-[#50453b]/15 bg-[#1b1b1d] p-6 text-center">
+                    <h4 className="mb-4 font-serif text-sm italic text-[#f2be8c]">
+                      Learning Momentum
+                    </h4>
+                    <div className="relative mb-6 inline-flex items-center justify-center">
+                      <svg className="h-32 w-32 -rotate-90">
+                        <circle
+                          className="text-[#353437]"
+                          cx="64" cy="64" r="56"
+                          fill="transparent" stroke="currentColor" strokeWidth="6"
                         />
-                        <YAxis
-                          stroke="#6B665F"
-                          fontSize={11}
-                          tickLine={false}
-                          axisLine={{ stroke: '#2A2A2E' }}
-                          domain={[0, 100]}
+                        <circle
+                          className="text-[#f2be8c]"
+                          cx="64" cy="64" r="56"
+                          fill="transparent" stroke="currentColor" strokeWidth="6"
+                          strokeDasharray="352"
+                          strokeDashoffset={352 - (streakDays / 7) * 352}
                         />
-                        <Tooltip
-                          contentStyle={{
-                            background: '#17171A',
-                            border: '1px solid #2A2A2E',
-                            borderRadius: 4,
-                            fontSize: 12,
-                            color: '#F5F2EC',
-                          }}
-                          labelStyle={{ color: '#9A948A' }}
-                          cursor={{ stroke: '#D4A373', strokeWidth: 1, strokeDasharray: '2 4' }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="score"
-                          stroke="#D4A373"
-                          strokeWidth={1.6}
-                          dot={{ r: 2.5, fill: '#D4A373', stroke: '#D4A373' }}
-                          activeDot={{ r: 4, fill: '#F2C38E' }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                      </svg>
+                      <div className="absolute text-center">
+                        <span className="block font-serif text-3xl text-[#f2be8c]">{streakDays}</span>
+                        <span className="text-[8px] uppercase tracking-widest text-[#d4c4b7]">
+                          Day Streak
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Link
+                        href="/app"
+                        className="rounded-lg border border-[#f2be8c]/20 bg-[#f2be8c]/10 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-[#f2be8c] transition-all hover:bg-[#f2be8c]/20"
+                      >
+                        Start Session
+                      </Link>
+                      <Link
+                        href="/review"
+                        className="rounded-lg border border-[#50453b]/10 bg-[#353437]/50 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-[#d4c4b7] transition-colors hover:text-[#f2be8c]"
+                      >
+                        Review Notes
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Scholar's Tip */}
+                  <div className="rounded-xl border border-[#50453b]/15 bg-[#1b1b1d] p-6">
+                    <div className="mb-3 flex items-center gap-2">
+                      <AcademicSeal icon="history_edu" className="scale-75" />
+                      <h4 className="font-serif text-sm italic text-[#f2be8c]">Scholar&apos;s Tip</h4>
+                    </div>
+                    <p className="text-xs italic leading-relaxed text-[#d4c4b7]">
+                      &ldquo;Your use of conditional clauses has improved. Try incorporating more
+                      <strong> subjunctive moods</strong> in your next conversation to reach C2 level.&rdquo;
+                    </p>
                   </div>
                 </div>
 
-                <div className="col-span-1">
-                  <h3 className="font-serif-display mb-6 text-[24px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
-                    Where the mistakes live.
-                  </h3>
-                  <div className="space-y-5">
-                    {(['GRAMMAR', 'VOCABULARY', 'STRUCTURE', 'FLUENCY'] as const).map((key) => {
-                      const val = stats.errorBreakdown[key];
-                      const pct = errorTotal > 0 ? Math.round((val / errorTotal) * 100) : 0;
-                      return (
-                        <div key={key}>
-                          <div className="mb-1.5 flex items-baseline justify-between text-[12px]">
-                            <span className="uppercase tracking-[0.12em] text-[#9A948A]">
-                              {key.toLowerCase()}
-                            </span>
-                            <span className="tabular-nums text-[#6B665F]">
-                              {val} · {pct}%
-                            </span>
+                {/* Middle column — Linguistic Precision + Achievements */}
+                <div className="space-y-6 lg:col-span-3">
+                  <div className="flex h-full flex-col rounded-xl border border-[#50453b]/15 bg-[#1b1b1d] p-6">
+                    <div className="mb-8 flex items-center justify-between">
+                      <h4 className="font-serif text-lg italic text-[#f2be8c]">
+                        Linguistic Precision
+                      </h4>
+                      <span className="material-symbols-outlined text-[#f2be8c]/30">psychology</span>
+                    </div>
+
+                    <div className="space-y-8">
+                      {ERROR_CONFIG.map((cfg) => {
+                        const val = stats.errorBreakdown[cfg.key];
+                        const pct = errorTotal > 0 ? Math.round((val / errorTotal) * 100) : 0;
+                        return (
+                          <div key={cfg.key}>
+                            <div className="mb-2 flex justify-between text-[10px] uppercase tracking-widest">
+                              <span className="text-[#d4c4b7]">{cfg.label}</span>
+                              <span style={{ color: cfg.color }}>
+                                {pct}{cfg.suffix}
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#353437]">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{ width: `${pct}%`, backgroundColor: cfg.color }}
+                              />
+                            </div>
                           </div>
-                          <div className="h-[2px] w-full bg-[#2A2A2E]">
-                            <div
-                              className="h-full bg-[#D4A373]"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+
+                    {/* Achievements */}
+                    <div className="mt-auto border-t border-[#50453b]/10 pt-8">
+                      <h4 className="mb-4 font-serif text-xs italic uppercase tracking-wider text-[#f2be8c]">
+                        Recent Accolades
+                      </h4>
+                      <div className="flex justify-between gap-2">
+                        <AcademicSeal icon="dark_mode" />
+                        <AcademicSeal icon="auto_stories" />
+                        <AcademicSeal icon="verified_user" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Session history */}
-              <div className="mt-16">
-                <h3 className="font-serif-display mb-6 text-[24px] leading-[1.2] tracking-[-0.01em] text-[#F5F2EC]">
-                  Recent sessions.
-                </h3>
-                {user && <SessionHistoryTable userId={user.id} />}
+                {/* Right column — Session Ledger */}
+                <div className="lg:col-span-5">
+                  <SessionLedger userId={user!.id} />
+                </div>
               </div>
             </>
           ) : null}
+        </div>
+
+        {/* Floating AI assistant indicator */}
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-4">
+          <div className="rounded-full border border-[#50453b]/20 bg-[#353437]/60 px-4 py-1.5 text-[9px] italic uppercase tracking-widest text-[#f2be8c] shadow-2xl backdrop-blur-xl">
+            AI Assistant Active
+          </div>
+          <Link
+            href="/app"
+            className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#f2be8c] bg-gradient-to-tr from-[#f2be8c]/20 to-[#d4a373]/20 transition-transform hover:scale-105"
+            style={{
+              background: 'radial-gradient(circle, rgba(242,190,140,0.1) 0%, transparent 70%)',
+            }}
+          >
+            <span
+              className="material-symbols-outlined text-3xl text-[#f2be8c]"
+              style={{ textShadow: '0 0 8px rgba(242,190,140,0.3)' }}
+            >
+              mic
+            </span>
+          </Link>
         </div>
       </AppShell>
     </RequireAuth>
@@ -312,9 +495,8 @@ export default function DashboardPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Inline session history table — minimal, editorial                  */
+/* Session Ledger — table with academic styling                        */
 /* ------------------------------------------------------------------ */
-
 interface SessionItem {
   id: string;
   mode: string;
@@ -324,93 +506,145 @@ interface SessionItem {
   createdAt: string;
 }
 
-function SessionHistoryTable({ userId }: { userId: string }) {
+function scoreToGrade(score: number): { grade: string; color: string } {
+  if (score >= 90) { return { grade: 'A+', color: '#f2be8c' }; }
+  if (score >= 85) { return { grade: 'A', color: '#f2be8c' }; }
+  if (score >= 80) { return { grade: 'A-', color: '#f2be8c' }; }
+  if (score >= 75) { return { grade: 'B+', color: '#f2be8c' }; }
+  if (score >= 70) { return { grade: 'B', color: '#d4a373' }; }
+  if (score >= 65) { return { grade: 'B-', color: '#d4a373' }; }
+  if (score >= 60) { return { grade: 'C+', color: '#a7ccea' }; }
+  if (score >= 50) { return { grade: 'C', color: '#a7ccea' }; }
+  return { grade: 'D', color: '#ffb4ab' };
+}
+
+function SessionLedger({ userId }: { userId: string }) {
   const [items, setItems] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 4;
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setLoading(true);
       try {
-        const res = await api.sessions.list({ userId, page: 1, pageSize: 10 });
-        if (!cancelled) setItems((res?.data ?? []) as SessionItem[]);
+        const res = await api.sessions.list({ userId, page, pageSize });
+        const typed = res as unknown as { data: SessionItem[]; total: number };
+        if (!cancelled) {
+          setItems(typed.data ?? []);
+          setTotal(typed.total ?? 0);
+        }
       } catch (e) {
-        if (!cancelled) setErr(e instanceof Error ? e.message : 'Could not load sessions');
+        logger.error('Session ledger fetch failed:', e);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) { setLoading(false); }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+    return () => { cancelled = true; };
+  }, [userId, page]);
 
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-[52px] w-full bg-[#17171A]/60" />
-        ))}
-      </div>
-    );
-  }
-  if (err) {
-    return <div className="text-[13px] text-[#9A948A]">Could not load sessions: {err}</div>;
-  }
-  if (!items.length) {
-    return <div className="text-[13px] text-[#9A948A]">No sessions yet.</div>;
-  }
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="border-t border-[#2A2A2E]">
-      <div className="grid grid-cols-12 gap-4 border-b border-[#2A2A2E] py-3 text-[11px] uppercase tracking-[0.14em] text-[#6B665F]">
-        <div className="col-span-3">Mode</div>
-        <div className="col-span-2">Level</div>
-        <div className="col-span-3">Date</div>
-        <div className="col-span-2 text-right">Duration</div>
-        <div className="col-span-2 text-right">Score</div>
+    <section className="flex h-full flex-col overflow-hidden rounded-xl border border-[#50453b]/15 bg-[#1b1b1d]">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-[#50453b]/15 bg-[#2a2a2c]/30 p-5">
+        <div className="flex items-center gap-3">
+          <AcademicSeal icon="list_alt" className="scale-75" />
+          <h4 className="font-serif text-lg italic leading-none text-[#f2be8c]">
+            Detailed Session Ledger
+          </h4>
+        </div>
+        <span className="material-symbols-outlined text-xl text-[#f2be8c]">filter_list</span>
       </div>
-      <ul>
-        {items.map((s, i) => (
-          <li
-            key={s.id ?? i}
-            className="grid grid-cols-12 gap-4 border-b border-[#2A2A2E] py-4 text-[14px] text-[#F5F2EC] transition-colors hover:bg-[#17171A]"
+
+      {/* Table */}
+      <div className="flex-grow overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-[#50453b]/5 text-[9px] uppercase tracking-widest text-[#d4c4b7]">
+              <th className="px-5 py-4 font-medium">Session / Topic</th>
+              <th className="px-5 py-4 text-center font-medium">Dur.</th>
+              <th className="px-5 py-4 text-right font-medium">Accuracy</th>
+              <th className="px-5 py-4 text-right font-medium">Score</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#50453b]/5">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <tr key={i}>
+                  <td colSpan={4} className="px-5 py-5">
+                    <div className="h-4 w-2/3 animate-pulse rounded bg-[#353437]" />
+                  </td>
+                </tr>
+              ))
+            ) : items.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-5 py-12 text-center text-sm text-[#d4c4b7]">
+                  No sessions yet
+                </td>
+              </tr>
+            ) : (
+              items.map((s) => {
+                const { grade, color } = scoreToGrade(Math.round(s.score ?? 0));
+                return (
+                  <tr
+                    key={s.id}
+                    className="transition-colors hover:bg-[#2a2a2c]/40"
+                  >
+                    <td className="px-5 py-4">
+                      <span className="mb-0.5 block text-xs font-bold text-[#e5e1e4]">
+                        {humanMode(s.mode)}
+                      </span>
+                      <span className="rounded border border-[#f2be8c]/10 bg-[#f2be8c]/5 px-1.5 py-0.5 text-[9px] text-[#f2be8c]/70">
+                        {titleCase(s.level)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-center text-[10px] text-[#d4c4b7]">
+                      {formatDuration(s.duration ?? 0)}
+                    </td>
+                    <td className="px-5 py-4 text-right text-[10px] font-medium text-[#e5e1e4]">
+                      {Math.round(s.score ?? 0)}%
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <span className="font-serif font-bold" style={{ color }}>
+                        {grade}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-auto flex items-center justify-between border-t border-[#50453b]/10 bg-[#2a2a2c]/10 px-5 py-4">
+        <span className="text-[9px] uppercase tracking-widest text-[#d4c4b7]">
+          {items.length > 0
+            ? `${(page - 1) * pageSize + 1}-${Math.min(page * pageSize, total)} of ${total}`
+            : '0 sessions'}
+        </span>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="flex h-6 w-6 items-center justify-center rounded border border-[#50453b]/10 text-[#d4c4b7] disabled:opacity-30"
           >
-            <div className="col-span-3 font-medium">{humanMode(s.mode)}</div>
-            <div className="col-span-2 text-[#9A948A]">{titleCase(s.level)}</div>
-            <div className="col-span-3 tabular-nums text-[#9A948A]">
-              {(() => {
-                if (!s.createdAt) return '—';
-                const d = new Date(s.createdAt);
-                return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-              })()}
-            </div>
-            <div className="col-span-2 tabular-nums text-right text-[#9A948A]">
-              {formatDuration(s.duration ?? 0)}
-            </div>
-            <div className="col-span-2 tabular-nums text-right text-[#D4A373]">
-              {Math.round(s.score ?? 0)}/100
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            <span className="material-symbols-outlined text-xs">chevron_left</span>
+          </button>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="flex h-6 w-6 items-center justify-center rounded border border-[#50453b]/10 text-[#e5e1e4] hover:border-[#f2be8c]/40 disabled:opacity-30"
+          >
+            <span className="material-symbols-outlined text-xs">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </section>
   );
-}
-
-function humanMode(m: string) {
-  const map: Record<string, string> = {
-    FREE_TALK: 'Free Talk',
-    ROLE_PLAY: 'Role Play',
-    DEBATE: 'Debate',
-    GRAMMAR_FIX: 'Grammar Fix',
-    PRONUNCIATION: 'Pronunciation',
-  };
-  return map[m] ?? m;
-}
-
-function titleCase(s: string) {
-  if (!s) return '';
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
