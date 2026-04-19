@@ -248,7 +248,7 @@ export function SessionReport({
             {tips.map((tip, i) => (
               <li key={i} className="flex gap-6 border-b border-[#2A2A2E] py-4">
                 <span className="font-serif-display tabular-nums w-6 text-[16px] text-[#D4A373]">
-                  0{i + 1}
+                  {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="text-[15px] leading-[1.55] text-[#F5F2EC]">{tip}</span>
               </li>

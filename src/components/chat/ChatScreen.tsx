@@ -391,6 +391,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
                 {mode === 'ROLE_PLAY' && 'The scene has started. Jump in.'}
                 {mode === 'DEBATE' && 'Make your opening argument.'}
                 {mode === 'GRAMMAR_FIX' && 'Write a sentence. Any sentence.'}
+                {mode === 'PRONUNCIATION' && 'Speak clearly. Your tutor will listen.'}
               </h2>
               {(context.topic || context.scenario || context.debateTopic) && (
                 <div className="mt-6 border-l border-[#D4A373] pl-4 text-[14px] italic leading-[1.5] text-[#9A948A] font-serif-display">
