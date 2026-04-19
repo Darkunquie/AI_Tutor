@@ -1,94 +1,94 @@
 'use client';
 
+import { useState } from 'react';
 import type { Message, Correction } from '@/lib/types';
 
 interface MessageBubbleProps {
   message: Message;
 }
 
-const CORRECTION_STYLES: Record<string, { bg: string; text: string }> = {
-  GRAMMAR: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-400' },
-  VOCABULARY: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' },
-  STRUCTURE: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-400' },
-  FLUENCY: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-400' },
+const CORRECTION_COLORS: Record<string, { border: string; badge: string; badgeBg: string }> = {
+  GRAMMAR: { border: 'border-[#ffb4ab]', badge: 'text-[#ffb4ab]', badgeBg: 'bg-[#ffb4ab]/10' },
+  VOCABULARY: { border: 'border-[#f2be8c]', badge: 'text-[#f2be8c]', badgeBg: 'bg-[#f2be8c]/10' },
+  STRUCTURE: { border: 'border-[#a7ccea]', badge: 'text-[#a7ccea]', badgeBg: 'bg-[#a7ccea]/10' },
+  FLUENCY: { border: 'border-[#b19cd9]', badge: 'text-[#b19cd9]', badgeBg: 'bg-[#b19cd9]/10' },
 };
 
-function CorrectionTip({ correction }: { correction: Correction }) {
-  const style = CORRECTION_STYLES[correction.type] || CORRECTION_STYLES.GRAMMAR;
-
+function CorrectionPopup({ corrections }: { corrections: Correction[] }) {
   return (
-    <div className="flex items-start gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <span className="material-symbols-outlined">lightbulb</span>
-      </div>
-      <div className="flex flex-col gap-2 max-w-[80%]">
-        <div className={`rounded-xl ${style.bg} p-4 border border-primary/20 ${style.text}`}>
-          <p className="text-sm font-medium">
-            <strong className="text-primary font-bold">{correction.type} Tip:</strong>{' '}
-            <span className="line-through opacity-60">{correction.original}</span>
-            {' → '}
-            <span className="font-bold underline">{correction.corrected}</span>
-          </p>
-          {correction.explanation && (
-            <p className="text-xs mt-1 opacity-80">{correction.explanation}</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CorrectBadge() {
-  return (
-    <div className="flex items-start gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-        <span className="material-symbols-outlined">check_circle</span>
-      </div>
-      <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 p-3 border border-emerald-200 dark:border-emerald-800">
-        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-          Your English is correct!
-        </p>
-      </div>
+    <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
+      {corrections.map((c, i) => {
+        const style = CORRECTION_COLORS[c.type] || CORRECTION_COLORS.GRAMMAR;
+        return (
+          <div
+            key={`${c.original}-${i}`}
+            className={`rounded-lg bg-[#1B1B1D] p-3 border-l-2 ${style.border}`}
+          >
+            <span className={`text-[9px] uppercase tracking-widest ${style.badge} ${style.badgeBg} px-1.5 py-0.5 rounded`}>
+              {c.type}
+            </span>
+            <p className="mt-1.5 text-sm text-[#E5E1E4]">
+              <span className="line-through text-[#ffb4ab]/60">{c.original}</span>
+              <span className="material-symbols-outlined text-xs mx-1.5 align-middle text-[#9A948A]">arrow_forward</span>
+              <span className="font-bold text-[#b4e3b2]">{c.corrected}</span>
+            </p>
+            {c.explanation && (
+              <p className="mt-1 text-[11px] italic text-[#9A948A]">{c.explanation}</p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
+  const [showCorrections, setShowCorrections] = useState(false);
   const isUser = message.role === 'USER';
 
   if (isUser) {
     const hasCorrections = message.corrections && message.corrections.length > 0;
-    const showCorrectBadge = message.hasBeenChecked && !hasCorrections;
+    const isCorrect = message.hasBeenChecked && !hasCorrections;
 
     return (
-      <div className="flex flex-col items-end gap-4">
+      <div className="flex flex-col items-end gap-1">
         {/* User message */}
-        <div className="flex items-start justify-end gap-4 max-w-[80%]">
-          <div className="flex flex-col gap-1.5 items-end">
-            <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mr-1">You</p>
-            <div className="rounded-2xl rounded-tr-none bg-primary p-4 text-white shadow-lg shadow-primary/20">
-              <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
+        <div className="flex items-start justify-end gap-3 max-w-[80%]">
+          <div className="flex flex-col items-end gap-1">
+            <p className="text-[11px] font-medium text-[#9A948A] mr-1">You</p>
+            <div className="rounded-2xl rounded-tr-none bg-[#D4A373] p-4 text-[#0E0E10] shadow-lg shadow-[#D4A373]/10">
+              <p className="leading-relaxed whitespace-pre-wrap text-sm">{message.content}</p>
             </div>
-          </div>
-          {/* User avatar */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-2 border-white dark:border-slate-800 shadow-md">
-            <span className="material-symbols-outlined text-xl">person</span>
+
+            {/* Toggle badge below message */}
+            {hasCorrections && (
+              <button
+                onClick={() => setShowCorrections(!showCorrections)}
+                className="flex items-center gap-1.5 mt-1 px-2.5 py-1 rounded-full bg-[#ffb4ab]/10 border border-[#ffb4ab]/20 text-[#ffb4ab] text-[10px] font-bold uppercase tracking-wider hover:bg-[#ffb4ab]/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {showCorrections ? 'expand_less' : 'lightbulb'}
+                </span>
+                {message.corrections!.length} correction{message.corrections!.length > 1 ? 's' : ''}
+                <span className="material-symbols-outlined text-xs">
+                  {showCorrections ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                </span>
+              </button>
+            )}
+
+            {isCorrect && (
+              <div className="flex items-center gap-1.5 mt-1 px-2.5 py-1 rounded-full bg-[#b4e3b2]/10 border border-[#b4e3b2]/20 text-[#b4e3b2] text-[10px] font-bold uppercase tracking-wider">
+                <span className="material-symbols-outlined text-sm">check_circle</span>
+                Correct
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Correction tips (displayed as coaching messages below user message) */}
-        {hasCorrections && (
-          <div className="w-full flex flex-col gap-4">
-            {message.corrections!.map((correction, index) => (
-              <CorrectionTip key={index} correction={correction} />
-            ))}
-          </div>
-        )}
-
-        {/* Positive feedback when sentence is correct */}
-        {showCorrectBadge && (
-          <div className="w-full">
-            <CorrectBadge />
+        {/* Correction popup (toggleable) */}
+        {hasCorrections && showCorrections && (
+          <div className="w-full max-w-[80%] mr-0">
+            <CorrectionPopup corrections={message.corrections!} />
           </div>
         )}
       </div>
@@ -97,14 +97,14 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   // AI message
   return (
-    <div className="flex items-start gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
-        <span className="material-symbols-outlined">smart_toy</span>
+    <div className="flex items-start gap-3 max-w-[80%]">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#D4A373]/10 text-[#D4A373] border border-[#D4A373]/20">
+        <span className="material-symbols-outlined text-lg">smart_toy</span>
       </div>
-      <div className="flex flex-col gap-1.5 max-w-[80%]">
-        <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 ml-1">Talkivo</p>
-        <div className="rounded-2xl rounded-tl-none bg-white p-4 text-slate-800 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700">
-          <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
+      <div className="flex flex-col gap-1">
+        <p className="text-[11px] font-medium text-[#9A948A] ml-1">Talkivo</p>
+        <div className="rounded-2xl rounded-tl-none bg-[#1B1B1D] p-4 text-[#E5E1E4] border border-[#50453B]/15">
+          <p className="leading-relaxed whitespace-pre-wrap text-sm">{message.content}</p>
         </div>
       </div>
     </div>

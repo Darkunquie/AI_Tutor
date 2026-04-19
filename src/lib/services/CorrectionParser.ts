@@ -74,6 +74,23 @@ const TEXT_CORRECTION_PATTERNS = [
     regex: /\*\s*(\w+(?:\s+\w+){0,4})\s*(?:→|->)\s*(\w+(?:\s+\w+){0,4})/g,
     type: 'GRAMMAR' as ErrorType,
   },
+  // Pattern: "X" → "Y" — explanation (smart quotes, em dash)
+  {
+    regex: /\u201c([^\u201d]+)\u201d\s*(?:→|->)\s*\u201c([^\u201d]+)\u201d\s*(?:—|--)\s*(.+?)(?:\n|$)/gi,
+    type: 'GRAMMAR' as ErrorType,
+    hasExplanation: true,
+  },
+  // Pattern: X → Y — explanation (unquoted, casual style)
+  {
+    regex: /(?:^|\n)\s*(\w[\w ]{0,30}?\w)\s*(?:→|->)\s*(\w[\w ]{0,30}?\w)\s*[—-]{1,2}\s*(.+?)(?:\n|$)/gi,
+    type: 'GRAMMAR' as ErrorType,
+    hasExplanation: true,
+  },
+  // Pattern: "X" to "Y" or correct form is "Y"
+  {
+    regex: /["']([^"']+)["']\s*(?:should be|to|correct form is|change to)\s*["']([^"']+)["']/gi,
+    type: 'GRAMMAR' as ErrorType,
+  },
   // Pattern: we usually say "X" not "Y"
   {
     regex: /(?:we\s+(?:usually|normally|typically)\s+say|you\s+should\s+say|say)\s+["']([^"']+)["']\s+(?:not|instead\s+of)\s+["']([^"']+)["']/gi,
