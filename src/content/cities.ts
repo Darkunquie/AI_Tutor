@@ -53,6 +53,62 @@ export const CITIES: City[] = [
       'From UPSC interview prep to MBA application SOPs to client-facing consulting work, Talkivo covers the speaking practice Delhi professionals actually need \u2014 on your phone, on your schedule.',
     testimonialCity: 'Delhi NCR',
   },
+  {
+    slug: 'mumbai',
+    name: 'Mumbai',
+    state: 'Maharashtra',
+    metaTitle: 'English Speaking Course in Mumbai — AI Tutor, Online',
+    metaDescription:
+      'Practice spoken English online in Mumbai with Talkivo. AI English tutor for BKC professionals, Andheri startups, and anyone serious about fluency. Free trial.',
+    keyword: 'english speaking course mumbai',
+    intro:
+      'Mumbai is financial services, media, advertising, and the startup scene all in one city. BKC, Lower Parel, Andheri, Powai \u2014 every pitch, every client meeting, every agency brief happens in English. Talkivo helps Mumbai professionals speak the English their jobs require \u2014 without booking an in-person class.',
+    localAngle:
+      'Investment bankers, creative directors, product managers, TV hosts, FMCG brand managers \u2014 Talkivo adapts to your level and the vocabulary you actually need for work.',
+    testimonialCity: 'Mumbai',
+  },
+  {
+    slug: 'chennai',
+    name: 'Chennai',
+    state: 'Tamil Nadu',
+    metaTitle: 'Spoken English in Chennai — AI English Tutor, Online',
+    metaDescription:
+      'Learn spoken English in Chennai with Talkivo \u2014 an AI tutor for IT professionals, students, and anyone who wants confident, natural English. Free trial.',
+    keyword: 'spoken english chennai',
+    intro:
+      'Chennai is India\u2019s IT and manufacturing heartland. OMR, Tidel Park, Guindy, Ambattur \u2014 tens of thousands of engineers, BPO trainees, and manufacturing managers need fluent English for daily work. Talkivo brings the speaking practice Chennai professionals need, at their own pace, from their own phone.',
+    localAngle:
+      'From IT freshers preparing for client video calls to automotive professionals working with global teams, Talkivo covers the speaking practice Chennai professionals actually need. Optional Tamil interface for beginners.',
+    testimonialCity: 'Chennai',
+  },
+  {
+    slug: 'pune',
+    name: 'Pune',
+    state: 'Maharashtra',
+    metaTitle: 'English Speaking Classes in Pune — AI Tutor, Online',
+    metaDescription:
+      'Improve your spoken English in Pune with Talkivo. AI-powered conversation and pronunciation practice for Hinjewadi, Kharadi, and Viman Nagar professionals. Free to start.',
+    keyword: 'english speaking classes pune',
+    intro:
+      'Pune combines India\u2019s biggest student population with a fast-growing IT corridor. Hinjewadi, Kharadi, Viman Nagar, Baner \u2014 every IT park here runs on English-medium work. Talkivo helps Pune professionals move from passable to polished English, in 15-minute daily sessions.',
+    localAngle:
+      'Whether you are a fresh engineering graduate from COEP or MIT, an IT professional in Hinjewadi, or a management consultant in Kalyani Nagar, Talkivo fits around your schedule.',
+    testimonialCity: 'Pune',
+  },
+  {
+    slug: 'kolkata',
+    name: 'Kolkata',
+    state: 'West Bengal',
+    metaTitle: 'English Speaking Classes in Kolkata — AI Tutor, Online',
+    metaDescription:
+      'Practice English speaking in Kolkata with Talkivo. AI-powered conversation, role play, and pronunciation drills. For Salt Lake IT, New Town, and beyond. Free trial.',
+    keyword: 'english speaking classes kolkata',
+    intro:
+      'Kolkata is rebuilding as an eastern India hub \u2014 Salt Lake Sector V, New Town, Rajarhat. IT services, analytics, and finance roles here require English fluency beyond what school and college taught. Talkivo gives Kolkata professionals a patient AI tutor for daily speaking practice.',
+    localAngle:
+      'From IT services professionals in Sector V to students at Jadavpur and Presidency preparing for higher studies abroad, Talkivo covers the speaking practice Kolkata professionals actually need.',
+    testimonialCity: 'Kolkata',
+  },
 ];
 
 export function getCity(slug: string) {
