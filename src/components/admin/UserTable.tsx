@@ -21,6 +21,10 @@ interface UserTableProps {
   loading?: boolean;
 }
 
+function getInitials(name: string): string {
+  return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
+}
+
 export default function UserTable({ users, onApprove, onReject, loading }: UserTableProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -53,56 +57,51 @@ export default function UserTable({ users, onApprove, onReject, loading }: UserT
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-[#50453B]/20">
-            {['User', 'Phone', 'Status', 'Level', 'Sessions', 'Joined', 'Actions'].map((h, i) => (
-              <th
-                key={h}
-                className={`py-3 px-4 text-[10px] font-bold text-[#D4C4B7] uppercase tracking-[0.2em] ${i === 6 ? 'text-right' : 'text-left'}`}
-              >
+          <tr className="bg-[#131315]/40 border-b border-[#50453B]/10">
+            {['User', 'Status', 'Level', 'Sessions', 'Actions'].map((h, i) => (
+              <th key={h} className={`px-6 py-4 text-[10px] uppercase tracking-widest text-[#9A948A] ${i === 4 ? 'text-right' : ''}`}>
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#50453B]/10">
+        <tbody className="divide-y divide-[#50453B]/5">
           {users.map((user) => (
-            <tr key={user.id} className="hover:bg-[#2A2A2C]/50 transition-colors">
-              <td className="py-3 px-4">
-                <p className="text-sm font-semibold text-[#E5E1E4]">{user.name}</p>
-                <p className="text-xs text-[#9A948A]">{user.email}</p>
+            <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
+              <td className="px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#353437] flex items-center justify-center text-[#D4A373] text-xs font-bold">
+                    {getInitials(user.name)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#E5E1E4]">{user.name}</p>
+                    <p className="text-[10px] text-[#9A948A]">{user.phone}</p>
+                  </div>
+                </div>
               </td>
-              <td className="py-3 px-4 text-sm text-[#D4C4B7]">{user.phone}</td>
-              <td className="py-3 px-4"><StatusBadge status={user.status} /></td>
-              <td className="py-3 px-4 text-sm text-[#D4C4B7] uppercase text-[11px] tracking-wider">{user.level}</td>
-              <td className="py-3 px-4 text-sm text-[#D4C4B7]">{user._count.sessions}</td>
-              <td className="py-3 px-4 text-sm text-[#9A948A]">
-                {(() => {
-                  const d = new Date(user.createdAt);
-                  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                })()}
-              </td>
-              <td className="py-3 px-4">
-                <div className="flex items-center justify-end gap-2">
-                  {user.status === 'PENDING' && (
-                    <button
-                      onClick={() => handleAction(user.id, 'approve')}
-                      disabled={actionLoading === `${user.id}-approve`}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-bold uppercase tracking-wider bg-[#b4e3b2]/10 text-[#b4e3b2] border border-[#b4e3b2]/20 hover:bg-[#b4e3b2]/20 transition-colors disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined text-sm">check_circle</span>
-                      Approve
-                    </button>
-                  )}
+              <td className="px-6 py-5"><StatusBadge status={user.status} /></td>
+              <td className="px-6 py-5 text-sm text-[#D4C4B7]">{user.level}</td>
+              <td className="px-6 py-5 text-sm text-[#D4C4B7]">{user._count.sessions}</td>
+              <td className="px-6 py-5 text-right">
+                <div className="flex justify-end gap-2">
                   {user.status !== 'REJECTED' && (
                     <button
                       onClick={() => handleAction(user.id, 'reject')}
                       disabled={actionLoading === `${user.id}-reject`}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-bold uppercase tracking-wider bg-[#ffb4ab]/10 text-[#ffb4ab] border border-[#ffb4ab]/20 hover:bg-[#ffb4ab]/20 transition-colors disabled:opacity-50"
+                      className="w-8 h-8 flex items-center justify-center rounded border border-[#50453B]/20 text-[#ffb4ab] hover:bg-[#ffb4ab]/10 transition-colors disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-sm">cancel</span>
-                      Reject
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  )}
+                  {user.status === 'PENDING' && (
+                    <button
+                      onClick={() => handleAction(user.id, 'approve')}
+                      disabled={actionLoading === `${user.id}-approve`}
+                      className="w-8 h-8 flex items-center justify-center rounded border border-[#50453B]/20 text-[#f2be8c] hover:bg-[#f2be8c]/10 transition-colors disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-sm">check</span>
                     </button>
                   )}
                 </div>

@@ -124,13 +124,13 @@ export default function AdminDashboardPage() {
           ) : stats ? (
             <div className="space-y-10">
               <section>
-                <h2 className="font-serif italic text-[#f2be8c] text-xl tracking-tight mb-4">Platform Overview</h2>
+                <h2 className="font-serif text-3xl text-[#E5E1E4] mb-4">Platform Overview</h2>
                 <AdminStatsCards stats={stats} />
               </section>
 
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-serif italic text-[#f2be8c] text-xl tracking-tight flex items-center gap-3">
+                  <h2 className="font-serif text-3xl text-[#E5E1E4] flex items-center gap-4">
                     Pending Approvals
                     {stats.users.pending > 0 && (
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#D4A373] text-[#0E0E10] text-xs font-bold">
@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
 
-                <div className="bg-[#1B1B1D] rounded-xl border border-[#50453B]/10">
+                <div className="bg-[rgba(27,27,29,0.7)] backdrop-blur-[12px] border border-[rgba(80,69,59,0.15)] rounded-xl overflow-hidden">
                   <UserTable users={pendingUsers} onApprove={handleApprove} onReject={handleReject} />
                 </div>
               </section>

@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Table */}
-          <div className="bg-[#1B1B1D] rounded-xl border border-[#50453B]/10">
+          <div className="bg-[rgba(27,27,29,0.7)] backdrop-blur-[12px] border border-[rgba(80,69,59,0.15)] rounded-xl overflow-hidden">
             <UserTable users={users} onApprove={handleApprove} onReject={handleReject} loading={loading} />
           </div>
 
