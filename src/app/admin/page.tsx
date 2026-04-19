@@ -36,6 +36,7 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState('');
   const [rejectAllDialogOpen, setRejectAllDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [health, setHealth] = useState<{ status: string; uptime: number; memory: { rss: string; heap: string }; groqQueue: number; db: { status: string; latency?: number } } | null>(null);
   const addToast = useToastStore((s) => s.addToast);
 
   const fetchData = useCallback(async () => {
@@ -56,6 +57,21 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Fetch platform health
+  useEffect(() => {
+    let cancelled = false;
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        if (!cancelled) { setHealth(data); }
+      } catch { /* silent */ }
+    };
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 30000); // refresh every 30s
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
 
   const handleApprove = async (id: string) => {
     setActionLoading(true);
@@ -127,6 +143,64 @@ export default function AdminDashboardPage() {
                 <h2 className="font-serif text-3xl text-[#E5E1E4] mb-4">Platform Overview</h2>
                 <AdminStatsCards stats={stats} />
               </section>
+
+              {/* Platform Health */}
+              {health && (
+                <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-[rgba(27,27,29,0.7)] backdrop-blur-[12px] border border-[rgba(80,69,59,0.15)] p-6 rounded-xl">
+                    <h4 className="font-serif text-xl text-[#E5E1E4] mb-5 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[#f2be8c]" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                      Platform Health
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">Groq API</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-[#f2be8c]">{health.groqQueue > 0 ? `${health.groqQueue} in queue` : 'Idle'}</span>
+                          <div className={`w-2 h-2 rounded-full ${health.status === 'ok' ? 'bg-[#b4e3b2] shadow-[0_0_10px_#b4e3b2]' : 'bg-[#ffb4ab]'}`} />
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">DB Status</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold">{health.db.latency ? `${health.db.latency}ms` : health.db.status}</span>
+                          <div className={`w-2 h-2 rounded-full ${health.db.status === 'connected' ? 'bg-[#b4e3b2] shadow-[0_0_10px_#b4e3b2]' : 'bg-[#ffb4ab]'}`} />
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">Memory</span>
+                        <span className="text-xs font-bold">{health.memory.rss} RSS / {health.memory.heap} Heap</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">Uptime</span>
+                        <span className="text-xs font-bold">{Math.floor(health.uptime / 3600)}h {Math.floor((health.uptime % 3600) / 60)}m</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[rgba(27,27,29,0.7)] backdrop-blur-[12px] border border-[rgba(80,69,59,0.15)] p-6 rounded-xl">
+                    <h4 className="font-serif text-xl text-[#E5E1E4] mb-5">Quick Stats</h4>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">Approved Users</span>
+                        <span className="text-xs font-bold">{stats.users.approved}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">Rejected Users</span>
+                        <span className="text-xs font-bold">{stats.users.rejected}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">New This Week</span>
+                        <span className="text-xs font-bold">{stats.users.newThisWeek}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-[#D4C4B7] uppercase tracking-wider">Sessions This Week</span>
+                        <span className="text-xs font-bold">{stats.activity.sessionsThisWeek}</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
 
               <section>
                 <div className="flex items-center justify-between mb-4">
