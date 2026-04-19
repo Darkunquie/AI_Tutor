@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { comparePassword, generateToken, validateEmail } from '@/lib/auth';
+import { comparePassword, generateToken, validateEmail, needsRehash, hashPassword } from '@/lib/auth';
 import { checkRateLimit, LOGIN_RATE_LIMIT, getClientIp } from '@/lib/rate-limiter';
 import { withErrorHandling } from '@/lib/error-handler';
 
@@ -59,6 +59,17 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   });
 
   if (!user) {
+    // Dummy compare to prevent timing-based user enumeration
+    await comparePassword(password, '$2a$12$dummyhashvaluetopreventtimingattacks000');
+    return NextResponse.json(
+      { error: 'Invalid email or password' },
+      { status: 401 }
+    );
+  }
+
+  // Check lockout
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    // Don't reveal lockout — same generic message
     return NextResponse.json(
       { error: 'Invalid email or password' },
       { status: 401 }
@@ -67,6 +78,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
+    const nextCount = (user.failedLoginCount || 0) + 1;
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginCount: nextCount,
+        lockedUntil: nextCount >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null,
+      },
+    });
     return NextResponse.json(
       { error: 'Invalid email or password' },
       { status: 401 }
@@ -85,6 +104,26 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       { error: 'Your account has been rejected. Please contact the administrator.', status: 'REJECTED' },
       { status: 403 }
     );
+  }
+
+  // Reset failed login count and record login metadata
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      failedLoginCount: 0,
+      lockedUntil: null,
+      lastLoginAt: new Date(),
+      lastLoginIp: ip,
+    },
+  });
+
+  // Lazy rehash if bcrypt rounds are outdated
+  if (needsRehash(user.password)) {
+    const newHash = await hashPassword(password);
+    await db.user.update({
+      where: { id: user.id },
+      data: { password: newHash },
+    });
   }
 
   const token = generateToken(

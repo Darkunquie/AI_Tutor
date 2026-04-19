@@ -23,14 +23,26 @@ export interface AuthUser {
   status: string;
 }
 
+const SALT_ROUNDS = 12;
+
+/**
+ * Check if a bcrypt hash needs rehashing (uses fewer rounds than current target)
+ * @param hash - bcrypt hash string
+ * @returns True if hash uses fewer than SALT_ROUNDS rounds
+ */
+export function needsRehash(hash: string): boolean {
+  const match = /^\$2[abxy]\$(\d{2})\$/.exec(hash);
+  if (!match) { return true; }
+  return Number(match[1]) < SALT_ROUNDS;
+}
+
 /**
  * Hash a password using bcrypt
  * @param password - Plain text password
  * @returns Hashed password
  */
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 10;
-  return await bcrypt.hash(password, saltRounds);
+  return await bcrypt.hash(password, SALT_ROUNDS);
 }
 
 /**
@@ -121,6 +133,30 @@ export function validatePassword(password: string): {
     return {
       isValid: false,
       error: 'Password must be at least 8 characters long',
+    };
+  }
+  if (password.length > 128) {
+    return {
+      isValid: false,
+      error: 'Password must not exceed 128 characters',
+    };
+  }
+  if (!/[a-z]/.test(password)) {
+    return {
+      isValid: false,
+      error: 'Password must contain at least one lowercase letter',
+    };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return {
+      isValid: false,
+      error: 'Password must contain at least one uppercase letter',
+    };
+  }
+  if (!/\d/.test(password)) {
+    return {
+      isValid: false,
+      error: 'Password must contain at least one digit',
     };
   }
 

@@ -7,6 +7,7 @@ import {
   validatePassword,
   validateEmail,
   validatePhone,
+  needsRehash,
   type JWTPayload,
 } from '../auth';
 
@@ -177,15 +178,15 @@ describe('Auth Utilities', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('should accept exactly 8 characters', () => {
-      const result = validatePassword('12345678');
+    it('should accept exactly 8 characters with all requirements', () => {
+      const result = validatePassword('Abcdef1x');
 
       expect(result.isValid).toBe(true);
       expect(result.error).toBeUndefined();
     });
 
-    it('should accept long passwords', () => {
-      const longPassword = 'a'.repeat(100);
+    it('should accept long passwords up to 128 characters', () => {
+      const longPassword = 'Aa1' + 'x'.repeat(125);
       const result = validatePassword(longPassword);
 
       expect(result.isValid).toBe(true);
@@ -211,6 +212,68 @@ describe('Auth Utilities', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.error).toBe('Password must be at least 8 characters long');
+    });
+
+    it('should reject password without uppercase letter', () => {
+      const result = validatePassword('abcdefg1');
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Password must contain at least one uppercase letter');
+    });
+
+    it('should reject password without lowercase letter', () => {
+      const result = validatePassword('ABCDEFG1');
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Password must contain at least one lowercase letter');
+    });
+
+    it('should reject password without digit', () => {
+      const result = validatePassword('Abcdefgh');
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Password must contain at least one digit');
+    });
+
+    it('should reject password exceeding 128 characters', () => {
+      const longPassword = 'Aa1' + 'x'.repeat(126);
+      const result = validatePassword(longPassword);
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Password must not exceed 128 characters');
+    });
+  });
+
+  describe('needsRehash', () => {
+    it('should return true for round 10 hash', () => {
+      // bcrypt hash with cost factor 10
+      const hash10 = '$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
+      expect(needsRehash(hash10)).toBe(true);
+    });
+
+    it('should return false for round 12 hash', () => {
+      // bcrypt hash with cost factor 12
+      const hash12 = '$2a$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
+      expect(needsRehash(hash12)).toBe(false);
+    });
+
+    it('should return false for hash with more than 12 rounds', () => {
+      const hash14 = '$2a$14$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
+      expect(needsRehash(hash14)).toBe(false);
+    });
+
+    it('should return true for malformed hash', () => {
+      expect(needsRehash('not-a-bcrypt-hash')).toBe(true);
+    });
+
+    it('should return true for empty string', () => {
+      expect(needsRehash('')).toBe(true);
+    });
+
+    it('should work with real bcrypt hashes', async () => {
+      const hash = await hashPassword('TestPass1');
+      // hashPassword now uses 12 rounds, so needsRehash should return false
+      expect(needsRehash(hash)).toBe(false);
     });
   });
 
