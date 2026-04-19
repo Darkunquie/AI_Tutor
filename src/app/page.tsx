@@ -7,6 +7,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Waveform } from '@/components/landing/Waveform';
 import { GlowCard } from '@/components/ui/spotlight-card';
 import { TestimonialSlider } from '@/components/ui/testimonial-slider-1';
+import {
+  OrganizationJsonLd,
+  WebSiteJsonLd,
+  SoftwareAppJsonLd,
+  FaqJsonLd,
+} from './JsonLd';
 
 const MODES = [
   { name: 'Free Talk', tagline: 'Pick any topic. Just talk.' },
@@ -26,6 +32,10 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#0E0E10] text-[#F5F2EC] font-geist antialiased">
+      <OrganizationJsonLd />
+      <WebSiteJsonLd />
+      <SoftwareAppJsonLd />
+      <FaqJsonLd />
       {/* Top nav */}
       <header className="sticky top-0 z-40 border-b border-[#2A2A2E] bg-[#0E0E10]/90 backdrop-blur-sm">
         <div className="mx-auto flex h-[72px] max-w-[1720px] items-center justify-between px-10 lg:px-16">
