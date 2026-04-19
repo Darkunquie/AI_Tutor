@@ -45,9 +45,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     );
   }
 
-  if (typeof password !== 'string' || password.length > 128) {
+  if (typeof password !== 'string' || password.length > 72) {
     return NextResponse.json(
-      { error: 'Password must be at most 128 characters' },
+      { error: 'Password must be at most 72 characters' },
       { status: 400 }
     );
   }

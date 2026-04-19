@@ -39,7 +39,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       { status: 400 }
     );
   }
-  if (typeof password !== 'string' || password.length > 128) {
+  if (typeof password !== 'string' || password.length > 72) {
     return NextResponse.json(
       { error: 'Invalid password' },
       { status: 400 }
@@ -60,7 +60,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (!user) {
     // Dummy compare to prevent timing-based user enumeration
-    await comparePassword(password, '$2a$12$dummyhashvaluetopreventtimingattacks000');
+    await comparePassword(password, '$2b$12$Ov1XZN0aMoBFahFfbJqKb.WT6EhjLLSEbH6xNQSF8YExT5SBn2oa.');
     return NextResponse.json(
       { error: 'Invalid email or password' },
       { status: 401 }

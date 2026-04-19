@@ -135,10 +135,10 @@ export function validatePassword(password: string): {
       error: 'Password must be at least 8 characters long',
     };
   }
-  if (password.length > 128) {
+  if (password.length > 72) {
     return {
       isValid: false,
-      error: 'Password must not exceed 128 characters',
+      error: 'Password must not exceed 72 characters',
     };
   }
   if (!/[a-z]/.test(password)) {

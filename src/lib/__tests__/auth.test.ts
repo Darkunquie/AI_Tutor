@@ -185,8 +185,8 @@ describe('Auth Utilities', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('should accept long passwords up to 128 characters', () => {
-      const longPassword = 'Aa1' + 'x'.repeat(125);
+    it('should accept long passwords up to 72 characters', () => {
+      const longPassword = 'Aa1' + 'x'.repeat(69);
       const result = validatePassword(longPassword);
 
       expect(result.isValid).toBe(true);
@@ -235,12 +235,12 @@ describe('Auth Utilities', () => {
       expect(result.error).toBe('Password must contain at least one digit');
     });
 
-    it('should reject password exceeding 128 characters', () => {
-      const longPassword = 'Aa1' + 'x'.repeat(126);
+    it('should reject password exceeding 72 characters', () => {
+      const longPassword = 'Aa1' + 'x'.repeat(70);
       const result = validatePassword(longPassword);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Password must not exceed 128 characters');
+      expect(result.error).toBe('Password must not exceed 72 characters');
     });
   });
 
