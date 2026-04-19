@@ -101,10 +101,10 @@ export function Waveform() {
         ctx.stroke();
       }
 
-      // Draw glow layer (thicker, blurred center lines)
+      // Wide soft glow layer — atmospheric bloom
       ctx.save();
-      ctx.filter = 'blur(6px)';
-      for (let i = 10; i < 18; i++) {
+      ctx.filter = 'blur(18px)';
+      for (let i = 8; i < 20; i++) {
         const norm = (i - LINES / 2) / (LINES / 2);
         const amp = H * 0.28 * (1 - Math.abs(norm) * 0.3);
         const period = W * 0.35 + i * W * 0.008;
@@ -124,8 +124,37 @@ export function Waveform() {
           if (s === 0) { ctx.moveTo(x, y); }
           else { ctx.lineTo(x, y); }
         }
-        ctx.strokeStyle = 'rgba(212, 163, 115, 0.12)';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(212, 163, 115, 0.08)';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Tight glow layer — sharper bloom on center lines
+      ctx.save();
+      ctx.filter = 'blur(4px)';
+      for (let i = 11; i < 17; i++) {
+        const norm = (i - LINES / 2) / (LINES / 2);
+        const amp = H * 0.28 * (1 - Math.abs(norm) * 0.3);
+        const period = W * 0.35 + i * W * 0.008;
+        const phase = i * 0.25 + t;
+        const yOff = norm * H * 0.06;
+
+        ctx.beginPath();
+        const steps = Math.max(60, Math.floor(W / 6));
+        for (let s = 0; s <= steps; s++) {
+          const frac = s / steps;
+          const x = frac * W;
+          const envelope = Math.sin(frac * Math.PI);
+          const wave =
+            Math.sin((x / period) * Math.PI * 2 + phase) +
+            0.3 * Math.sin((x / (period * 0.45)) * Math.PI * 2 + phase * 1.5);
+          const y = CY + yOff + amp * envelope * wave;
+          if (s === 0) { ctx.moveTo(x, y); }
+          else { ctx.lineTo(x, y); }
+        }
+        ctx.strokeStyle = 'rgba(242, 195, 142, 0.18)';
+        ctx.lineWidth = 2.5;
         ctx.stroke();
       }
       ctx.restore();
@@ -143,26 +172,35 @@ export function Waveform() {
           0.3 * Math.sin((x / (centerPeriod * 0.45)) * Math.PI * 2 + centerPhase * 1.5);
         const y = CY + centerAmp * envelope * wave;
 
+        const pulse = prefersReduced ? 1 : 0.7 + 0.3 * Math.sin(time * 0.002 + node.xFrac * 10);
+
+        // Node halo glow — soft radial bloom
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, 28 * pulse);
+        halo.addColorStop(0, `rgba(242, 195, 142, ${0.25 * pulse})`);
+        halo.addColorStop(0.4, `rgba(212, 163, 115, ${0.08 * pulse})`);
+        halo.addColorStop(1, 'rgba(212, 163, 115, 0)');
+        ctx.fillStyle = halo;
+        ctx.fillRect(x - 30, y - 30, 60, 60);
+
         // Drop line
         ctx.beginPath();
         ctx.moveTo(x, y);
         ctx.lineTo(x, y + (y > CY ? -50 : 50));
-        ctx.strokeStyle = 'rgba(212, 163, 115, 0.2)';
-        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = 'rgba(212, 163, 115, 0.25)';
+        ctx.lineWidth = 0.6;
         ctx.stroke();
 
-        // Outer ring
+        // Outer ring — pulse size
         ctx.beginPath();
-        ctx.arc(x, y, 7, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(212, 163, 115, 0.35)';
+        ctx.arc(x, y, 6 + 2 * pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(212, 163, 115, ${0.25 + 0.15 * pulse})`;
         ctx.lineWidth = 0.8;
         ctx.stroke();
 
-        // Inner dot — pulse
-        const pulse = prefersReduced ? 1 : 0.7 + 0.3 * Math.sin(time * 0.002 + node.xFrac * 10);
+        // Inner dot — bright pulse
         ctx.beginPath();
         ctx.arc(x, y, 3.5 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(242, 195, 142, ${0.6 + 0.4 * pulse})`;
+        ctx.fillStyle = `rgba(242, 195, 142, ${0.7 + 0.3 * pulse})`;
         ctx.fill();
 
         // Label
