@@ -27,11 +27,8 @@ export default function UserTable({ users, onApprove, onReject, loading }: UserT
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
     setActionLoading(`${id}-${action}`);
     try {
-      if (action === 'approve') {
-        await onApprove(id);
-      } else {
-        await onReject(id);
-      }
+      if (action === 'approve') { await onApprove(id); }
+      else { await onReject(id); }
     } finally {
       setActionLoading(null);
     }
@@ -40,7 +37,7 @@ export default function UserTable({ users, onApprove, onReject, loading }: UserT
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#D4A373] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -48,12 +45,8 @@ export default function UserTable({ users, onApprove, onReject, loading }: UserT
   if (users.length === 0) {
     return (
       <div className="text-center py-12">
-        <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600">
-          group_off
-        </span>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-          No users found
-        </p>
+        <span className="material-symbols-outlined text-4xl text-[#50453B]">group_off</span>
+        <p className="text-sm text-[#9A948A] mt-2">No users found</p>
       </div>
     );
   }
@@ -62,93 +55,60 @@ export default function UserTable({ users, onApprove, onReject, loading }: UserT
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-slate-200 dark:border-slate-700">
-            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              User
-            </th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Phone
-            </th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Status
-            </th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Level
-            </th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Sessions
-            </th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Joined
-            </th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Actions
-            </th>
+          <tr className="border-b border-[#50453B]/20">
+            {['User', 'Phone', 'Status', 'Level', 'Sessions', 'Joined', 'Actions'].map((h, i) => (
+              <th
+                key={h}
+                className={`py-3 px-4 text-[10px] font-bold text-[#D4C4B7] uppercase tracking-[0.2em] ${i === 6 ? 'text-right' : 'text-left'}`}
+              >
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {users.map((user) => {
-            return (
-              <tr
-                key={user.id}
-                className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-              >
-                <td className="py-3 px-4">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {user.email}
-                    </p>
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
-                  {user.phone}
-                </td>
-                <td className="py-3 px-4">
-                  <StatusBadge status={user.status} />
-                </td>
-                <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
-                  {user.level}
-                </td>
-                <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
-                  {user._count.sessions}
-                </td>
-                <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </td>
-                <td className="py-3 px-4">
-                  <div className="flex items-center justify-end gap-2">
-                    {user.status === 'PENDING' && (
-                      <button
-                        onClick={() => handleAction(user.id, 'approve')}
-                        disabled={actionLoading === `${user.id}-approve`}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors disabled:opacity-50"
-                      >
-                        <span className="material-symbols-outlined text-sm">
-                          check_circle
-                        </span>
-                        Approve
-                      </button>
-                    )}
-                    {user.status !== 'REJECTED' && (
-                      <button
-                        onClick={() => handleAction(user.id, 'reject')}
-                        disabled={actionLoading === `${user.id}-reject`}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50"
-                      >
-                        <span className="material-symbols-outlined text-sm">
-                          cancel
-                        </span>
-                        Reject
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+        <tbody className="divide-y divide-[#50453B]/10">
+          {users.map((user) => (
+            <tr key={user.id} className="hover:bg-[#2A2A2C]/50 transition-colors">
+              <td className="py-3 px-4">
+                <p className="text-sm font-semibold text-[#E5E1E4]">{user.name}</p>
+                <p className="text-xs text-[#9A948A]">{user.email}</p>
+              </td>
+              <td className="py-3 px-4 text-sm text-[#D4C4B7]">{user.phone}</td>
+              <td className="py-3 px-4"><StatusBadge status={user.status} /></td>
+              <td className="py-3 px-4 text-sm text-[#D4C4B7] uppercase text-[11px] tracking-wider">{user.level}</td>
+              <td className="py-3 px-4 text-sm text-[#D4C4B7]">{user._count.sessions}</td>
+              <td className="py-3 px-4 text-sm text-[#9A948A]">
+                {(() => {
+                  const d = new Date(user.createdAt);
+                  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                })()}
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-end gap-2">
+                  {user.status === 'PENDING' && (
+                    <button
+                      onClick={() => handleAction(user.id, 'approve')}
+                      disabled={actionLoading === `${user.id}-approve`}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-bold uppercase tracking-wider bg-[#b4e3b2]/10 text-[#b4e3b2] border border-[#b4e3b2]/20 hover:bg-[#b4e3b2]/20 transition-colors disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      Approve
+                    </button>
+                  )}
+                  {user.status !== 'REJECTED' && (
+                    <button
+                      onClick={() => handleAction(user.id, 'reject')}
+                      disabled={actionLoading === `${user.id}-reject`}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-bold uppercase tracking-wider bg-[#ffb4ab]/10 text-[#ffb4ab] border border-[#ffb4ab]/20 hover:bg-[#ffb4ab]/20 transition-colors disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-sm">cancel</span>
+                      Reject
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

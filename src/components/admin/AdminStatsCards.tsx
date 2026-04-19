@@ -26,61 +26,18 @@ interface AdminStatsCardsProps {
 function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) { return `${hours}h ${minutes}m`; }
   return `${minutes}m`;
 }
 
 export default function AdminStatsCards({ stats }: AdminStatsCardsProps) {
   const cards = [
-    {
-      label: 'Total Users',
-      value: stats.users.total,
-      icon: 'group',
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-      sub: `${stats.users.newThisWeek} new this week`,
-    },
-    {
-      label: 'Pending Approval',
-      value: stats.users.pending,
-      icon: 'pending',
-      color: 'text-amber-600 dark:text-amber-400',
-      bgColor: 'bg-amber-100 dark:bg-amber-900/30',
-      sub: stats.users.pending > 0 ? 'Action needed' : 'All clear',
-      alert: stats.users.pending > 0,
-    },
-    {
-      label: 'Active Users (7d)',
-      value: stats.activity.activeUsersThisWeek,
-      icon: 'trending_up',
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900/30',
-      sub: `${stats.activity.sessionsThisWeek} sessions this week`,
-    },
-    {
-      label: 'Total Sessions',
-      value: stats.activity.totalSessions,
-      icon: 'chat',
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      sub: `${formatDuration(stats.activity.totalPracticeDuration)} total practice`,
-    },
-    {
-      label: 'Avg Score',
-      value: stats.activity.averageScore,
-      icon: 'grade',
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-100 dark:bg-orange-900/30',
-      sub: 'Out of 100',
-    },
-    {
-      label: 'Words Learned',
-      value: stats.activity.totalVocabularyLearned,
-      icon: 'menu_book',
-      color: 'text-teal-600 dark:text-teal-400',
-      bgColor: 'bg-teal-100 dark:bg-teal-900/30',
-      sub: 'Across all users',
-    },
+    { label: 'Total Users', value: stats.users.total, icon: 'group', sub: `${stats.users.newThisWeek} new this week` },
+    { label: 'Pending Approval', value: stats.users.pending, icon: 'pending', sub: stats.users.pending > 0 ? 'Action needed' : 'All clear', alert: stats.users.pending > 0 },
+    { label: 'Active Users (7d)', value: stats.activity.activeUsersThisWeek, icon: 'trending_up', sub: `${stats.activity.sessionsThisWeek} sessions this week` },
+    { label: 'Total Sessions', value: stats.activity.totalSessions, icon: 'chat', sub: `${formatDuration(stats.activity.totalPracticeDuration)} total practice` },
+    { label: 'Avg Score', value: stats.activity.averageScore, icon: 'grade', sub: 'Out of 100' },
+    { label: 'Words Learned', value: stats.activity.totalVocabularyLearned, icon: 'menu_book', sub: 'Across all users' },
   ];
 
   return (
@@ -88,30 +45,27 @@ export default function AdminStatsCards({ stats }: AdminStatsCardsProps) {
       {cards.map((card) => (
         <div
           key={card.label}
-          className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-5"
+          className="bg-[#1B1B1D] rounded-xl p-6 border border-[#50453B]/10 relative overflow-hidden group hover:shadow-[0_0_25px_rgba(242,190,140,0.08)] transition-all duration-500"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${card.bgColor}`}>
-              <span className={`material-symbols-outlined text-xl ${card.color}`}>
-                {card.icon}
-              </span>
+          <div className="absolute bottom-[-10px] right-[-10px] opacity-5 text-[#D4C4B7] group-hover:opacity-10 transition-opacity">
+            <span className="material-symbols-outlined text-6xl">{card.icon}</span>
+          </div>
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <div className="w-10 h-10 rounded-lg bg-[#D4A373]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-xl text-[#f2be8c]">{card.icon}</span>
             </div>
             {card.alert && (
               <span className="flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-[#D4A373] opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#D4A373]" />
               </span>
             )}
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
-            {card.value}
-          </p>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-            {card.label}
-          </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            {card.sub}
-          </p>
+          <div className="relative z-10">
+            <p className="font-serif text-2xl text-[#f2be8c]">{card.value}</p>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[#D4C4B7] mt-1 font-bold">{card.label}</p>
+            <p className="text-xs text-[#9A948A] mt-1">{card.sub}</p>
+          </div>
         </div>
       ))}
     </div>

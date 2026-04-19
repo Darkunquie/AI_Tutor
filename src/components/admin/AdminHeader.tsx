@@ -14,24 +14,14 @@ export default function AdminHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#1e293b]/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <header className="sticky top-0 z-50 bg-[#131315]/80 backdrop-blur-md border-b border-[#50453B]/15">
+      <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10">
-              <span className="material-symbols-outlined text-xl text-primary">
-                admin_panel_settings
-              </span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white">
-                Talkivo Admin
-              </h1>
-            </div>
+            <span className="font-serif text-xl text-[#D4A373] tracking-tight">Talkivo</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-[#9A948A] border-l border-[#50453B] pl-3">Admin</span>
           </div>
 
-          {/* Navigation */}
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -39,25 +29,22 @@ export default function AdminHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded text-sm transition-all duration-300 ${
                     isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? 'bg-[#D4A373]/10 text-[#f2be8c] text-[11px] tracking-widest uppercase font-bold'
+                      : 'text-[#D4C4B7] opacity-60 text-[11px] tracking-widest uppercase hover:text-[#f2be8c] hover:bg-[#201F21]'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-lg">
-                    {item.icon}
-                  </span>
+                  <span className="material-symbols-outlined text-lg">{item.icon}</span>
                   {item.label}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Logout */}
           <button
             onClick={logout}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded text-[11px] tracking-widest uppercase text-[#D4C4B7] opacity-60 hover:text-[#ffb4ab] hover:bg-[#ffb4ab]/5 transition-all duration-300"
           >
             <span className="material-symbols-outlined text-lg">logout</span>
             Logout

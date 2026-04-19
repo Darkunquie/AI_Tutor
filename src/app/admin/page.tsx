@@ -34,11 +34,8 @@ export default function AdminDashboardPage() {
   const [pendingUsers, setPendingUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // Dialog state
   const [rejectAllDialogOpen, setRejectAllDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-
   const addToast = useToastStore((s) => s.addToast);
 
   const fetchData = useCallback(async () => {
@@ -58,22 +55,16 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Single user approve
   const handleApprove = async (id: string) => {
     setActionLoading(true);
     try {
       await api.admin.updateUserStatus(id, 'APPROVED');
       addToast('User approved', 'check_circle', 'success');
       fetchData();
-    } catch {
-      addToast('Failed to approve user', 'error', 'error');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { addToast('Failed to approve user', 'error', 'error'); }
+    finally { setActionLoading(false); }
   };
 
   const handleReject = async (id: string) => {
@@ -82,14 +73,10 @@ export default function AdminDashboardPage() {
       await api.admin.updateUserStatus(id, 'REJECTED');
       addToast('User rejected', 'cancel', 'success');
       fetchData();
-    } catch {
-      addToast('Failed to reject user', 'error', 'error');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { addToast('Failed to reject user', 'error', 'error'); }
+    finally { setActionLoading(false); }
   };
 
-  // Bulk approve
   const handleBulkApprove = async () => {
     setActionLoading(true);
     try {
@@ -100,14 +87,10 @@ export default function AdminDashboardPage() {
         addToast(`Approved all ${result.processed} users`, 'check_circle', 'success');
       }
       fetchData();
-    } catch {
-      addToast('Failed to bulk approve', 'error', 'error');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { addToast('Failed to bulk approve', 'error', 'error'); }
+    finally { setActionLoading(false); }
   };
 
-  // Bulk reject
   const handleBulkReject = async () => {
     setActionLoading(true);
     try {
@@ -115,68 +98,60 @@ export default function AdminDashboardPage() {
       setRejectAllDialogOpen(false);
       addToast(`Rejected ${result.processed} users`, 'cancel', 'success');
       fetchData();
-    } catch {
-      addToast('Failed to bulk reject', 'error', 'error');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { addToast('Failed to bulk reject', 'error', 'error'); }
+    finally { setActionLoading(false); }
   };
 
   return (
     <RequireAdmin>
-      <div className="min-h-screen bg-[#f5f7f8] dark:bg-[#101722]">
+      <div className="min-h-screen bg-[#0E0E10]">
         <AdminHeader />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <main className="max-w-7xl mx-auto px-6 py-8">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <div className="mb-6 p-4 rounded-xl bg-[#ffb4ab]/5 border border-[#ffb4ab]/20">
+              <p className="text-sm text-[#ffb4ab]">{error}</p>
             </div>
           )}
 
           {loading ? (
             <div className="flex items-center justify-center py-24">
               <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-slate-500 dark:text-slate-400">Loading dashboard...</p>
+                <div className="w-10 h-10 border-2 border-[#D4A373] border-t-transparent rounded-full animate-spin" />
+                <p className="text-[#9A948A] text-sm">Loading dashboard...</p>
               </div>
             </div>
           ) : stats ? (
-            <div className="space-y-8">
-              {/* Platform Overview */}
+            <div className="space-y-10">
               <section>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                  Platform Overview
-                </h2>
+                <h2 className="font-serif italic text-[#f2be8c] text-xl tracking-tight mb-4">Platform Overview</h2>
                 <AdminStatsCards stats={stats} />
               </section>
 
-              {/* Pending Users */}
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h2 className="font-serif italic text-[#f2be8c] text-xl tracking-tight flex items-center gap-3">
                     Pending Approvals
                     {stats.users.pending > 0 && (
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#D4A373] text-[#0E0E10] text-xs font-bold">
                         {stats.users.pending}
                       </span>
                     )}
                   </h2>
 
-                  {/* Bulk Actions */}
                   {stats.users.pending > 0 && (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleBulkApprove}
                         disabled={actionLoading}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider bg-[#b4e3b2]/10 text-[#b4e3b2] border border-[#b4e3b2]/20 hover:bg-[#b4e3b2]/20 transition-colors disabled:opacity-50"
                       >
                         <span className="material-symbols-outlined text-sm">done_all</span>
                         Approve All ({stats.users.pending})
                       </button>
                       <button
                         onClick={() => setRejectAllDialogOpen(true)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider bg-[#ffb4ab]/10 text-[#ffb4ab] border border-[#ffb4ab]/20 hover:bg-[#ffb4ab]/20 transition-colors"
                       >
                         <span className="material-symbols-outlined text-sm">close</span>
                         Reject All
@@ -185,19 +160,14 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
 
-                <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                  <UserTable
-                    users={pendingUsers}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                  />
+                <div className="bg-[#1B1B1D] rounded-xl border border-[#50453B]/10">
+                  <UserTable users={pendingUsers} onApprove={handleApprove} onReject={handleReject} />
                 </div>
               </section>
             </div>
           ) : null}
         </main>
 
-        {/* Dialogs */}
         <ConfirmDialog
           open={rejectAllDialogOpen}
           onClose={() => setRejectAllDialogOpen(false)}
