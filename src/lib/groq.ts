@@ -76,20 +76,20 @@ async function checkRpmLimit(): Promise<void> {
 
   const now = Date.now();
   const windowStart = now - 60_000;
+  const member = `${now}:${Math.random().toString(36).slice(2)}`;
 
   // Remove old entries + count current window + add new entry atomically
   const pipeline = redis.pipeline();
   pipeline.zremrangebyscore(RPM_KEY, 0, windowStart);
   pipeline.zcard(RPM_KEY);
-  pipeline.zadd(RPM_KEY, { score: now, member: `${now}:${Math.random().toString(36).slice(2)}` });
+  pipeline.zadd(RPM_KEY, { score: now, member });
   pipeline.expire(RPM_KEY, 70); // slightly longer than window
 
   const results = await pipeline.exec();
   const currentCount = results[1] as number;
 
   if (currentCount >= RPM_LIMIT) {
-    // Remove the entry we just added
-    await redis.zremrangebyscore(RPM_KEY, now, now + 1);
+    await redis.zrem(RPM_KEY, member);
     throw new Error('RPM_LIMIT');
   }
 }
@@ -114,10 +114,20 @@ async function releaseUserSlot(userId: string): Promise<void> {
   const redis = getRedis();
   if (!redis) { return; }
   try {
-    const val = await redis.get<number>(`groq:user:${userId}`);
-    if (val && val > 0) {
-      await redis.decr(`groq:user:${userId}`);
-    }
+    await redis.eval(
+      `local val = redis.call('GET', KEYS[1])
+       if val and tonumber(val) > 0 then
+         return redis.call('DECR', KEYS[1])
+       end
+       return 0`,
+      [`groq:user:${userId}`],
+      [],
+    );
+  } catch {
+    // best-effort release
+  }
+}
+    );
   } catch {
     // best-effort release
   }
@@ -278,7 +288,12 @@ export async function chat(
   // 3. Per-user concurrency cap
   if (userId) { await checkUserConcurrency(userId); }
   // 4. Global concurrency slot
-  await acquireGroqSlot();
+  try {
+    await acquireGroqSlot();
+  } catch (err) {
+    if (userId) { await releaseUserSlot(userId); }
+    throw err;
+  }
 
   try {
     const result = await withGroqRetry(async () => {
@@ -334,7 +349,12 @@ export async function* chatStream(
   // 3. Per-user concurrency cap
   if (userId) { await checkUserConcurrency(userId); }
   // 4. Global concurrency slot
-  await acquireGroqSlot();
+  try {
+    await acquireGroqSlot();
+  } catch (err) {
+    if (userId) { await releaseUserSlot(userId); }
+    throw err;
+  }
 
   try {
     const stream = await groq.chat.completions.create({

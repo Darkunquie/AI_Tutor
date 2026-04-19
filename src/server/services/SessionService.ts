@@ -152,15 +152,15 @@ export const sessionService = {
     errorBreakdown: ErrorBreakdown | null,
   ) {
     // 1. Update daily stats
-    await this.updateDailyStats(sessionId, userId, session, errorBreakdown);
+    await sessionService.updateDailyStats(sessionId, userId, session, errorBreakdown);
 
     // 2. Check achievements
-    await this.checkAchievements(userId);
+    await sessionService.checkAchievements(userId);
 
     // 3. Update streak (StreakCalculator reads from dailyStats, so it
     //    automatically reflects the newly upserted stats above)
     //    Note: streak is computed on-read, no separate write needed.
-    logger.info('Post-session work completed', { sessionId, userId });
+    logger.debug('Post-session work completed', { sessionId, userId });
   },
 
   /**
@@ -202,10 +202,12 @@ export const sessionService = {
       today,
     );
 
-    const newAvgScore = ScoreCalculator.calculateNewAverageScore({
-      currentStats: currentStats || { sessionsCount: 0, avgScore: 0 },
-      newSessionScore: session.score ?? 0,
-    });
+    const newAvgScore = session.score === null
+      ? (currentStats?.avgScore ?? 0)
+      : ScoreCalculator.calculateNewAverageScore({
+          currentStats: currentStats || { sessionsCount: 0, avgScore: 0 },
+          newSessionScore: session.score,
+        });
 
     // Count new vocabulary words learned in this session
     const wordsLearnedCount = await db.vocabulary.count({
@@ -231,7 +233,7 @@ export const sessionService = {
   async checkAchievements(userId: string) {
     const newlyUnlocked = await AchievementChecker.checkAndUnlock(userId);
     if (newlyUnlocked.length > 0) {
-      logger.info('Achievements unlocked', { userId, achievements: newlyUnlocked });
+      logger.info('Achievements unlocked', { achievements: newlyUnlocked });
     }
   },
 };

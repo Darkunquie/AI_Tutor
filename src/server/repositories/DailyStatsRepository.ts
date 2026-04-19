@@ -1,9 +1,15 @@
 import { db } from '@/server/infra/db';
 
+function toMidnight(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export const dailyStatsRepo = {
   async findByUserAndDate(userId: string, date: Date) {
     return db.dailyStats.findUnique({
-      where: { userId_date: { userId, date } },
+      where: { userId_date: { userId, date: toMidnight(date) } },
       select: { sessionsCount: true, avgScore: true },
     });
   },
@@ -23,8 +29,7 @@ export const dailyStatsRepo = {
       fillerWords: number;
     },
   ) {
-    const dateKey = new Date(date);
-    dateKey.setHours(0, 0, 0, 0);
+    const dateKey = toMidnight(date);
 
     return db.dailyStats.upsert({
       where: { userId_date: { userId, date: dateKey } },
@@ -57,7 +62,7 @@ export const dailyStatsRepo = {
 
   async findByUserAndDateRange(userId: string, startDate: Date, endDate: Date) {
     return db.dailyStats.findMany({
-      where: { userId, date: { gte: startDate, lte: endDate } },
+      where: { userId, date: { gte: toMidnight(startDate), lte: toMidnight(endDate) } },
       orderBy: { date: 'asc' },
     });
   },
