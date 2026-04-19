@@ -4,6 +4,7 @@
 
 import { PrismaClient } from '@/generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { config } from '@/server/config';
 
 declare global {
@@ -11,7 +12,8 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const adapter = new PrismaPg({ connectionString: config.DATABASE_URL });
+const pool = new Pool({ connectionString: config.DATABASE_URL });
+const adapter = new PrismaPg(pool);
 export const db = globalThis.prisma || new PrismaClient({ adapter });
 
 /**
@@ -39,6 +41,7 @@ if (config.NODE_ENV === 'production') {
     shuttingDown = true;
     console.log(`[Talkivo] ${signal} received — shutting down gracefully`);
     db.$disconnect()
+      .then(() => pool.end())
       .then(() => { console.log('[Talkivo] Database disconnected'); process.exit(0); })
       .catch((err: unknown) => { console.error('[Talkivo] Error during shutdown:', err); process.exit(1); });
   };
