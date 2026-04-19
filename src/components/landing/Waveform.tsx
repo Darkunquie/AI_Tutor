@@ -84,7 +84,7 @@ export function Waveform() {
       <svg
         viewBox="0 0 1600 560"
         preserveAspectRatio="xMidYMid slice"
-        className="absolute left-1/2 top-1/2 h-[720px] w-[120vw] min-w-[1600px] -translate-x-1/2 -translate-y-1/2"
+        className="absolute inset-0 h-full w-full"
       >
         <defs>
           <linearGradient id="wv-grad" x1="0" x2="1" y1="0.5" y2="0.5">
