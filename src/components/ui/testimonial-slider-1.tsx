@@ -33,10 +33,6 @@ export const TestimonialSlider = ({ reviews, className }: TestimonialSliderProps
   const [isPaused, setIsPaused] = useState(false);
   const tickRef = useRef(0);
 
-  if (reviews.length === 0) { return null; }
-
-  const activeReview = reviews[currentIndex];
-
   const handleNext = () => {
     setDirection('right');
     setCurrentIndex((prev) => (prev + 1) % reviews.length);
@@ -57,20 +53,23 @@ export const TestimonialSlider = ({ reviews, className }: TestimonialSliderProps
   useEffect(() => {
     if (isPaused || reviews.length < 2) return;
     const reducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      typeof globalThis.window !== 'undefined' &&
+      globalThis.window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) return;
 
-    const id = window.setInterval(() => {
+    const id = globalThis.window.setInterval(() => {
       setDirection('right');
       setCurrentIndex((prev) => (prev + 1) % reviews.length);
     }, AUTOPLAY_INTERVAL_MS);
 
-    return () => window.clearInterval(id);
+    return () => globalThis.window.clearInterval(id);
     // tickRef.current in deps resets the timer whenever the user navigates manually
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused, reviews.length, tickRef.current]);
 
+  if (reviews.length === 0) { return null; }
+
+  const activeReview = reviews[currentIndex];
   const thumbnailReviews = reviews.filter((_, i) => i !== currentIndex).slice(0, 3);
 
   const imageVariants = {
@@ -89,8 +88,12 @@ export const TestimonialSlider = ({ reviews, className }: TestimonialSliderProps
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      onFocusCapture={() => setIsPaused(true)}
-      onBlurCapture={() => setIsPaused(false)}
+      onFocusCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) { setIsPaused(true); }
+      }}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) { setIsPaused(false); }
+      }}
       className={cn(
         'relative w-full min-h-[600px] overflow-hidden bg-[#0E0E10] text-[#F5F2EC] p-8 md:p-12',
         className,
