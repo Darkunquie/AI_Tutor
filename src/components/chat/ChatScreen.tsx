@@ -18,6 +18,7 @@ import { CorrectionParser } from '@/lib/services/CorrectionParser';
 import { logger } from '@/lib/utils';
 import { AiOrb } from './AiOrb';
 import { ChatWaveform } from './ChatWaveform';
+import { Ai3DOrb } from './Ai3DOrb';
 
 interface ChatScreenProps {
   onEndSession?: () => void;
@@ -323,7 +324,17 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
   const modeLabel = MODE_LABEL[mode ?? ''] ?? 'Practice';
 
   return (
-    <div className="flex h-screen flex-col bg-[#0E0E10] text-[#F5F2EC] font-geist antialiased">
+    <div className="flex h-screen bg-[#0E0E10] text-[#F5F2EC] font-geist antialiased">
+      {/* 3D Orb — left side */}
+      <div className="hidden lg:flex w-[280px] shrink-0 items-center justify-center border-r border-[#2A2A2E]">
+        <Ai3DOrb
+          state={isSpeakingState ? 'speaking' : streamingMessageId ? 'speaking' : isLoading ? 'thinking' : 'idle'}
+          className="w-[240px] h-[240px]"
+        />
+      </div>
+
+      {/* Chat column */}
+      <div className="flex flex-1 flex-col min-w-0">
       {/* Top bar */}
       <header className="flex h-[64px] shrink-0 items-center justify-between border-b border-[#2A2A2E] bg-[#0E0E10] px-8">
         <div className="flex items-center gap-3">
@@ -468,6 +479,7 @@ export function ChatScreen({ onEndSession }: ChatScreenProps) {
           </button>
         </div>
       </footer>
+    </div>
     </div>
   );
 }
