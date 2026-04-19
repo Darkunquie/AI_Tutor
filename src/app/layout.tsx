@@ -5,13 +5,74 @@ import { ToastContainer } from "@/components/ui/Toast";
 import { SpeechWarmUpProvider } from "@/components/SpeechWarmUpProvider";
 
 export const metadata: Metadata = {
-  title: "Talkivo - Practice English with AI",
-  description: "Improve your English speaking skills with AI-powered conversations. Practice Free Talk, Role Play, Debate, and Grammar exercises with Talkivo.",
-  keywords: ["English learning", "AI tutor", "language practice", "speaking skills", "Talkivo"],
+  metadataBase: new URL('https://talkivo.in'),
+  title: {
+    default: 'Talkivo — AI English Tutor | Practice Speaking with AI',
+    template: '%s | Talkivo',
+  },
+  description:
+    'Practice English speaking with an AI tutor that listens, corrects with reason, and remembers your patterns. Free Talk, Role Play, Debate, Grammar, Pronunciation. Start free.',
+  keywords: [
+    'AI English tutor',
+    'English speaking practice',
+    'practice English with AI',
+    'spoken English online',
+    'English fluency app',
+    'IELTS speaking practice',
+    'English pronunciation AI',
+    'free English speaking app',
+    'English speaking course online',
+    'Talkivo',
+  ],
+  authors: [{ name: 'Talkivo' }],
+  creator: 'Talkivo',
+  publisher: 'Talkivo',
+  applicationName: 'Talkivo',
+  category: 'education',
+  alternates: {
+    canonical: '/',
+    languages: { 'en-IN': '/', 'en-US': '/' },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://talkivo.in',
+    siteName: 'Talkivo',
+    title: 'Talkivo — AI English Tutor',
+    description:
+      'Speak English like you think. AI tutor that listens first, corrects with reason, and remembers your patterns.',
+    images: [
+      {
+        url: '/logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'Talkivo — Practice English with AI',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Talkivo — AI English Tutor',
+    description: 'Practice English speaking with AI. Free to start.',
+    images: ['/logo.png'],
+    creator: '@talkivo',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   icons: {
     icon: '/favicon.svg',
     apple: '/branding/talkivo-icon.svg',
   },
+  manifest: '/manifest.webmanifest',
 };
 
 export default function RootLayout({
