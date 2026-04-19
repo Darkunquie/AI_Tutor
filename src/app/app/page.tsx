@@ -266,7 +266,12 @@ export default function AppHome() {
             className="absolute inset-0 bg-[#0E0E10]/80 backdrop-blur-sm"
             onClick={() => setShowTopicModal(false)}
           />
-          <div role="dialog" aria-modal="true" aria-labelledby="modal-title" className="relative flex max-h-[85vh] w-full max-w-[640px] flex-col overflow-hidden rounded-xl border border-[#2A2A2E] bg-[#17171A] text-[#F5F2EC] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]">
+          <div
+            className="relative flex max-h-[85vh] w-full max-w-[640px] flex-col overflow-hidden rounded-xl border border-[#2A2A2E] bg-[#17171A] text-[#F5F2EC] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+          >
             <div className="border-b border-[#2A2A2E] p-8">
               <div className="text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
                 {selectedMode === 'FREE_TALK' && 'Free Talk'}

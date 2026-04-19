@@ -405,7 +405,7 @@ export default function Landing() {
                 <li><a href="#modes" className="hover:text-[#F5F2EC]">Modes</a></li>
                 <li><a href="#why" className="hover:text-[#F5F2EC]">Why Talkivo</a></li>
                 <li><a href="#how" className="hover:text-[#F5F2EC]">How it works</a></li>
-                <li><a href="#pricing" className="hover:text-[#F5F2EC]">Pricing</a></li>
+                <li><a href="#testimonials" className="hover:text-[#F5F2EC]">Testimonials</a></li>
               </ul>
             </div>
             <div className="col-span-6 md:col-span-4">
