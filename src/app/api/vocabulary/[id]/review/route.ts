@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { withErrorHandling, successResponse, validateBody } from '@/lib/error-handler';
 import { ReviewResultSchema } from '@/lib/schemas/review.schema';
 import { ApiError } from '@/lib/errors/ApiError';

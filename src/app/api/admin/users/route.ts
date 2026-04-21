@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { Prisma } from '@/generated/prisma';
 import { withErrorHandling, paginatedResponse, validateQuery } from '@/lib/error-handler';
 import { requireAdmin } from '@/server/http/auth-context';

@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { ApiError } from '@/lib/errors/ApiError';
 import { withErrorHandling, validateBody, successResponse } from '@/lib/error-handler';
-import { logger } from '@/lib/utils';
+import { logger } from '@/server/infra/logger';
 import { requireAdmin } from '@/server/http/auth-context';
 import { checkRateLimit } from '@/lib/rate-limiter';
 

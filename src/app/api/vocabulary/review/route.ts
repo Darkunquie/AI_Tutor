@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { withErrorHandling, successResponse } from '@/lib/error-handler';
 import { requireAuth } from '@/server/http/auth-context';
 

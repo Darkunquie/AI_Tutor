@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
-import { env } from './env';
+import { config } from '@/server/config';
 
-const JWT_SECRET = env.JWT_SECRET;
+const JWT_SECRET = config.JWT_SECRET;
 
 // JWT payload interface
 export interface JWTPayload {

@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { getActiveGroqRequests } from '@/lib/groq';
 
 export async function GET() {

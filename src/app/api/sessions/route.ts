@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { CreateSessionSchema, SessionQuerySchema } from '@/lib/schemas/session.schema';
 import {
   withErrorHandling,

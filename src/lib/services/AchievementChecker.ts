@@ -1,7 +1,7 @@
 // Achievement checking and unlocking service
 
-import { db } from '@/lib/db';
-import { logger } from '@/lib/utils';
+import { db } from '@/server/infra/db';
+import { logger } from '@/server/infra/logger';
 import { StreakCalculator } from './StreakCalculator';
 
 export class AchievementChecker {

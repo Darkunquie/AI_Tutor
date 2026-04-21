@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { withErrorHandling, successResponse, validateBody } from '@/lib/error-handler';
 import { StreakCalculator } from '@/lib/services/StreakCalculator';
 import { requireAuth } from '@/server/http/auth-context';

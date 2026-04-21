@@ -1,6 +1,6 @@
 // Streak calculation service using DailyStats data
 
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import type { StreakData } from '@/lib/types';
 
 function formatDateStr(date: Date): string {

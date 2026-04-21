@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { SaveMessageSchema } from '@/lib/schemas/message.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import {

@@ -33,9 +33,10 @@ export function logBackgroundError(context: string) {
 }
 
 /**
- * Structured logger.
- * Server-side (PM2): outputs JSON lines for easy parsing by log aggregators.
- * Client-side (browser): outputs plain text for readable devtools.
+ * Lightweight logger safe for both client and server.
+ * Server-side: JSON lines for PM2 log aggregators.
+ * Client-side: plain text for devtools.
+ * For server-only code, prefer @/server/infra/logger (has LOG_LEVEL support).
  */
 const isServer = globalThis.window === undefined;
 
@@ -44,7 +45,7 @@ function formatLog(level: string, message: string, meta?: Record<string, unknown
 }
 
 function extractMeta(args: unknown[]): Record<string, unknown> | undefined {
-  if (args.length === 0) return undefined;
+  if (args.length === 0) { return undefined; }
   if (args.length === 1 && args[0] instanceof Error) {
     return { error: args[0].message, stack: args[0].stack };
   }
@@ -67,7 +68,6 @@ export const logger = {
     }
   },
   warn: (message: string, ...args: unknown[]) => {
-    if (process.env.NODE_ENV === 'production') return;
     if (isServer) {
       console.warn(formatLog('warn', message, extractMeta(args)));
     } else {

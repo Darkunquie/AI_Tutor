@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { UpdateSessionSchema } from '@/lib/schemas/session.schema';
 import { ApiError } from '@/lib/errors/ApiError';
 import {

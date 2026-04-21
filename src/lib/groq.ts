@@ -4,20 +4,20 @@
 import Groq from 'groq-sdk';
 import { getRedis } from '@/server/infra/redis';
 import { logger } from '@/server/infra/logger';
-import { env } from './env';
+import { config } from '@/server/config';
 
-const GROQ_MODEL = env.GROQ_MODEL;
+const GROQ_MODEL = config.GROQ_MODEL;
 const GROQ_TIMEOUT = 30000; // 30 seconds
 
 const groq = new Groq({
-  apiKey: env.GROQ_API_KEY,
+  apiKey: config.GROQ_API_KEY,
   timeout: GROQ_TIMEOUT,
 });
 
 // ── Configuration ────────────────────────────────────────────────────────────
-const MAX_CONCURRENT = Number.parseInt(process.env.GROQ_MAX_CONCURRENT ?? '25', 10);
-const RPM_LIMIT = Number.parseInt(process.env.GROQ_RPM_LIMIT ?? '25', 10);
-const MAX_PER_USER = Number.parseInt(process.env.GROQ_MAX_PER_USER ?? '3', 10);
+const MAX_CONCURRENT = config.GROQ_MAX_CONCURRENT;
+const RPM_LIMIT = config.GROQ_RPM_LIMIT;
+const MAX_PER_USER = config.GROQ_MAX_PER_USER;
 const SEM_KEY = 'groq:inflight';
 const SEM_TTL = 120; // seconds — heals after worker crash
 const RPM_KEY = 'groq:rpm';

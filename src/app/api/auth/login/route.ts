@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/server/infra/db';
 import { comparePassword, generateToken, validateEmail, needsRehash, hashPassword } from '@/lib/auth';
 import { checkRateLimit, LOGIN_RATE_LIMIT, getClientIp } from '@/lib/rate-limiter';
 import { withErrorHandling } from '@/lib/error-handler';
