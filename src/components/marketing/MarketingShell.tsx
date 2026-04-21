@@ -1,7 +1,17 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { Mail } from 'lucide-react';
+import { Mail, Menu, X } from 'lucide-react';
 import { GridBackground } from '@/components/ui/grid-background';
 import { Footer } from '@/components/ui/modem-animated-footer';
+
+const NAV_ITEMS = [
+  { href: '/features', label: 'Features' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/locations', label: 'Locations' },
+  { href: '/about', label: 'About' },
+];
 
 export function MarketingShell({
   children,
@@ -10,6 +20,8 @@ export function MarketingShell({
   children: React.ReactNode;
   showBackground?: boolean;
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#0D131B] text-[#E6EEF8] antialiased">
       {showBackground && <GridBackground />}
@@ -26,12 +38,7 @@ export function MarketingShell({
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
-            {[
-              { href: '/features', label: 'Features' },
-              { href: '/blog', label: 'Blog' },
-              { href: '/locations', label: 'Locations' },
-              { href: '/about', label: 'About' },
-            ].map((item) => (
+            {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -56,8 +63,41 @@ export function MarketingShell({
               Get started
               <span aria-hidden>→</span>
             </Link>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-md p-2 text-[#E6EEF8]/80 transition-colors hover:bg-white/5 hover:text-[#E6EEF8] md:hidden"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-expanded={mobileOpen}
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {mobileOpen && (
+          <nav className="border-t border-white/5 bg-[#0D131B]/95 backdrop-blur-xl md:hidden">
+            <div className="mx-auto max-w-7xl space-y-1 px-6 py-4">
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-md px-3 py-2.5 text-[15px] font-medium text-[#E6EEF8]/80 transition-colors hover:bg-white/5 hover:text-[#E6EEF8]"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-md px-3 py-2.5 text-[15px] font-medium text-[#E6EEF8]/80 transition-colors hover:bg-white/5 hover:text-[#E6EEF8] sm:hidden"
+              >
+                Sign in
+              </Link>
+            </div>
+          </nav>
+        )}
       </header>
 
       <div className="relative z-10">{children}</div>

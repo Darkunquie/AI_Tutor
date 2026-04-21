@@ -65,7 +65,7 @@ export default function SignupPage() {
   };
 
   const inputCls =
-    'w-full bg-transparent border-0 border-b border-[#4FD1FF/20] px-0 py-3 text-[16px] text-[#E6EEF8] placeholder-[#879299] outline-none transition-colors focus:border-[#4FD1FF]';
+    'w-full bg-transparent border-0 border-b border-[#4FD1FF]/20 px-0 py-3 text-[16px] text-[#E6EEF8] placeholder-[#879299] outline-none transition-colors focus:border-[#4FD1FF]';
   const labelCls = 'mb-2 block text-[11px] uppercase tracking-[0.12em] text-[#BCC8CF]';
 
   return (
@@ -77,7 +77,7 @@ export default function SignupPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span>
             Already have an account?{' '}
-            <Link href="/login" className="text-[#4FD1FF] hover:text-[#4FD1FF]">
+            <Link href="/login" className="text-[#4FD1FF] hover:text-[#6FDCFF]">
               Log in
             </Link>
           </span>
@@ -177,7 +177,7 @@ export default function SignupPage() {
             name="rememberMe"
             checked={formData.rememberMe}
             onChange={handleChange}
-            className="h-4 w-4 rounded border border-[#4FD1FF/20] bg-transparent accent-[#4FD1FF]"
+            className="h-4 w-4 rounded border border-[#4FD1FF]/20 bg-transparent accent-[#4FD1FF]"
             disabled={isLoading}
           />
           Keep me signed in for 30 days
@@ -192,7 +192,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-md bg-[#4FD1FF] px-6 py-[14px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-[#4FD1FF] px-6 py-[14px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#6FDCFF] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLoading ? 'Creating account…' : 'Create my account'}
         </button>

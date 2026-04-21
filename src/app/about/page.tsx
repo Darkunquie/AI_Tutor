@@ -62,8 +62,7 @@ export default function AboutPage() {
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF]"
-          >
+            className="mt-8 inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#3FC1EF]"          >
             Start your first session
           </Link>
         </section>

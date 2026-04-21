@@ -97,9 +97,11 @@ export const Footer = ({
                 <Link
                   href={creatorUrl}
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="text-base text-muted-foreground hover:text-foreground transition-colors duration-300 hover:font-medium"
                 >
                   Crafted by {creatorName}
+                </Link>
                 </Link>
               </nav>
             )}
@@ -127,7 +129,7 @@ export const Footer = ({
         </div>
 
         {/* Bottom line */}
-        <div className="absolute bottom-32 sm:bottom-34 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-border to-transparent w-full left-1/2 -translate-x-1/2"></div>
+        <div className="absolute bottom-32 sm:bottom-36 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-border to-transparent w-full left-1/2 -translate-x-1/2"></div>
 
         {/* Bottom shadow */}
         <div className="bg-gradient-to-t from-background via-background/80 blur-[1em] to-background/40 absolute bottom-28 w-full h-24"></div>

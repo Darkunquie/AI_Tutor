@@ -121,8 +121,7 @@ export default async function BlogPost({
                   <div key={idx} className="mt-10">
                     <Link
                       href="/signup"
-                      className="inline-block rounded-md bg-[#4FD1FF] px-6 py-[12px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF]"
-                    >
+                      className="inline-block rounded-md bg-[#4FD1FF] px-6 py-[12px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#6EDAFF]"                    >
                       {b.text}
                     </Link>
                   </div>

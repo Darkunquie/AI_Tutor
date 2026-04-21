@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/cn";
 
 interface BeamsBackgroundProps {
@@ -42,6 +42,7 @@ export function BeamsBackground({ className, intensity = "subtle" }: BeamsBackgr
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const beamsRef = useRef<Beam[]>([]);
   const animationFrameRef = useRef<number>(0);
+  const prefersReducedMotion = useReducedMotion();
   const MINIMUM_BEAMS = 20;
 
   const opacityMap = {
@@ -68,9 +69,11 @@ export function BeamsBackground({ className, intensity = "subtle" }: BeamsBackgr
       canvas.style.height = `${window.innerHeight}px`;
       ctx.scale(dpr, dpr);
 
-      const totalBeams = MINIMUM_BEAMS * 1.5;
+      const totalBeams = Math.floor(MINIMUM_BEAMS * 1.5);
+      const logicalWidth = window.innerWidth;
+      const logicalHeight = window.innerHeight;
       beamsRef.current = Array.from({ length: totalBeams }, () =>
-        createBeam(canvas.width, canvas.height),
+        createBeam(logicalWidth, logicalHeight),
       );
     };
 
@@ -80,8 +83,8 @@ export function BeamsBackground({ className, intensity = "subtle" }: BeamsBackgr
     function resetBeam(beam: Beam, index: number, totalBeams: number) {
       if (!canvas) return beam;
       const column = index % 3;
-      const spacing = canvas.width / 3;
-      beam.y = canvas.height + 100;
+      const spacing = window.innerWidth / 3;
+      beam.y = window.innerHeight + 100;
       beam.x = column * spacing + spacing / 2 + (Math.random() - 0.5) * spacing * 0.5;
       beam.width = 100 + Math.random() * 100;
       beam.speed = 0.5 + Math.random() * 0.4;
@@ -151,13 +154,22 @@ export function BeamsBackground({ className, intensity = "subtle" }: BeamsBackgr
     >
       <canvas
         ref={canvasRef}
-        className="absolute inset-0"
-        style={{ filter: "blur(15px)" }}
-      />
       <motion.div
         className="absolute inset-0 bg-[#070B10]/5"
         animate={{ opacity: [0.05, 0.15, 0.05] }}
-        transition={{ duration: 10, ease: "easeInOut", repeat: Infinity }}
+        transition={{
+          duration: 10,
+          ease: "easeInOut",
+          repeat: Infinity,
+        }}
+        {...(typeof window !== "undefined" &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches && {
+            animate: { opacity: 0.1 },
+            transition: { duration: 0 },
+          })}
+        style={{ backdropFilter: "blur(50px)" }}
+      />
+        transition={prefersReducedMotion ? { duration: 0 } : { duration: 10, ease: "easeInOut", repeat: Infinity }}
         style={{ backdropFilter: "blur(50px)" }}
       />
     </div>

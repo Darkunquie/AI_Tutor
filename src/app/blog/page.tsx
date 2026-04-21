@@ -34,7 +34,7 @@ export default function BlogIndex() {
             <Link
               key={p.slug}
               href={`/blog/${p.slug}`}
-              className="group rounded-2xl border border-[#4FD1FF/20] bg-[#121215] p-8 transition-colors hover:border-[#4FD1FF]/60 hover:bg-[#141A22]"
+              className="group rounded-2xl border border-[#4FD1FF]/20 bg-[#121215] p-8 transition-colors hover:border-[#4FD1FF]/60 hover:bg-[#141A22]"
             >
               <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.12em] text-[#879299]">
                 <time dateTime={p.date}>{new Date(p.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</time>

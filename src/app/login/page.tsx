@@ -91,7 +91,7 @@ export default function LoginPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span>
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-[#4FD1FF] hover:text-[#4FD1FF]">
+            <Link href="/signup" className="text-[#4FD1FF] hover:text-[#6FE0FF]">
               Create one
             </Link>
           </span>
@@ -168,7 +168,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-md bg-[#4FD1FF] px-6 py-[14px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-[#4FD1FF] px-6 py-[14px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#6FE0FF] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLoading ? 'Signing in…' : 'Log in'}
         </button>

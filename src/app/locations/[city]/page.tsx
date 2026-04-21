@@ -82,8 +82,7 @@ export default async function CityPage({
         <div className="mt-10">
           <Link
             href="/signup"
-            className="inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF]"
-          >
+            className="inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#3BC4F2]"          >
             Start practising \u2014 free
           </Link>
           <p className="mt-3 text-[13px] text-[#879299]">No credit card \u00B7 3-day free trial</p>
@@ -99,9 +98,8 @@ export default async function CityPage({
               { h: 'Built for Indian English speakers', b: 'Pronunciation drills target the 18 sounds Indian speakers most commonly avoid. Corrections explain the Indian English grammar patterns that get reinforced at school.' },
               { h: 'Cheaper than a tutor, patient like a friend', b: 'A live tutor in India costs \u20B9500-\u20B92000 per hour and meets once a week. Talkivo is \u20B9499 per month, unlimited, and never tired.' },
             ].map((x) => (
-              <div key={x.h} className="rounded-2xl border border-[#4FD1FF/20] bg-[#121215] p-6">
-                <h3 className="font-sora text-[20px] leading-[1.2] text-[#E6EEF8]">{x.h}</h3>
-                <p className="mt-3 text-[14px] leading-[1.65] text-[#BCC8CF]">{x.b}</p>
+              <div key={x.h} className="rounded-2xl border border-[#4FD1FF]/20 bg-[#121215] p-6">
+              <div key={x.h} className="rounded-2xl border border-[#4FD1FF]/20 bg-[#121215] p-6">                <p className="mt-3 text-[14px] leading-[1.65] text-[#BCC8CF]">{x.b}</p>
               </div>
             ))}
           </div>
@@ -114,7 +112,7 @@ export default async function CityPage({
               <Link
                 key={m.slug}
                 href={`/features/${m.slug}`}
-                className="rounded-xl border border-[#4FD1FF/20] bg-[#121215] p-5 transition-colors hover:border-[#4FD1FF]/60"
+                className="rounded-xl border border-[#4FD1FF]/20 bg-[#121215] p-5 transition-colors hover:border-[#4FD1FF]/60"
               >
                 <div className="text-[14px] font-medium text-[#E6EEF8]">{m.name}</div>
                 <div className="mt-2 text-[12px] leading-[1.5] text-[#879299] line-clamp-3">{m.tagline}</div>
@@ -123,7 +121,7 @@ export default async function CityPage({
           </div>
         </section>
 
-        <section className="mt-24 rounded-2xl border border-[#4FD1FF/20] bg-[#141A22] p-10 lg:p-14">
+        <section className="mt-24 rounded-2xl border border-[#4FD1FF]/20 bg-[#141A22] p-10 lg:p-14">
           <h2 className="font-sora text-[28px] leading-[1.15] text-[#E6EEF8]">
             Who is Talkivo for in {c.name}?
           </h2>
@@ -151,20 +149,20 @@ export default async function CityPage({
           <p className="mt-4 text-[15px] text-[#BCC8CF]">Three-day free trial. No credit card.</p>
           <Link
             href="/signup"
-            className="mt-8 inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF]"
+            className="mt-8 inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#3FBFEE]"
           >
             Start free
           </Link>
         </section>
 
-        <section className="mt-24 border-t border-[#4FD1FF/20] pt-12">
+        <section className="mt-24 border-t border-[#4FD1FF]/20 pt-12">
           <h2 className="font-sora text-[24px] text-[#E6EEF8]">Other cities</h2>
           <div className="mt-6 flex flex-wrap gap-3">
             {CITIES.filter((x) => x.slug !== c.slug).map((x) => (
               <Link
                 key={x.slug}
                 href={`/locations/${x.slug}`}
-                className="rounded-full border border-[#4FD1FF/20] bg-[#121215] px-4 py-2 text-[13px] text-[#BCC8CF] transition-colors hover:border-[#4FD1FF]/60 hover:text-[#E6EEF8]"
+                className="rounded-full border border-[#4FD1FF]/20 bg-[#121215] px-4 py-2 text-[13px] text-[#BCC8CF] transition-colors hover:border-[#4FD1FF]/60 hover:text-[#E6EEF8]"
               >
                 {x.name}
               </Link>

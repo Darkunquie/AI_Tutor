@@ -79,7 +79,7 @@ export default async function ModePage({
         <div className="mt-10">
           <Link
             href="/signup"
-            className="inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF]"
+            className="inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#3FBFEE]"
           >
             Try {m.name} free
           </Link>
@@ -94,7 +94,7 @@ export default async function ModePage({
           ))}
         </section>
 
-        <section className="mt-24 rounded-2xl border border-[#4FD1FF/20] bg-[#141A22] p-10 lg:p-14">
+        <section className="mt-24 rounded-2xl border border-[#4FD1FF]/20 bg-[#141A22] p-10 lg:p-14">
           <h2 className="font-sora text-[28px] leading-[1.15] text-[#E6EEF8]">Who it\u2019s for</h2>
           <ul className="mt-6 grid gap-3 md:grid-cols-2">
             {m.useCases.map((u) => (
@@ -125,8 +125,7 @@ export default async function ModePage({
               <Link
                 key={x.slug}
                 href={`/features/${x.slug}`}
-                className="rounded-xl border border-[#4FD1FF/20] bg-[#121215] p-5 transition-colors hover:border-[#4FD1FF]/60"
-              >
+                className="rounded-xl border border-[#4FD1FF]/20 bg-[#121215] p-5 transition-colors hover:border-[#4FD1FF]/60"              >
                 <div className="text-[13px] text-[#E6EEF8]">{x.name}</div>
                 <div className="mt-1 text-[12px] text-[#879299] line-clamp-2">{x.tagline}</div>
               </Link>
@@ -140,11 +139,10 @@ export default async function ModePage({
           </h2>
           <Link
             href="/signup"
-            className="mt-8 inline-block rounded-md bg-[#4FD1FF] px-7 py-[14px] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF]"
+            className="mt-8 inline-block rounded-md bg-[#4FD1FF] px-7 py-[14py] text-[17px] font-medium text-[#0D131B] transition-colors hover:bg-[#3FBFEE]"
           >
             Try it free
-          </Link>
-        </section>
+          </Link>        </section>
       </main>
     </MarketingShell>
   );
