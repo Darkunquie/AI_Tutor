@@ -20,11 +20,11 @@ export default function LocationsIndex() {
     <MarketingShell>
       <main className="mx-auto max-w-[1100px] px-6 py-20 lg:px-10 lg:py-28">
         <div className="mx-auto max-w-[760px] text-center">
-          <div className="mb-6 text-[12px] uppercase tracking-[0.12em] text-[#D4A373]">Locations</div>
-          <h1 className="font-serif-display text-[56px] leading-[1.05] tracking-[-0.02em] text-[#F5F2EC] lg:text-[72px]">
+          <div className="mb-6 text-[12px] uppercase tracking-[0.12em] text-[#4FD1FF]">Locations</div>
+          <h1 className="font-sora text-[56px] leading-[1.05] tracking-[-0.02em] text-[#E6EEF8] lg:text-[72px]">
             English speaking practice, every Indian city.
           </h1>
-          <p className="mt-6 text-[18px] leading-[1.6] text-[#9A948A]">
+          <p className="mt-6 text-[18px] leading-[1.6] text-[#BCC8CF]">
             Talkivo runs online \u2014 wherever you are in India, you can practice English speaking from your phone. Pages tailored to major cities below.
           </p>
         </div>
@@ -34,12 +34,12 @@ export default function LocationsIndex() {
             <Link
               key={c.slug}
               href={`/locations/${c.slug}`}
-              className="group rounded-2xl border border-[#2A2A2E] bg-[#121215] p-8 transition-colors hover:border-[#D4A373]/60 hover:bg-[#17171A]"
+              className="group rounded-2xl border border-[#4FD1FF/20] bg-[#121215] p-8 transition-colors hover:border-[#4FD1FF]/60 hover:bg-[#141A22]"
             >
-              <div className="text-[11px] uppercase tracking-[0.12em] text-[#D4A373]">{c.state}</div>
-              <h2 className="font-serif-display mt-3 text-[28px] text-[#F5F2EC]">{c.name}</h2>
-              <p className="mt-4 text-[14px] leading-[1.65] text-[#9A948A] line-clamp-3">{c.intro}</p>
-              <div className="mt-6 text-[14px] text-[#D4A373] transition-transform group-hover:translate-x-1">Learn more \u2192</div>
+              <div className="text-[11px] uppercase tracking-[0.12em] text-[#4FD1FF]">{c.state}</div>
+              <h2 className="font-sora mt-3 text-[28px] text-[#E6EEF8]">{c.name}</h2>
+              <p className="mt-4 text-[14px] leading-[1.65] text-[#BCC8CF] line-clamp-3">{c.intro}</p>
+              <div className="mt-6 text-[14px] text-[#4FD1FF] transition-transform group-hover:translate-x-1">Learn more \u2192</div>
             </Link>
           ))}
         </div>

@@ -11,6 +11,7 @@ import { api } from '@/lib/api-client';
 import type { Mode, Level, ChatContext, ErrorType, Correction } from '@/lib/types';
 import { logBackgroundError } from '@/lib/utils';
 import RequireAuth from '@/components/auth/RequireAuth';
+import { GridBackground } from '@/components/ui/grid-background';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToastStore } from '@/stores/toastStore';
 import { ACHIEVEMENT_MAP } from '@/lib/config/achievements';
@@ -117,6 +118,7 @@ export default function TutorPage() {
 
   return (
     <RequireAuth>
+      <GridBackground />
       {/* Show report screen */}
       {showReport && reportData ? (
         <SessionReport

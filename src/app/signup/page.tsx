@@ -65,8 +65,8 @@ export default function SignupPage() {
   };
 
   const inputCls =
-    'w-full bg-transparent border-0 border-b border-[#3A3A3F] px-0 py-3 text-[16px] text-[#F5F2EC] placeholder-[#6B665F] outline-none transition-colors focus:border-[#D4A373]';
-  const labelCls = 'mb-2 block text-[11px] uppercase tracking-[0.12em] text-[#9A948A]';
+    'w-full bg-transparent border-0 border-b border-[#4FD1FF/20] px-0 py-3 text-[16px] text-[#E6EEF8] placeholder-[#879299] outline-none transition-colors focus:border-[#4FD1FF]';
+  const labelCls = 'mb-2 block text-[11px] uppercase tracking-[0.12em] text-[#BCC8CF]';
 
   return (
     <AuthShell
@@ -77,11 +77,11 @@ export default function SignupPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span>
             Already have an account?{' '}
-            <Link href="/login" className="text-[#D4A373] hover:text-[#DDB389]">
+            <Link href="/login" className="text-[#4FD1FF] hover:text-[#4FD1FF]">
               Log in
             </Link>
           </span>
-          <Link href="/" className="text-[13px] text-[#6B665F] hover:text-[#9A948A]">
+          <Link href="/" className="text-[13px] text-[#879299] hover:text-[#BCC8CF]">
             ← Back to home
           </Link>
         </div>
@@ -164,27 +164,27 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 text-[11px] uppercase tracking-[0.1em] text-[#6B665F] transition-colors hover:text-[#F5F2EC]"
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-[11px] uppercase tracking-[0.1em] text-[#879299] transition-colors hover:text-[#E6EEF8]"
             >
               {showPassword ? 'Hide' : 'Show'}
             </button>
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 text-[14px] text-[#9A948A]">
+        <label className="flex cursor-pointer items-center gap-3 text-[14px] text-[#BCC8CF]">
           <input
             type="checkbox"
             name="rememberMe"
             checked={formData.rememberMe}
             onChange={handleChange}
-            className="h-4 w-4 rounded border border-[#3A3A3F] bg-transparent accent-[#D4A373]"
+            className="h-4 w-4 rounded border border-[#4FD1FF/20] bg-transparent accent-[#4FD1FF]"
             disabled={isLoading}
           />
           Keep me signed in for 30 days
         </label>
 
         {error && (
-          <div className="border-l-2 border-[#B5564C] bg-[#B5564C]/10 px-4 py-3 text-[13px] text-[#F5F2EC]">
+          <div className="border-l-2 border-[#B5564C] bg-[#B5564C]/10 px-4 py-3 text-[13px] text-[#E6EEF8]">
             {error}
           </div>
         )}
@@ -192,15 +192,15 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-md bg-[#D4A373] px-6 py-[14px] text-[15px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-[#4FD1FF] px-6 py-[14px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLoading ? 'Creating account…' : 'Create my account'}
         </button>
 
-        <p className="text-[12px] leading-[1.5] text-[#6B665F]">
+        <p className="text-[12px] leading-[1.5] text-[#879299]">
           By continuing you agree to Talkivo&rsquo;s{' '}
-          <span className="text-[#9A948A]">Terms</span> and{' '}
-          <span className="text-[#9A948A]">Privacy Policy</span>.
+          <span className="text-[#BCC8CF]">Terms</span> and{' '}
+          <span className="text-[#BCC8CF]">Privacy Policy</span>.
         </p>
       </form>
     </AuthShell>

@@ -7,6 +7,7 @@ import AdminStatsCards from '@/components/admin/AdminStatsCards';
 import UserTable from '@/components/admin/UserTable';
 import type { UserRow } from '@/components/admin/UserTable';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { GridBackground } from '@/components/ui/grid-background';
 import { api } from '@/lib/api-client';
 import { useToastStore } from '@/stores/toastStore';
 
@@ -121,9 +122,11 @@ export default function AdminDashboardPage() {
   return (
     <RequireAdmin>
       <div className="min-h-screen bg-[#0E0E10]">
-        <AdminHeader />
+        <GridBackground />
+        <div className="relative z-10">
+          <AdminHeader />
 
-        <main className="max-w-7xl mx-auto px-6 py-8">
+          <main className="max-w-7xl mx-auto px-6 py-8">
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-[#ffb4ab]/5 border border-[#ffb4ab]/20">
               <p className="text-sm text-[#ffb4ab]">{error}</p>
@@ -252,6 +255,7 @@ export default function AdminDashboardPage() {
           confirmColor="red"
           loading={actionLoading}
         />
+        </div>
       </div>
     </RequireAdmin>
   );

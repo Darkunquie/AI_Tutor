@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ReactNode } from 'react';
+import { GridBackground } from '@/components/ui/grid-background';
 
 interface AppShellProps {
   children: ReactNode;
@@ -33,7 +34,8 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-[#0E0E10] text-[#F5F2EC] font-geist antialiased">
-      <div className="flex min-h-screen">
+      <GridBackground />
+      <div className="relative z-10 flex min-h-screen">
         {/* Sidebar */}
         <aside className="sticky top-0 flex h-screen w-[240px] flex-col border-r border-[#2A2A2E] bg-[#17171A] px-6 py-8">
           <Link href="/app" className="flex items-center gap-2.5">

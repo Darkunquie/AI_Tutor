@@ -4,23 +4,17 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { Waveform } from '@/components/landing/Waveform';
-import { GlowCard } from '@/components/ui/spotlight-card';
-import { TestimonialSlider } from '@/components/ui/testimonial-slider-1';
+import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { BeamsBackground } from '@/components/ui/beams-background';
+import { ModuleRack } from '@/components/landing/ModuleRack';
+import { ReactorOrb } from '@/components/landing/ReactorOrb';
+import { WaveformStrip } from '@/components/landing/WaveformStrip';
 import {
   OrganizationJsonLd,
   WebSiteJsonLd,
   SoftwareAppJsonLd,
   FaqJsonLd,
 } from './JsonLd';
-
-const MODES = [
-  { name: 'Free Talk', tagline: 'Pick any topic. Just talk.' },
-  { name: 'Role Play', tagline: 'Rehearse the conversation before it happens.' },
-  { name: 'Debate', tagline: 'Defend a position. Sharpen your thinking.' },
-  { name: 'Grammar Fix', tagline: 'Bring a paragraph. Leave it better.' },
-  { name: 'Pronunciation', tagline: 'The sounds you avoid, practised with care.' },
-];
 
 export default function Landing() {
   const router = useRouter();
@@ -31,414 +25,302 @@ export default function Landing() {
   }, [isAuthenticated, router]);
 
   return (
-    <div className="min-h-screen bg-[#0E0E10] text-[#F5F2EC] font-geist antialiased">
+    <MarketingShell showBackground={false}>
       <OrganizationJsonLd />
       <WebSiteJsonLd />
       <SoftwareAppJsonLd />
       <FaqJsonLd />
-      {/* Top nav */}
-      <header className="sticky top-0 z-40 border-b border-[#2A2A2E] bg-[#0E0E10]/90 backdrop-blur-sm">
-        <div className="mx-auto flex h-[72px] max-w-[1720px] items-center justify-between px-10 lg:px-16">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-serif-display text-[20px] tracking-tight">Talkivo</span>
-            <span className="h-[6px] w-[6px] rounded-full bg-[#D4A373]" />
-          </Link>
 
-          <nav className="hidden items-center gap-8 md:flex">
-            <a href="#modes" className="text-[14px] text-[#9A948A] transition-colors hover:text-[#F5F2EC]">Modes</a>
-            <a href="#why" className="text-[14px] text-[#9A948A] transition-colors hover:text-[#F5F2EC]">Why Talkivo</a>
-            <a href="#how" className="text-[14px] text-[#9A948A] transition-colors hover:text-[#F5F2EC]">How it works</a>
-          </nav>
+      {/* Fixed ambient beams layer */}
+      <BeamsBackground className="fixed inset-0 z-0" intensity="subtle" />
+      {/* Faint 20px grid overlay on top of everything (but under content) */}
+      <div className="grid-bg-overlay" />
 
-          <div className="flex items-center gap-5">
-            <Link href="/login" className="text-[14px] text-[#9A948A] transition-colors hover:text-[#F5F2EC]">
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-md bg-[#D4A373] px-4 py-2 text-[14px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
-            >
-              Start speaking
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* Custom waveform — amber ribbon behind hero text */}
-        <div aria-hidden className="pointer-events-none absolute left-0 right-0 top-0 h-[820px]">
-          <Waveform />
-          {/* Left fade — keeps headline legible */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(90deg, rgba(14,14,16,0.72) 0%, rgba(14,14,16,0.35) 35%, rgba(14,14,16,0.05) 65%, rgba(14,14,16,0) 100%)',
-            }}
-          />
-        </div>
-
-        <div className="relative mx-auto max-w-[1720px] px-10 lg:px-16 pt-[128px] pb-[96px]">
-        <div className="mb-8 text-[12px] uppercase tracking-[0.12em] text-[#D4A373]">
-          AI English Tutor · Beta
-        </div>
-
-        <h1 className="font-serif-display max-w-[1050px] text-[88px] leading-[1.02] tracking-[-0.03em] text-[#F5F2EC]">
-          Speak English like you <em className="italic">think</em> — not like you <em className="italic">rehearse</em>.
-        </h1>
-
-        <p className="mt-10 max-w-[580px] text-[18px] leading-[1.55] text-[#9A948A]">
-          Talkivo is a calm, patient AI tutor that listens, corrects, and helps you find your voice. Built for professionals who refuse to sound uncertain in the room that matters.
-        </p>
-
-        <div className="mt-10 flex items-center gap-4">
-          <Link
-            href="/signup"
-            className="rounded-md bg-[#D4A373] px-7 py-[14px] text-[17px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
-          >
-            Begin your first session
-          </Link>
-          <button
-            type="button"
-            disabled
-            className="flex items-center gap-2 rounded-md border border-[#2A2A2E] px-6 py-[13px] text-[15px] text-[#F5F2EC] transition-colors hover:border-[#3A3A3F] hover:bg-[#17171A]"
-            aria-disabled="true"
-          >
-            <svg width="11" height="12" viewBox="0 0 11 12" fill="none" aria-hidden>
-              <path d="M10 5.13397C10.6667 5.51887 10.6667 6.48113 10 6.86603L1.75 11.6292C1.08333 12.0141 0.25 11.5329 0.25 10.7631L0.25 1.23686C0.25 0.467059 1.08333 -0.0140659 1.75 0.37083L10 5.13397Z" fill="#F5F2EC"/>
-            </svg>
-            Watch a 90-second tour
-          </button>
-        </div>
-
-        <p className="mt-8 text-[13px] text-[#6B665F]">
-          Free to use · No credit card required
-        </p>
-
-        {/* Hero demo panel */}
-        <div className="mt-[72px] rounded-2xl border border-[#2A2A2E] bg-[#17171A] p-10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)]">
-          {/* Session header */}
-          <div className="flex items-center justify-between border-b border-[#2A2A2E] pb-5">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D4A373] opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#D4A373]" />
-              </span>
-              <span className="text-[13px] text-[#D4A373] tabular-nums">Recording · 02:14</span>
-            </div>
-            <div className="text-[12px] uppercase tracking-[0.1em] text-[#6B665F]">
-              Free Talk · Intermediate
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="relative grid grid-cols-12 gap-6 pt-8">
-            <div className="col-span-8 space-y-8">
-              {/* AI */}
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-[#D4A373]">
-                  <span className="h-1 w-1 rounded-full bg-[#D4A373]" />
-                  Tutor
-                </div>
-                <p className="font-serif-display text-[19px] leading-[1.5] text-[#F5F2EC]">
-                  What&apos;s something you&apos;re working on this quarter?
-                </p>
-              </div>
-
-              {/* User */}
-              <div>
-                <div className="mb-2 text-[11px] uppercase tracking-[0.12em] text-[#6B665F]">You</div>
-                <p className="text-[17px] leading-[1.55] text-[#F5F2EC]">
-                  <span className="border-b border-[#D4A373]/60">I am</span> working on launching a new product line for mid-market customers.
-                </p>
-              </div>
-
-              {/* AI follow-up */}
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-[#D4A373]">
-                  <span className="h-1 w-1 rounded-full bg-[#D4A373]" />
-                  Tutor
-                </div>
-                <p className="font-serif-display text-[19px] leading-[1.5] text-[#F5F2EC]">
-                  Nice — tell me more about who the mid-market customer is.
-                </p>
-              </div>
-            </div>
-
-            {/* Marginalia */}
-            <div className="col-span-4 pt-1">
-              <div className="mt-[88px] border-l border-[#D4A373] pl-4">
-                <p className="font-serif-display italic text-[13px] leading-[1.5] text-[#9A948A]">
-                  noticed: drop &ldquo;I am&rdquo; → use contraction <span className="text-[#F5F2EC]">&ldquo;I&rsquo;m&rdquo;</span> for natural rhythm.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        </div>
-      </section>
-
-      {/* Three-column feature strip */}
-      <section id="how" className="mx-auto max-w-[1720px] border-t border-[#2A2A2E] px-10 lg:px-16 py-[96px]">
-        <div className="mb-12 text-[12px] uppercase tracking-[0.12em] text-[#D4A373]">
-          What makes it different
-        </div>
-        <div className="grid grid-cols-3 divide-x divide-[#2A2A2E]">
-          {[
-            {
-              h: 'Listens first',
-              b: 'It doesn\u2019t interrupt. It hears your whole thought \u2014 grammar, hesitation, filler \u2014 and responds like a good tutor should.',
-            },
-            {
-              h: 'Corrects with reason',
-              b: 'Every correction comes with why. Not a red line. A note in the margin, like a teacher you\u2019d actually want to work with.',
-            },
-            {
-              h: 'Remembers you',
-              b: 'Over time, Talkivo learns the mistakes that haunt you \u2014 the ones you keep making \u2014 and quietly works them out of your speech.',
-            },
-          ].map((c, i) => (
-            <div key={c.h} className={i === 0 ? 'pr-10' : i === 2 ? 'pl-10' : 'px-10'}>
-              <h3 className="font-serif-display mb-4 text-[22px] leading-tight text-[#F5F2EC]">{c.h}</h3>
-              <p className="text-[14px] leading-[1.6] text-[#9A948A]">{c.b}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Modes */}
-      <section id="modes" className="mx-auto max-w-[1720px] border-t border-[#2A2A2E] px-10 lg:px-16 py-[128px]">
-        <div className="mb-4 text-center text-[12px] uppercase tracking-[0.12em] text-[#D4A373]">
-          Five ways to practise
-        </div>
-        <h2 className="font-serif-display mx-auto mb-4 max-w-[700px] text-center text-[48px] leading-[1.08] tracking-[-0.02em] text-[#F5F2EC]">
-          Five ways to practise.
-        </h2>
-        <p className="mb-16 text-center text-[15px] text-[#9A948A]">
-          Pick a mode. Pick a level. Start speaking in under a minute.
-        </p>
-
-        <div className="grid grid-cols-5 gap-4">
-          {MODES.map((m, i) => (
-            <GlowCard
-              key={m.name}
-              customSize
-              glowColor="orange"
-              className="group p-6"
-            >
-              <div>
-                <div className="mb-4 text-[11px] tabular-nums text-[#6B665F]">0{i + 1}</div>
-                <h4 className="font-geist mb-3 text-[16px] font-medium text-[#F5F2EC]">{m.name}</h4>
-                <p className="font-serif-display text-[15px] italic leading-[1.45] text-[#9A948A]">
-                  {m.tagline}
-                </p>
-              </div>
-              <div className="mt-8 text-[14px] text-[#D4A373] opacity-0 transition-opacity group-hover:opacity-100">
-                →
-              </div>
-            </GlowCard>
-          ))}
-        </div>
-      </section>
-
-      {/* Why Talkivo — GlowCards */}
-      <section id="why" className="mx-auto max-w-[1720px] border-t border-[#2A2A2E] px-10 lg:px-16 py-[128px]">
-        <div className="mb-4 text-center text-[12px] uppercase tracking-[0.12em] text-[#D4A373]">
-          Why Talkivo
-        </div>
-        <h2 className="font-serif-display mx-auto mb-4 max-w-[720px] text-center text-[48px] leading-[1.08] tracking-[-0.02em] text-[#F5F2EC]">
-          Built for the room that matters.
-        </h2>
-        <p className="mx-auto mb-16 max-w-[560px] text-center text-[15px] text-[#9A948A]">
-          Three quiet promises we make to every learner who shows up to practise.
-        </p>
-
-        <div className="flex flex-wrap items-stretch justify-center gap-8">
-          <GlowCard glowColor="orange" customSize width={320} height={400} className="flex flex-col justify-between">
-            <div>
-              <div className="mb-4 text-[11px] uppercase tracking-[0.12em] text-[#D4A373]">01 · Calm</div>
-              <h3 className="font-serif-display text-[26px] leading-[1.15] text-[#F5F2EC]">
-                No judgement. Ever.
-              </h3>
-            </div>
-            <p className="text-[14px] leading-[1.6] text-[#9A948A]">
-              Stumble, restart, pause — Talkivo waits. The pressure of being corrected mid-sentence is gone.
+      <main className="relative z-10 space-y-32 pb-32">
+        {/* UNIT 01 // CORE_RESONANCE — hero */}
+        <section className="min-h-[90vh] grid-bg-40 px-8 md:px-12 py-20 md:py-28 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8">
+            <div className="module-header">UNIT: 01 // CORE_RESONANCE</div>
+            <h1 className="font-sora font-extrabold text-5xl md:text-7xl lg:text-8xl tracking-tighter leading-[1.02] text-[#E6EEF8]">
+              ORCHESTRATING
+              <br />
+              <span className="text-[#4FD1FF]">INTELLIGENCE</span>
+            </h1>
+            <p className="font-geist text-[#BCC8CF] text-lg max-w-lg leading-relaxed">
+              A high-precision instrument for practicing spoken English. Talkivo listens, corrects with reason, and remembers the patterns you keep missing.
             </p>
-          </GlowCard>
-
-          <GlowCard glowColor="purple" customSize width={320} height={400} className="flex flex-col justify-between">
-            <div>
-              <div className="mb-4 text-[11px] uppercase tracking-[0.12em] text-[#D4A373]">02 · Honest</div>
-              <h3 className="font-serif-display text-[26px] leading-[1.15] text-[#F5F2EC]">
-                Every correction has a reason.
-              </h3>
-            </div>
-            <p className="text-[14px] leading-[1.6] text-[#9A948A]">
-              No vague &ldquo;good job.&rdquo; You&apos;ll know exactly what shifted, and why it sounds more natural.
-            </p>
-          </GlowCard>
-
-          <GlowCard glowColor="blue" customSize width={320} height={400} className="flex flex-col justify-between">
-            <div>
-              <div className="mb-4 text-[11px] uppercase tracking-[0.12em] text-[#D4A373]">03 · Yours</div>
-              <h3 className="font-serif-display text-[26px] leading-[1.15] text-[#F5F2EC]">
-                It remembers your patterns.
-              </h3>
-            </div>
-            <p className="text-[14px] leading-[1.6] text-[#9A948A]">
-              The mistakes you keep making are the ones Talkivo will quietly help you retire — over weeks, not hours.
-            </p>
-          </GlowCard>
-        </div>
-
-        <div
-          className="relative mt-24 overflow-hidden rounded-2xl border border-[#0B2A2E] px-10 py-14 lg:px-16 lg:py-16"
-          style={{
-            backgroundImage:
-              'radial-gradient(120% 140% at 85% 10%, rgba(45,212,191,0.25) 0%, rgba(13,148,136,0.18) 28%, rgba(6,78,87,0.85) 60%, #031B1F 100%), radial-gradient(80% 100% at 15% 90%, rgba(8,51,68,0.6) 0%, transparent 60%)',
-          }}
-        >
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
-            <div>
-              <h3 className="font-serif-display text-[48px] leading-[1.05] tracking-[-0.02em] text-white lg:text-[56px]">
-                Let&apos;s build from here.
-              </h3>
-              <p className="mt-5 max-w-[520px] text-[15px] leading-[1.6] text-[#B5C8CB]">
-                Harnessed for progress. Designed for conversation. Celebrated for the quiet discipline of showing up daily. Welcome to the practice professionals love.
-              </p>
-            </div>
-
-            <form
-              action="/signup"
-              method="get"
-              className="flex w-full flex-col items-stretch gap-3 sm:flex-row lg:justify-end"
-            >
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="Email address"
-                className="w-full max-w-[320px] rounded-md border border-white/15 bg-black/30 px-4 py-[13px] text-[15px] text-white placeholder:text-white/50 outline-none transition-colors focus:border-white/40"
-              />
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-6 py-[13px] text-[15px] font-medium text-[#031B1F] transition-colors hover:bg-white/90"
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/signup"
+                className="bg-[#4FD1FF] text-[#0D131B] px-7 py-4 font-sora font-bold text-[14px] tracking-[0.08em] uppercase hover:bg-[#4FD1FF]/90 transition-colors"
               >
-                Start your free trial
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </form>
+                INITIALIZE_SYSTEM
+              </Link>
+              <Link
+                href="/features"
+                className="border-[0.5px] border-[#4FD1FF]/40 text-[#4FD1FF] px-7 py-4 font-jetbrains-mono font-bold text-[12px] tracking-[0.15em] uppercase hover:bg-[#4FD1FF]/10 transition-colors"
+              >
+                REF_DOCS
+              </Link>
+            </div>
+            <div className="font-serif italic text-[13px] tracking-[0.02em] text-[#BCC8CF]/90">
+              No card required · Works in any browser · Voice is never stored
+            </div>
           </div>
-        </div>
-      </section>
 
-      {/* Footer — Testimonials */}
-      <footer className="border-t border-[#2A2A2E]">
-        <div className="mx-auto max-w-[1720px] px-10 lg:px-16 pt-[96px] pb-6">
-          <div className="mb-12 grid grid-cols-12 items-end gap-8">
-            <div className="col-span-12 md:col-span-8">
-              <div className="mb-4 text-[12px] uppercase tracking-[0.12em] text-[#D4A373]">
-                Spoken by
+          <div className="flex flex-col items-center gap-10">
+            <ReactorOrb size={520} />
+            <WaveformStrip className="max-w-[520px] h-16" />
+          </div>
+        </section>
+
+        {/* UNIT 02 // SYSTEM_STATUS — stat row */}
+        <ModuleRack unit="02" name="SYSTEM_STATUS">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-[0.5px] bg-[#4FD1FF]/10 border-[0.5px] border-[#4FD1FF]/20">
+            {[
+              { ref: 'REF_001', label: 'ACTIVE_USERS', value: '12.4K', fill: 62 },
+              { ref: 'REF_002', label: 'SENTENCES_PARSED', value: '892M', fill: 100 },
+              { ref: 'REF_003', label: 'NET_LATENCY', value: '04MS', fill: 4 },
+              { ref: 'REF_004', label: 'VOICE_STORED', value: '0', fill: 0 },
+            ].map((s) => (
+              <div key={s.ref} className="bg-[#141A22] p-8 relative">
+                <div className="absolute top-2 right-2 font-jetbrains-mono text-[11px] font-bold text-[#4FD1FF]/60">{s.ref}</div>
+                <div className="font-jetbrains-mono text-[13px] font-bold text-[#4FD1FF]/90 mb-2 tracking-widest">// {s.label}</div>
+                <div className="font-jetbrains-mono text-3xl text-[#4FD1FF]">{s.value}</div>
+                <div className="mt-4 w-full h-1 bg-[#4FD1FF]/10">
+                  <div className="h-full bg-[#4FD1FF]" style={{ width: `${s.fill}%` }} />
+                </div>
               </div>
-              <h2 className="font-serif-display text-[48px] leading-[1.08] tracking-[-0.02em] text-[#F5F2EC] lg:text-[56px]">
-                People who stopped rehearsing.
-              </h2>
-            </div>
-            <div className="col-span-12 flex items-center gap-2 md:col-span-4 md:justify-end">
-              <span className="font-serif-display text-[18px]">Talkivo</span>
-              <span className="h-[5px] w-[5px] rounded-full bg-[#D4A373]" />
-            </div>
+            ))}
           </div>
+        </ModuleRack>
 
-          <TestimonialSlider
-            reviews={[
-              {
-                id: 1,
-                name: 'Ananya Rao',
-                affiliation: 'Product Manager · Bangalore',
-                quote:
-                  'I used to prepare every meeting in my head, word by word. After six weeks of Talkivo, I stopped rehearsing. I just talked.',
-                imageSrc: '/testimonials/portrait-1.jpg',
-                thumbnailSrc: '/testimonials/portrait-1.jpg',
-              },
-              {
-                id: 2,
-                name: 'Rahul Gupta',
-                affiliation: 'Management Consultant · Mumbai',
-                quote:
-                  'Client calls used to leave me exhausted. Now I close my laptop at the end of a pitch and actually remember what I said.',
-                imageSrc: '/testimonials/portrait-2.jpg',
-                thumbnailSrc: '/testimonials/portrait-2.jpg',
-              },
-              {
-                id: 3,
-                name: 'Priya Shah',
-                affiliation: 'Founder · Delhi NCR',
-                quote:
-                  'No tutor I hired ever gave me the patience Talkivo does. It just listens, then quietly shows me what I would have said if I were clearer.',
-                imageSrc: '/testimonials/portrait-3.jpg',
-                thumbnailSrc: '/testimonials/portrait-3.jpg',
-              },
-              {
-                id: 4,
-                name: 'Arjun Krishnan',
-                affiliation: 'Staff Engineer · Pune',
-                quote:
-                  'I speak English every day at work, but I always felt second-language. After a month of sessions, the hesitation just isn\u2019t there.',
-                imageSrc: '/testimonials/portrait-4.jpg',
-                thumbnailSrc: '/testimonials/portrait-4.jpg',
-              },
-              {
-                id: 5,
-                name: 'Meera Iyer',
-                affiliation: 'Journalist · Chennai',
-                quote:
-                  'Grammar Fix is the best editor I\u2019ve ever worked with. It explains why, not just what. My drafts land cleaner on the first read.',
-                imageSrc: '/testimonials/portrait-5.jpg',
-                thumbnailSrc: '/testimonials/portrait-5.jpg',
-              },
-            ]}
-          />
-
-          <div className="mt-16 grid grid-cols-12 gap-8 border-t border-[#2A2A2E] pt-8">
-            <div className="col-span-12 md:col-span-4">
-              <p className="text-[13px] leading-[1.55] text-[#6B665F]">
-                A calm, patient AI tutor for ambitious professionals.
+        {/* UNIT 03 // MODE_MATRIX — 3 cards, middle inverted cyan */}
+        <ModuleRack unit="03" name="MODE_MATRIX">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-[#141A22] border-[0.5px] border-[#4FD1FF]/10 p-8 space-y-4">
+              <div className="font-jetbrains-mono text-[12px] font-bold text-[#4FD1FF] tracking-widest">[ MODE_01 ]</div>
+              <h3 className="font-sora text-xl font-bold text-[#E6EEF8]">Free Talk</h3>
+              <p className="font-geist text-sm text-[#BCC8CF] leading-relaxed">
+                Open conversation on any topic. Real-time grammar + vocabulary + structure corrections.
               </p>
+              <Link href="/features/free-talk" className="inline-block pt-4 font-jetbrains-mono text-[12px] font-bold text-[#4FD1FF] tracking-widest uppercase hover:underline">+ ACTIVATE_NODE</Link>
             </div>
-            <div className="col-span-6 md:col-span-4">
-              <div className="mb-2 text-[11px] uppercase tracking-[0.12em] text-[#6B665F]">
-                Product
-              </div>
-              <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-[#9A948A]">
-                <li><a href="#modes" className="hover:text-[#F5F2EC]">Modes</a></li>
-                <li><a href="#why" className="hover:text-[#F5F2EC]">Why Talkivo</a></li>
-                <li><a href="#how" className="hover:text-[#F5F2EC]">How it works</a></li>
-                <li><a href="#testimonials" className="hover:text-[#F5F2EC]">Testimonials</a></li>
+
+            <div className="bg-[#4FD1FF] p-8 space-y-4 text-[#0D131B]">
+              <div className="font-jetbrains-mono text-[12px] font-bold tracking-widest">[ MODE_02 · PROTOCOL_X ]</div>
+              <h3 className="font-sora text-xl font-bold">Role Play</h3>
+              <p className="font-geist text-sm text-[#0D131B]/80 leading-relaxed">
+                Rehearse the conversation before it happens. Interviews, negotiations, difficult calls.
+              </p>
+              <Link href="/features/role-play" className="inline-block pt-4 font-jetbrains-mono text-[12px] font-bold tracking-widest uppercase hover:underline">+ ENGAGE</Link>
+            </div>
+
+            <div className="bg-[#141A22] border-[0.5px] border-[#4FD1FF]/10 p-8 space-y-4">
+              <div className="font-jetbrains-mono text-[12px] font-bold text-[#4FD1FF] tracking-widest">[ MODE_03 ]</div>
+              <h3 className="font-sora text-xl font-bold text-[#E6EEF8]">Debate</h3>
+              <p className="font-geist text-sm text-[#BCC8CF] leading-relaxed">
+                Hold a position against a patient opponent. Sharpens argument structure and persuasion.
+              </p>
+              <Link href="/features/debate" className="inline-block pt-4 font-jetbrains-mono text-[12px] font-bold text-[#4FD1FF] tracking-widest uppercase hover:underline">+ ACTIVATE_NODE</Link>
+            </div>
+          </div>
+        </ModuleRack>
+
+        {/* UNIT 04 // ENGAGEMENT_CONTRACT — trust centerpiece */}
+        <ModuleRack unit="04" name="ENGAGEMENT_CONTRACT">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[3px] bg-[#3D484E]">
+            <div className="bg-[#141A22] p-10 md:p-12">
+              <div className="font-jetbrains-mono text-[15px] font-bold text-[#E8B64C] mb-10 tracking-[0.2em] uppercase">[ SYSTEM_REFUSES ]</div>
+              <ul className="space-y-6">
+                {[
+                  'NO GAMIFIED STREAKS OR POINT-HUNTING.',
+                  'NO STORAGE OF RAW AUDIO RECORDINGS.',
+                  'NO PRE-RECORDED "COFFEE-ORDER" SCENARIOS.',
+                  'NO PRETENDING TO BE A HUMAN TEACHER.',
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-4">
+                    <span className="font-jetbrains-mono text-[#E8B64C]">—</span>
+                    <span className="font-jetbrains-mono text-sm text-[#E6EEF8]/70 uppercase tracking-tight leading-relaxed">{line}</span>
+                  </li>
+                ))}
               </ul>
             </div>
-            <div className="col-span-6 md:col-span-4">
-              <div className="mb-2 text-[11px] uppercase tracking-[0.12em] text-[#6B665F]">
-                Company
-              </div>
-              <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-[#9A948A]">
-                <li><span className="text-[#6B665F]">About</span></li>
-                <li><span className="text-[#6B665F]">Support</span></li>
-                <li><span className="text-[#6B665F]">Privacy</span></li>
-                <li><span className="text-[#6B665F]">Terms</span></li>
+            <div className="bg-[#141A22] p-10 md:p-12">
+              <div className="font-jetbrains-mono text-[15px] font-bold text-[#4FD1FF] mb-10 tracking-[0.2em] uppercase">[ SYSTEM_DOES ]</div>
+              <ul className="space-y-6">
+                {[
+                  'CORRECT GRAMMAR IN REAL TIME, QUIETLY.',
+                  'TRACK THE PATTERNS YOU KEEP MISSING.',
+                  'ADAPT VOICE, PACE, AND ACCENT ON REQUEST.',
+                  'EXPLAIN WHY EACH CORRECTION WAS MADE.',
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-4">
+                    <span className="font-jetbrains-mono text-[#4FD1FF]">+</span>
+                    <span className="font-jetbrains-mono text-sm text-[#E6EEF8] uppercase tracking-tight leading-relaxed">{line}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
+        </ModuleRack>
 
-          <div className="mt-8 flex items-center justify-between border-t border-[#2A2A2E] pt-5 text-[12px] text-[#6B665F]">
-            <span>© {new Date().getFullYear()} Talkivo</span>
-            <span>Made in India · English worldwide</span>
+        {/* UNIT 05 // SESSION_FLOW — 4-step pipeline */}
+        <ModuleRack unit="05" name="SESSION_FLOW">
+          <div className="p-8 md:p-12 bg-[#141A22] hairline-bracing grid grid-cols-1 md:grid-cols-4 gap-0 divide-x-[0.5px] divide-dashed divide-[#4FD1FF]/30">
+            {[
+              { n: '01', title: 'INITIALIZATION', body: 'PICK A MODE, TOPIC, OR SCENARIO. CALIBRATE VOICE AND PACE PARAMETERS.' },
+              { n: '02', title: 'SYNC_PHASE', body: 'SPEAK NATURALLY. TALKIVO TRANSCRIBES IN THE MARGIN AND WAITS FOR A PAUSE.' },
+              { n: '03', title: 'ANALYSIS', body: 'GRAMMAR, STRUCTURE, VOCAB, PRONUNCIATION — INLINE MARGINALIA, NOT POPUPS.' },
+              { n: '04', title: 'REFINEMENT', body: 'A WRITTEN REPORT, EVERY WEEK, ON THE 2-3 PATTERNS YOU KEEP REPEATING.' },
+            ].map((s, i) => (
+              <div key={s.n} className={i === 0 ? 'pr-6' : i === 3 ? 'pl-6' : 'px-6'}>
+                <div className="w-10 h-10 border-[1px] border-[#4FD1FF] flex items-center justify-center font-jetbrains-mono text-[#4FD1FF] mb-6">{s.n}</div>
+                <h4 className="font-sora font-bold text-base mb-3 uppercase text-[#E6EEF8]">{s.title}</h4>
+                <p className="font-jetbrains-mono text-[11px] text-[#BCC8CF]/80 leading-relaxed uppercase">{s.body}</p>
+              </div>
+            ))}
+          </div>
+        </ModuleRack>
+
+        {/* UNIT 06 // TELEMETRY_FEED + UNIT 07 // SPECTROGRAM */}
+        <div className="px-8 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div>
+            <div className="module-header">UNIT: 06 // TELEMETRY_FEED</div>
+            <div className="font-jetbrains-mono text-[11px] text-[#BCC8CF] space-y-3 p-6 bg-[#141A22] hairline-bracing leading-relaxed">
+              <div>[ 14:02:11 ] <span className="text-[#4FD1FF]">SYSTEM_BOOT:</span> KERNEL_INIT_OK</div>
+              <div>[ 14:02:12 ] <span className="text-[#4FD1FF]">NEURAL_MAP:</span> LOADING_WEIGHTS_V2.0</div>
+              <div>[ 14:02:13 ] <span className="text-[#E8B64C]">WARNING:</span> LATENCY_SPIKE_NODE_04</div>
+              <div>[ 14:02:14 ] <span className="text-[#4FD1FF]">AUTO_REROUTE:</span> OPTIMIZING_PATHS</div>
+              <div>[ 14:02:15 ] <span className="text-[#4FD1FF]">SYSTEM_READY:</span> LISTENING_PORT_8080</div>
+              <div>[ 14:02:16 ] <span className="text-[#4FD1FF]">HEARTBEAT:</span> SIG_STABLE [04ms]</div>
+              <div>[ 14:02:17 ] <span className="text-[#4FD1FF]">DATA_IN:</span> 14KB_ENCRYPTED</div>
+              <div>[ 14:02:18 ] <span className="text-[#4FD1FF]">DECRYPT_OK:</span> 256bit_AES_SECURE</div>
+              <div>[ 14:02:19 ] <span className="text-[#4FD1FF]">PROCESS:</span> NLP_PARSE_INITIATED</div>
+            </div>
+          </div>
+          <div>
+            <div className="module-header">UNIT: 07 // SPECTROGRAM</div>
+            <div className="h-[260px] bg-[#141A22] hairline-bracing relative overflow-hidden grid-bg-40">
+              <div className="absolute inset-6 border-[0.5px] border-[#4FD1FF]/10" />
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-[#4FD1FF]/40" />
+              <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#4FD1FF]/40" />
+              <WaveformStrip bars={40} className="absolute bottom-8 left-8 right-8" />
+            </div>
           </div>
         </div>
-      </footer>
-    </div>
+
+        {/* UNIT 08 // ARCHIVE_INDEX */}
+        <ModuleRack unit="08" name="ARCHIVE_INDEX">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { idx: 'IDX_MODES', title: 'MODE_REFERENCE', href: '/features' },
+              { idx: 'IDX_BLOG', title: 'FIELD_NOTES', href: '/blog' },
+              { idx: 'IDX_GEO', title: 'LOCATION_INDEX', href: '/locations' },
+              { idx: 'IDX_MAKER', title: 'THE_MAKER', href: '/about' },
+            ].map((a) => (
+              <Link
+                key={a.idx}
+                href={a.href}
+                className="border-[0.5px] border-[#4FD1FF]/20 p-6 space-y-2 hover:bg-[#4FD1FF]/5 transition-colors block"
+              >
+                <div className="font-jetbrains-mono text-[12px] font-bold text-[#4FD1FF]/70 tracking-widest">{a.idx}</div>
+                <div className="font-sora text-lg font-bold text-[#E6EEF8]">{a.title}</div>
+                <div className="font-jetbrains-mono text-[12px] font-bold text-[#4FD1FF] tracking-widest">+ OPEN_FILE</div>
+              </Link>
+            ))}
+          </div>
+        </ModuleRack>
+
+        {/* UNIT 09 // OPERATOR_LOG — testimonial */}
+        <ModuleRack unit="09" name="OPERATOR_LOG">
+          <div className="py-20 px-8 text-center max-w-4xl mx-auto relative">
+            <span className="material-symbols-outlined absolute top-0 right-0 text-[160px] text-[#4FD1FF] opacity-5 pointer-events-none" aria-hidden>format_quote</span>
+            <blockquote className="font-sora font-light text-2xl md:text-3xl italic text-[#E6EEF8] leading-tight mb-10">
+              &ldquo;Talkivo isn&apos;t an app. It&apos;s a mirror. It showed me precisely where my language was failing and gave me the tools to rebuild it from the ground up.&rdquo;
+            </blockquote>
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-[0.5px] bg-[#4FD1FF] mb-4" />
+              <cite className="font-jetbrains-mono text-[13px] font-bold text-[#4FD1FF] uppercase tracking-[0.2em] not-italic">
+                DR. ELARA VOSS // CTO, NEXUS DYNAMICS
+              </cite>
+            </div>
+          </div>
+        </ModuleRack>
+
+        {/* UNIT 10 + 11 — docs + comms */}
+        <div className="px-8 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div>
+            <div className="module-header">UNIT: 10 // DOCUMENTATION</div>
+            <div className="p-8 bg-[#141A22] hairline-bracing space-y-6">
+              {[
+                { q: 'How is my voice data protected?', a: 'Session audio is processed in memory and discarded on disconnect. Only the transcript is retained.' },
+                { q: 'Which English accents are supported?', a: 'All major variants. The tutor adapts its voice and pace to your preference — you pick, not us.' },
+                { q: 'Can I cancel anytime?', a: 'From the dashboard, one click. No questions asked. Export your transcripts anytime.' },
+              ].map((item) => (
+                <div key={item.q} className="pb-6 border-b-[0.5px] border-[#4FD1FF]/10 last:border-0 last:pb-0">
+                  <div className="font-jetbrains-mono text-[13px] font-bold text-[#4FD1FF] mb-2 uppercase tracking-widest">{item.q}</div>
+                  <p className="font-geist text-sm text-[#BCC8CF] leading-relaxed">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="module-header">UNIT: 11 // COMMS_STATUS</div>
+            <div className="h-[300px] flex flex-col justify-between p-8 bg-[#141A22] hairline-bracing">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 bg-[#4FD1FF] hud-dot-pulse" />
+                  <div className="font-jetbrains-mono text-[13px] font-bold text-[#E6EEF8]">UPLINK_01: ESTABLISHED</div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 bg-[#4FD1FF]/20" />
+                  <div className="font-jetbrains-mono text-[13px] font-bold text-[#879299]">UPLINK_02: STANDBY</div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 bg-[#4FD1FF]" />
+                  <div className="font-jetbrains-mono text-[13px] font-bold text-[#E6EEF8]">ENCRYPTION: AES-256</div>
+                </div>
+              </div>
+              <div className="font-jetbrains-mono text-[12px] font-bold text-[#4FD1FF] leading-relaxed">
+                LAT: 17.3850 N<br />
+                LNG: 78.4867 E<br />
+                NODE: HYD-01
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* UNIT 12 // TERMINATION_SEQ — final CTA */}
+        <section className="px-8 md:px-12 pt-24 pb-8 grid-bg-40 border-t-[0.5px] border-[#4FD1FF]/20">
+          <div className="module-header">UNIT: 12 // TERMINATION_SEQ</div>
+          <div className="flex flex-col items-center text-center space-y-10 py-16">
+            <h2 className="font-sora font-extrabold text-4xl md:text-6xl text-[#E6EEF8] tracking-tighter max-w-4xl leading-tight">
+              SYSTEM READY FOR <span className="text-[#4FD1FF]">DEPLOYMENT</span>
+            </h2>
+            <p className="font-geist text-[#BCC8CF] text-lg md:text-xl max-w-2xl">
+              Initialize your first session. No card required. Two minutes to set up.
+            </p>
+            <div className="flex flex-col md:flex-row gap-4 w-full max-w-md">
+              <Link
+                href="/signup"
+                className="flex-1 text-center bg-[#4FD1FF] text-[#0D131B] px-6 py-5 font-jetbrains-mono font-bold text-xs tracking-[0.2em] uppercase hover:bg-[#4FD1FF]/90 transition-colors"
+              >
+                START_INSTANCE
+              </Link>
+              <Link
+                href="/features"
+                className="flex-1 text-center border-[1px] border-[#4FD1FF]/40 text-[#4FD1FF] px-6 py-5 font-jetbrains-mono text-xs tracking-[0.2em] uppercase hover:bg-[#4FD1FF]/10 transition-colors"
+              >
+                VIEW_DOCS
+              </Link>
+            </div>
+            <div className="font-jetbrains-mono text-[11px] font-bold text-[#4FD1FF]/60 mt-8 tracking-[0.5em]">
+              END_OF_SEQUENCE // REF_TALKIVO
+            </div>
+          </div>
+        </section>
+      </main>
+    </MarketingShell>
   );
 }

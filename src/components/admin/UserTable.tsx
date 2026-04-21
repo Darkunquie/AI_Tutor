@@ -91,6 +91,7 @@ export default function UserTable({ users, onApprove, onReject, loading }: UserT
                       onClick={() => handleAction(user.id, 'reject')}
                       disabled={actionLoading === `${user.id}-reject`}
                       className="w-8 h-8 flex items-center justify-center rounded border border-[#50453B]/20 text-[#ffb4ab] hover:bg-[#ffb4ab]/10 transition-colors disabled:opacity-50"
+                      aria-label="Reject user"
                     >
                       <span className="material-symbols-outlined text-sm">close</span>
                     </button>
@@ -100,6 +101,7 @@ export default function UserTable({ users, onApprove, onReject, loading }: UserT
                       onClick={() => handleAction(user.id, 'approve')}
                       disabled={actionLoading === `${user.id}-approve`}
                       className="w-8 h-8 flex items-center justify-center rounded border border-[#50453B]/20 text-[#f2be8c] hover:bg-[#f2be8c]/10 transition-colors disabled:opacity-50"
+                      aria-label="Approve user"
                     >
                       <span className="material-symbols-outlined text-sm">check</span>
                     </button>

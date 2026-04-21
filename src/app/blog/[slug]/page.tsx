@@ -72,39 +72,39 @@ export default async function BlogPost({
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <main className="mx-auto max-w-[760px] px-6 py-20 lg:px-10 lg:py-28">
-        <nav className="mb-10 text-[13px] text-[#6B665F]">
-          <Link href="/" className="hover:text-[#F5F2EC]">Home</Link>
+        <nav className="mb-10 text-[13px] text-[#879299]">
+          <Link href="/" className="hover:text-[#E6EEF8]">Home</Link>
           <span className="mx-2">/</span>
-          <Link href="/blog" className="hover:text-[#F5F2EC]">Blog</Link>
+          <Link href="/blog" className="hover:text-[#E6EEF8]">Blog</Link>
         </nav>
 
         <article>
           <header>
-            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.12em] text-[#6B665F]">
+            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.12em] text-[#879299]">
               <time dateTime={p.date}>
                 {new Date(p.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
               </time>
               <span>\u00B7</span>
               <span>{p.readMinutes} min read</span>
             </div>
-            <h1 className="font-serif-display mt-4 text-[48px] leading-[1.08] tracking-[-0.02em] text-[#F5F2EC] lg:text-[56px]">
+            <h1 className="font-sora mt-4 text-[48px] leading-[1.08] tracking-[-0.02em] text-[#E6EEF8] lg:text-[56px]">
               {p.title}
             </h1>
-            <p className="mt-6 text-[18px] leading-[1.6] text-[#9A948A]">{p.description}</p>
+            <p className="mt-6 text-[18px] leading-[1.6] text-[#BCC8CF]">{p.description}</p>
           </header>
 
           <div className="mt-16 space-y-6">
             {p.body.map((b, idx) => {
               if (b.type === 'h2') {
                 return (
-                  <h2 key={idx} className="font-serif-display mt-12 text-[32px] leading-[1.2] text-[#F5F2EC]">
+                  <h2 key={idx} className="font-sora mt-12 text-[32px] leading-[1.2] text-[#E6EEF8]">
                     {b.text}
                   </h2>
                 );
               }
               if (b.type === 'h3') {
                 return (
-                  <h3 key={idx} className="font-serif-display mt-8 text-[22px] leading-[1.25] text-[#F5F2EC]">
+                  <h3 key={idx} className="font-sora mt-8 text-[22px] leading-[1.25] text-[#E6EEF8]">
                     {b.text}
                   </h3>
                 );
@@ -121,7 +121,7 @@ export default async function BlogPost({
                   <div key={idx} className="mt-10">
                     <Link
                       href="/signup"
-                      className="inline-block rounded-md bg-[#D4A373] px-6 py-[12px] text-[15px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389]"
+                      className="inline-block rounded-md bg-[#4FD1FF] px-6 py-[12px] text-[15px] font-medium text-[#0D131B] transition-colors hover:bg-[#4FD1FF]"
                     >
                       {b.text}
                     </Link>
@@ -138,17 +138,17 @@ export default async function BlogPost({
         </article>
 
         {related.length > 0 && (
-          <section className="mt-24 border-t border-[#2A2A2E] pt-12">
-            <h2 className="font-serif-display text-[24px] text-[#F5F2EC]">Keep reading</h2>
+          <section className="mt-24 border-t border-[#4FD1FF/20] pt-12">
+            <h2 className="font-sora text-[24px] text-[#E6EEF8]">Keep reading</h2>
             <div className="mt-6 grid gap-6 md:grid-cols-2">
               {related.map((r) => (
                 <Link
                   key={r.slug}
                   href={`/blog/${r.slug}`}
-                  className="rounded-xl border border-[#2A2A2E] bg-[#121215] p-6 transition-colors hover:border-[#D4A373]/60"
+                  className="rounded-xl border border-[#4FD1FF/20] bg-[#121215] p-6 transition-colors hover:border-[#4FD1FF]/60"
                 >
-                  <h3 className="font-serif-display text-[18px] leading-[1.3] text-[#F5F2EC]">{r.title}</h3>
-                  <p className="mt-3 text-[13px] leading-[1.55] text-[#9A948A] line-clamp-2">{r.description}</p>
+                  <h3 className="font-sora text-[18px] leading-[1.3] text-[#E6EEF8]">{r.title}</h3>
+                  <p className="mt-3 text-[13px] leading-[1.55] text-[#BCC8CF] line-clamp-2">{r.description}</p>
                 </Link>
               ))}
             </div>

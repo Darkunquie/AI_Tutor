@@ -5,6 +5,7 @@ import RequireAdmin from '@/components/auth/RequireAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import UserTable from '@/components/admin/UserTable';
 import type { UserRow } from '@/components/admin/UserTable';
+import { GridBackground } from '@/components/ui/grid-background';
 import { api } from '@/lib/api-client';
 import { useToastStore } from '@/stores/toastStore';
 
@@ -73,9 +74,11 @@ export default function AdminUsersPage() {
   return (
     <RequireAdmin>
       <div className="min-h-screen bg-[#0E0E10]">
-        <AdminHeader />
+        <GridBackground />
+        <div className="relative z-10">
+          <AdminHeader />
 
-        <main className="max-w-7xl mx-auto px-6 py-8">
+          <main className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-serif italic text-[#f2be8c] text-xl tracking-tight">User Management</h2>
             <p className="text-sm text-[#9A948A]">{total} user{total !== 1 ? 's' : ''} total</p>
@@ -136,7 +139,8 @@ export default function AdminUsersPage() {
               </button>
             </div>
           )}
-        </main>
+          </main>
+        </div>
       </div>
     </RequireAdmin>
   );

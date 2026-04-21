@@ -1,28 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  /* Primary Colors */
+  /* Legacy tokens — kept for untouched product pages (dashboard, chat, admin) */
   --primary: #3c83f6;
   --primary-foreground: #ffffff;
-
-  /* Background Colors */
   --background: #f5f7f8;
   --background-dark: #101722;
   --foreground: #0f172a;
   --foreground-dark: #ffffff;
-
-  /* Card Colors */
   --card: #ffffff;
   --card-dark: rgba(30, 41, 59, 0.4);
   --card-border: #e2e8f0;
   --card-border-dark: #1e293b;
-
-  /* Muted Colors */
   --muted: #64748b;
   --muted-dark: #94a3b8;
 }
 
-/* Quiet Confidence — premium redesign tokens */
+/* Quiet Confidence — legacy warm-dark tokens still used by behind-login product pages */
 :root {
   --qc-bg: #0E0E10;
   --qc-surface: #17171A;
@@ -40,10 +34,28 @@
   --qc-danger: #B5564C;
 }
 
+/* Jarvis HUD — public-facing redesign tokens */
+:root {
+  --hud-bg: #0D131B;               /* obsidian, lifted slightly off pure black */
+  --hud-surface-1: #141A22;
+  --hud-surface-2: #1F242D;
+  --hud-surface-3: #2A2F38;
+  --hud-ink: #E6EEF8;              /* cool white */
+  --hud-ink-muted: #BCC8CF;
+  --hud-ink-subtle: #879299;
+  --hud-cyan: #4FD1FF;             /* reactor cyan */
+  --hud-cyan-dim: #2A6C88;
+  --hud-amber-warn: #E8B64C;
+  --hud-border: #3D484E;           /* chunky rack border */
+  --hud-hairline: rgba(79, 209, 255, 0.2);
+}
+
 @theme inline {
   --color-primary: var(--primary);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--hud-bg);
+  --color-foreground: var(--hud-ink);
+  --color-muted-foreground: var(--hud-ink-muted);
+  --color-border: var(--hud-border);
   --color-qc-bg: var(--qc-bg);
   --color-qc-surface: var(--qc-surface);
   --color-qc-surface-2: var(--qc-surface-2);
@@ -52,24 +64,120 @@
   --color-qc-text-muted: var(--qc-text-muted);
   --color-qc-text-subtle: var(--qc-text-subtle);
   --color-qc-amber: var(--qc-amber);
+  --color-hud-bg: var(--hud-bg);
+  --color-hud-surface-1: var(--hud-surface-1);
+  --color-hud-surface-2: var(--hud-surface-2);
+  --color-hud-surface-3: var(--hud-surface-3);
+  --color-hud-ink: var(--hud-ink);
+  --color-hud-ink-muted: var(--hud-ink-muted);
+  --color-hud-ink-subtle: var(--hud-ink-subtle);
+  --color-hud-cyan: var(--hud-cyan);
+  --color-hud-cyan-dim: var(--hud-cyan-dim);
+  --color-hud-amber-warn: var(--hud-amber-warn);
+  --color-hud-border: var(--hud-border);
   --font-sans: 'Lexend', sans-serif;
   --font-serif: 'Newsreader', serif;
   --font-geist: 'Geist', sans-serif;
+  --font-sora: 'Sora', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* Utility font classes for the redesign */
 .font-serif-display { font-family: 'Newsreader', serif; font-feature-settings: 'ss01'; }
 .font-geist { font-family: 'Geist', 'Lexend', sans-serif; }
+.font-sora { font-family: 'Sora', 'Geist', sans-serif; }
+.font-jetbrains-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 .tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Jarvis HUD — utilities */
+.hud-body {
+  background: var(--hud-bg);
+  color: var(--hud-ink);
+}
+
+.grid-bg-40 {
+  background-image:
+    linear-gradient(to right, rgba(79, 209, 255, 0.04) 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, rgba(79, 209, 255, 0.04) 0.5px, transparent 0.5px);
+  background-size: 40px 40px;
+}
+
+.grid-bg-overlay {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(79, 209, 255, 0.02) 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, rgba(79, 209, 255, 0.02) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.module-header {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(79, 209, 255, 0.95);
+  padding: 8px 12px;
+  border-left: 2px solid var(--hud-cyan);
+  background: rgba(79, 209, 255, 0.06);
+  margin-bottom: 24px;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.hairline-bracing {
+  border: 0.5px solid var(--hud-hairline);
+}
+
+.corner-tick-tl { border-top: 0.5px solid rgba(79, 209, 255, 0.4); border-left: 0.5px solid rgba(79, 209, 255, 0.4); }
+.corner-tick-tr { border-top: 0.5px solid rgba(79, 209, 255, 0.4); border-right: 0.5px solid rgba(79, 209, 255, 0.4); }
+.corner-tick-bl { border-bottom: 0.5px solid rgba(79, 209, 255, 0.4); border-left: 0.5px solid rgba(79, 209, 255, 0.4); }
+.corner-tick-br { border-bottom: 0.5px solid rgba(79, 209, 255, 0.4); border-right: 0.5px solid rgba(79, 209, 255, 0.4); }
+
+.reactor-orb-glow {
+  background: radial-gradient(circle, rgba(79, 209, 255, 0.2) 0%, rgba(13, 19, 27, 0) 70%);
+}
+
+/* Keyframes for HUD animations */
+@keyframes hud-waveform {
+  0%, 100% { transform: scaleY(0.15); opacity: 0.2; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes hud-dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.hud-dot-pulse {
+  animation: hud-dot-pulse 2.5s ease-in-out infinite;
+}
+
+/* Waveform bars driven by a per-bar --i custom property on each child */
+.hud-waveform-bar {
+  transform-origin: bottom;
+  animation: hud-waveform 2.5s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.1s);
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .hud-waveform-bar,
+  .hud-dot-pulse {
+    animation: none;
+  }
+}
 
 /* Kill browser autofill yellow — keep dark inputs in sign-in / sign-up */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-text-fill-color: #F5F2EC !important;
+  -webkit-text-fill-color: #E6EEF8 !important;
   -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
-  caret-color: #F5F2EC !important;
+  caret-color: #E6EEF8 !important;
   transition: background-color 5000s ease-in-out 0s !important;
 }
 
