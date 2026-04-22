@@ -51,8 +51,8 @@ export function ChatWaveform({ active = false }: ChatWaveformProps) {
 
       // Subtle ambient glow
       const glow = ctx.createRadialGradient(W * 0.5, CY, 0, W * 0.5, CY, W * 0.35);
-      glow.addColorStop(0, `rgba(212, 163, 115, ${0.04 * intensity})`);
-      glow.addColorStop(1, 'rgba(14, 14, 16, 0)');
+      glow.addColorStop(0, `rgba(79, 209, 255, ${0.04 * intensity})`);
+      glow.addColorStop(1, 'rgba(13, 19, 27, 0)');
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, W, H);
 
@@ -81,11 +81,11 @@ export function ChatWaveform({ active = false }: ChatWaveformProps) {
         }
 
         const grad = ctx.createLinearGradient(0, 0, W, 0);
-        grad.addColorStop(0, 'rgba(212, 163, 115, 0)');
-        grad.addColorStop(0.2, `rgba(212, 163, 115, ${alpha})`);
-        grad.addColorStop(0.5, `rgba(242, 195, 142, ${alpha * 1.4})`);
-        grad.addColorStop(0.8, `rgba(212, 163, 115, ${alpha})`);
-        grad.addColorStop(1, 'rgba(212, 163, 115, 0)');
+        grad.addColorStop(0, 'rgba(79, 209, 255, 0)');
+        grad.addColorStop(0.2, `rgba(79, 209, 255, ${alpha})`);
+        grad.addColorStop(0.5, `rgba(79, 209, 255, ${alpha * 1.4})`);
+        grad.addColorStop(0.8, `rgba(79, 209, 255, ${alpha})`);
+        grad.addColorStop(1, 'rgba(79, 209, 255, 0)');
 
         ctx.strokeStyle = grad;
         ctx.lineWidth = 0.8;
@@ -114,7 +114,7 @@ export function ChatWaveform({ active = false }: ChatWaveformProps) {
             if (s === 0) { ctx.moveTo(x, y); }
             else { ctx.lineTo(x, y); }
           }
-          ctx.strokeStyle = 'rgba(212, 163, 115, 0.06)';
+          ctx.strokeStyle = 'rgba(79, 209, 255, 0.06)';
           ctx.lineWidth = 3;
           ctx.stroke();
         }
@@ -123,10 +123,10 @@ export function ChatWaveform({ active = false }: ChatWaveformProps) {
 
       // Edge fade
       const fade = ctx.createLinearGradient(0, 0, 0, H);
-      fade.addColorStop(0, 'rgba(14, 14, 16, 0.8)');
-      fade.addColorStop(0.15, 'rgba(14, 14, 16, 0)');
-      fade.addColorStop(0.85, 'rgba(14, 14, 16, 0)');
-      fade.addColorStop(1, 'rgba(14, 14, 16, 0.8)');
+      fade.addColorStop(0, 'rgba(13, 19, 27, 0.8)');
+      fade.addColorStop(0.15, 'rgba(13, 19, 27, 0)');
+      fade.addColorStop(0.85, 'rgba(13, 19, 27, 0)');
+      fade.addColorStop(1, 'rgba(13, 19, 27, 0.8)');
       ctx.fillStyle = fade;
       ctx.fillRect(0, 0, W, H);
 

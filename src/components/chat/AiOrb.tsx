@@ -49,10 +49,10 @@ export function AiOrb({ state, size = 120, className = '' }: AiOrbProps) {
           : 0.15 + 0.08 * Math.sin(t * 1.5);
 
       const outerGlow = ctx.createRadialGradient(cx, cy, baseRadius * 0.5, cx, cy, glowRadius);
-      outerGlow.addColorStop(0, `rgba(242, 195, 142, ${glowPulse * 0.6})`);
-      outerGlow.addColorStop(0.4, `rgba(212, 163, 115, ${glowPulse * 0.3})`);
-      outerGlow.addColorStop(0.7, `rgba(212, 163, 115, ${glowPulse * 0.1})`);
-      outerGlow.addColorStop(1, 'rgba(212, 163, 115, 0)');
+      outerGlow.addColorStop(0, `rgba(79, 209, 255, ${glowPulse * 0.6})`);
+      outerGlow.addColorStop(0.4, `rgba(79, 209, 255, ${glowPulse * 0.3})`);
+      outerGlow.addColorStop(0.7, `rgba(79, 209, 255, ${glowPulse * 0.1})`);
+      outerGlow.addColorStop(1, 'rgba(79, 209, 255, 0)');
       ctx.fillStyle = outerGlow;
       ctx.fillRect(0, 0, size, size);
 
@@ -64,7 +64,7 @@ export function AiOrb({ state, size = 120, className = '' }: AiOrbProps) {
           const rippleAlpha = (1 - rippleT) * 0.25;
           ctx.beginPath();
           ctx.arc(cx, cy, rippleR, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(242, 195, 142, ${rippleAlpha})`;
+          ctx.strokeStyle = `rgba(79, 209, 255, ${rippleAlpha})`;
           ctx.lineWidth = 1.5 * (1 - rippleT);
           ctx.stroke();
         }
@@ -79,7 +79,7 @@ export function AiOrb({ state, size = 120, className = '' }: AiOrbProps) {
           ctx.rotate(t * (1.5 + i * 0.7) + i * Math.PI * 0.6);
           ctx.beginPath();
           ctx.ellipse(0, 0, baseRadius * 1.5, baseRadius * 0.4, 0, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(212, 163, 115, ${0.2 + 0.1 * Math.sin(t * 3 + i)})`;
+          ctx.strokeStyle = `rgba(79, 209, 255, ${0.2 + 0.1 * Math.sin(t * 3 + i)})`;
           ctx.lineWidth = 1.2;
           ctx.stroke();
           // Orbiting dot
@@ -88,7 +88,7 @@ export function AiOrb({ state, size = 120, className = '' }: AiOrbProps) {
           const dotY = Math.sin(dotAngle) * baseRadius * 0.4;
           ctx.beginPath();
           ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(242, 195, 142, ${0.6 + 0.4 * Math.sin(t * 4)})`;
+          ctx.fillStyle = `rgba(79, 209, 255, ${0.6 + 0.4 * Math.sin(t * 4)})`;
           ctx.fill();
           ctx.restore();
         }
@@ -110,7 +110,7 @@ export function AiOrb({ state, size = 120, className = '' }: AiOrbProps) {
           else { ctx.lineTo(x, y); }
         }
         ctx.closePath();
-        ctx.strokeStyle = 'rgba(212, 163, 115, 0.3)';
+        ctx.strokeStyle = 'rgba(79, 209, 255, 0.3)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
@@ -127,8 +127,8 @@ export function AiOrb({ state, size = 120, className = '' }: AiOrbProps) {
       // Outer shell
       const shell = ctx.createRadialGradient(cx, cy, coreR * 0.2, cx, cy, coreR);
       shell.addColorStop(0, 'rgba(255, 220, 180, 0.95)');
-      shell.addColorStop(0.3, 'rgba(242, 195, 142, 0.85)');
-      shell.addColorStop(0.6, 'rgba(212, 163, 115, 0.7)');
+      shell.addColorStop(0.3, 'rgba(79, 209, 255, 0.85)');
+      shell.addColorStop(0.6, 'rgba(79, 209, 255, 0.7)');
       shell.addColorStop(0.85, 'rgba(180, 130, 85, 0.4)');
       shell.addColorStop(1, 'rgba(160, 110, 65, 0.1)');
       ctx.beginPath();
@@ -140,7 +140,7 @@ export function AiOrb({ state, size = 120, className = '' }: AiOrbProps) {
       const core = ctx.createRadialGradient(cx - coreR * 0.15, cy - coreR * 0.15, 0, cx, cy, coreR * 0.6);
       core.addColorStop(0, 'rgba(255, 240, 220, 0.9)');
       core.addColorStop(0.5, 'rgba(255, 220, 180, 0.4)');
-      core.addColorStop(1, 'rgba(242, 195, 142, 0)');
+      core.addColorStop(1, 'rgba(79, 209, 255, 0)');
       ctx.beginPath();
       ctx.arc(cx, cy, coreR * 0.6, 0, Math.PI * 2);
       ctx.fillStyle = core;

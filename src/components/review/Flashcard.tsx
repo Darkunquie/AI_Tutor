@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api-client';
 import type { ReviewWord } from '@/lib/types';
 
@@ -9,128 +9,214 @@ interface FlashcardProps {
   onComplete: () => void;
 }
 
+const RATINGS = [
+  { key: 'again', label: 'Again', sub: '< 1 MIN', color: '#f87171', correct: false },
+  { key: 'hard', label: 'Hard', sub: '10 MIN', color: '#fbbf24', correct: true },
+  { key: 'good', label: 'Good', sub: '1 DAY', color: '#a5f3c4', correct: true },
+  { key: 'easy', label: 'Easy', sub: '4 DAYS', color: '#4ade80', correct: true },
+] as const;
+
 export function Flashcard({ words, onComplete }: FlashcardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [results, setResults] = useState<{ correct: number; incorrect: number }>({ correct: 0, incorrect: 0 });
 
   const word = words[currentIndex];
-  if (!word) return null;
+  const total = words.length;
+  const progress = total > 0 ? ((currentIndex) / total) * 100 : 0;
+  const remaining = total - currentIndex;
 
-  const isLast = currentIndex === words.length - 1;
+  const flip = useCallback(() => {
+    if (!flipped && !submitting) { setFlipped(true); }
+  }, [flipped, submitting]);
 
-  const handleAnswer = async (correct: boolean) => {
-    if (submitting) return;
+  const handleRate = useCallback(async (correct: boolean) => {
+    if (submitting || !word) return;
     setSubmitting(true);
-
-    // Optimistic update
-    setResults((prev) => ({
-      correct: prev.correct + (correct ? 1 : 0),
-      incorrect: prev.incorrect + (correct ? 0 : 1),
-    }));
 
     try {
       await api.vocabulary.submitReview(word.id, correct);
     } catch (err) {
       console.error('Failed to submit review:', err);
-      // Rollback optimistic update
-      setResults((prev) => ({
-        correct: prev.correct - (correct ? 1 : 0),
-        incorrect: prev.incorrect - (correct ? 0 : 1),
-      }));
+      setSubmitting(false);
+      return;
     }
 
     setSubmitting(false);
     setFlipped(false);
 
-    if (isLast) {
+    if (currentIndex >= total - 1) {
       onComplete();
     } else {
       setCurrentIndex((i) => i + 1);
     }
-  };
+  }, [submitting, word, currentIndex, total, onComplete]);
 
-  const masteryColor =
-    word.mastery >= 80 ? 'bg-emerald-500' :
-    word.mastery >= 50 ? 'bg-amber-500' :
-    word.mastery >= 20 ? 'bg-orange-500' : 'bg-red-500';
+  // Keyboard: Space to flip, 1-4 to rate
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { return; }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        flip();
+      }
+      if (flipped && !submitting) {
+        const idx = Number(e.key) - 1;
+        if (idx >= 0 && idx < RATINGS.length) {
+          e.preventDefault();
+          handleRate(RATINGS[idx].correct);
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [flip, flipped, submitting, handleRate]);
+
+  if (!word) return null;
+
+  const masteryPct = word.mastery;
+  const masteryLabel =
+    masteryPct >= 80 ? '// MASTERED' :
+    masteryPct >= 40 ? '// LEARNING' : '// NEW';
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-lg mx-auto">
-      {/* Progress */}
-      <div className="flex items-center justify-between w-full text-sm text-slate-500 dark:text-slate-400">
-        <span>{currentIndex + 1} / {words.length}</span>
-        <div className="flex items-center gap-3">
-          <span className="text-emerald-500 font-semibold">{results.correct} correct</span>
-          <span className="text-red-500 font-semibold">{results.incorrect} missed</span>
+    <div className="flex flex-col items-center gap-0">
+      {/* Progress bar */}
+      <div className="flex w-full max-w-[540px] items-center gap-4 mb-6">
+        <span className="font-mono text-[13px] tabular-nums text-[#879299]">
+          {String(currentIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+        </span>
+        <div className="flex-1 h-1 rounded-full bg-[#1F242D] overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#4FD1FF] to-[#7DD3FC] transition-all duration-400"
+            style={{ width: `${progress}%` }}
+          />
         </div>
+        <span className="font-mono text-[13px] text-[#879299]">
+          {remaining} remaining
+        </span>
       </div>
 
-      {/* Card */}
-      <div
-        onClick={() => !flipped && setFlipped(true)}
-        onKeyDown={(e) => {
-          if (!flipped && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault();
-            setFlipped(true);
-          }
-        }}
-        tabIndex={0}
-        role="button"
-        aria-pressed={flipped}
-        className={`w-full min-h-[240px] rounded-2xl border-2 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-          flipped
-            ? 'bg-white dark:bg-slate-800 border-primary/30 shadow-lg'
-            : 'bg-gradient-to-br from-primary to-indigo-500 border-transparent text-white shadow-xl shadow-primary/20 hover:scale-[1.02]'
-        }`}
-      >
-        {!flipped ? (
-          <>
-            <p className="text-3xl font-black mb-3">{word.word}</p>
-            <p className="text-sm opacity-80">Tap to reveal</p>
-          </>
-        ) : (
-          <>
-            <p className="text-xl font-bold text-slate-900 dark:text-white mb-2">{word.word}</p>
-            {word.definition && (
-              <p className="text-base text-slate-600 dark:text-slate-300 mb-3">{word.definition}</p>
-            )}
-            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
-              &ldquo;{word.context}&rdquo;
-            </p>
-            {/* Mastery bar */}
-            <div className="w-full mt-4 flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div className={`h-full ${masteryColor} rounded-full transition-all`} style={{ width: `${word.mastery}%` }} />
+      {/* Card deck */}
+      <div className="relative grid place-items-center w-full" style={{ perspective: '1500px', height: '400px' }}>
+        <div className="relative w-full max-w-[540px] h-[370px]">
+          {/* Behind cards */}
+          <div
+            className="absolute inset-0 rounded-2xl border border-[#3D484E] bg-gradient-to-b from-white/[0.04] to-white/[0.01]"
+            style={{ transform: 'translateY(28px) scale(0.9) translateZ(-80px)', opacity: 0.3 }}
+          />
+          <div
+            className="absolute inset-0 rounded-2xl border border-[#3D484E] bg-gradient-to-b from-white/[0.04] to-white/[0.01]"
+            style={{ transform: 'translateY(16px) scale(0.95) translateZ(-40px)', opacity: 0.55 }}
+          />
+
+          {/* Active card */}
+          <div
+            className="absolute inset-0 rounded-2xl border border-[#3D484E] bg-gradient-to-b from-white/[0.08] to-white/[0.015] shadow-lg cursor-pointer"
+            style={{ transformStyle: 'preserve-3d' }}
+            onClick={flip}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                flip();
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-label={flipped ? 'Card back showing definition' : 'Tap to flip card'}
+          >
+            <div
+              className="relative w-full h-full transition-transform duration-700"
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                transitionTimingFunction: 'cubic-bezier(.2,.7,.3,1)',
+              }}
+            >
+              {/* Front face */}
+              <div
+                className="absolute inset-0 flex flex-col justify-between p-10"
+                style={{ backfaceVisibility: 'hidden' }}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#4FD1FF]">
+                    {masteryLabel}
+                  </span>
+                  <span className="rounded-full border border-[#3D484E] bg-[#141A22] px-2.5 py-1 font-mono text-[10px] tracking-[0.08em] text-[#879299]">
+                    CARD {String(currentIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+                  </span>
+                </div>
+
+                <div>
+                  <div className="font-mono text-[clamp(48px,8vw,72px)] leading-[1.05] tracking-[-0.04em] text-[#E6EEF8]">
+                    {word.word}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 font-mono text-[13px] text-[#879299]">
+                    <span className="text-[#4FD1FF]">↻</span>
+                    Tap card or press Space to flip
+                  </span>
+                </div>
               </div>
-              <span className="text-xs font-semibold text-slate-500">{word.mastery}%</span>
+
+              {/* Back face */}
+              <div
+                className="absolute inset-0 flex flex-col justify-between p-10"
+                style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#4FD1FF]">
+                    // definition
+                  </span>
+                  <span className="rounded-full border border-[#3D484E] bg-[#141A22] px-2.5 py-1 font-mono text-[10px] tracking-[0.08em] text-[#879299]">
+                    MASTERY {masteryPct}%
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="font-mono text-[28px] tracking-[-0.02em] text-[#E6EEF8]">
+                    {word.word}
+                  </div>
+                  {word.definition && (
+                    <p className="text-[16px] leading-[1.55] text-[#BCC8CF] max-w-[44ch]">
+                      {word.definition}
+                    </p>
+                  )}
+                  <div className="rounded-xl border border-[#3D484E] bg-[#141A22] px-4 py-3.5 font-mono text-[14px] leading-[1.5] text-[#E6EEF8]">
+                    &ldquo;{word.context}&rdquo;
+                    <span className="mt-2 block font-mono text-[11px] tracking-[0.08em] text-[#879299]">
+                      CONTEXT FROM SESSION
+                    </span>
+                  </div>
+                </div>
+
+                <span className="flex items-center gap-2 font-mono text-[13px] text-[#879299]">
+                  Rate your recall below ↓
+                </span>
+              </div>
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
-      {/* Action buttons - only show when flipped */}
-      {flipped && (
-        <div className="flex gap-4 w-full">
+      {/* Rating buttons */}
+      <div className="grid w-full max-w-[540px] grid-cols-4 gap-2.5 mt-6">
+        {RATINGS.map((r, i) => (
           <button
-            onClick={() => handleAnswer(false)}
-            disabled={submitting}
-            className="flex-1 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+            key={r.key}
+            disabled={!flipped || submitting}
+            onClick={() => handleRate(r.correct)}
+            className="flex flex-col items-center gap-1 rounded-xl border border-[#3D484E] bg-[#141A22] px-2.5 py-3.5 font-mono text-[12px] transition-all hover:-translate-y-0.5 hover:border-[#4FD1FF]/40 disabled:opacity-30 disabled:hover:translate-y-0"
           >
-            <span className="material-symbols-outlined text-lg align-middle mr-1">close</span>
-            Missed
+            <b style={{ color: r.color }} className="text-[14px] tracking-[-0.01em]">{r.label}</b>
+            <span className="text-[10px] tracking-[0.1em] text-[#879299]">{r.sub}</span>
+            <span className="mt-0.5 text-[10px] text-[#879299]/60">{i + 1}</span>
           </button>
-          <button
-            onClick={() => handleAnswer(true)}
-            disabled={submitting}
-            className="flex-1 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors disabled:opacity-50"
-          >
-            <span className="material-symbols-outlined text-lg align-middle mr-1">check</span>
-            Got it
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

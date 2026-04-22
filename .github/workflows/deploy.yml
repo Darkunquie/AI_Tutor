@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -19,7 +19,8 @@ jobs:
             cd /root/AI_Tutor
             git fetch origin main
             git reset --hard origin/main
-            npm install
+            npm install --production
             npx prisma generate
             npm run build
             pm2 restart ecosystem.config.js
+            pm2 save

@@ -15,11 +15,11 @@ import { AppShell } from '@/components/app/AppShell';
 const MODE_ORDER: Mode[] = ['FREE_TALK', 'ROLE_PLAY', 'DEBATE', 'GRAMMAR_FIX', 'PRONUNCIATION'];
 
 const MODE_CONFIG: Record<Mode, { icon: string; color: string; hoverBorder: string; iconBg: string; label: string; tagline: string }> = {
-  FREE_TALK: { icon: 'chat_bubble', color: 'text-teal-400', hoverBorder: 'hover:border-teal-500/30', iconBg: 'bg-teal-500/10', label: 'Free Talk', tagline: 'Spontaneous conversation on any topic.' },
-  ROLE_PLAY: { icon: 'theater_comedy', color: 'text-purple-400', hoverBorder: 'hover:border-purple-500/30', iconBg: 'bg-purple-500/10', label: 'Role Play', tagline: 'Practice real-world scenarios.' },
-  DEBATE: { icon: 'gavel', color: 'text-orange-400', hoverBorder: 'hover:border-orange-500/30', iconBg: 'bg-orange-500/10', label: 'Debate', tagline: 'Defend your stance on issues.' },
-  GRAMMAR_FIX: { icon: 'spellcheck', color: 'text-emerald-400', hoverBorder: 'hover:border-emerald-500/30', iconBg: 'bg-emerald-500/10', label: 'Grammar Fix', tagline: 'Iron out persistent structural errors.' },
-  PRONUNCIATION: { icon: 'mic', color: 'text-amber-400', hoverBorder: 'hover:border-amber-500/30', iconBg: 'bg-amber-500/10', label: 'Pronunciation', tagline: 'Master phonetics with AI feedback.' },
+  FREE_TALK: { icon: 'forum', color: 'text-[#4fd1ff]', hoverBorder: 'hover:border-[#4fd1ff]/30', iconBg: 'bg-[#4fd1ff]/10', label: 'Free Talk', tagline: 'Spontaneous conversation on any topic.' },
+  ROLE_PLAY: { icon: 'groups', color: 'text-[#f2bf54]', hoverBorder: 'hover:border-[#f2bf54]/30', iconBg: 'bg-[#f2bf54]/10', label: 'Role Play', tagline: 'Practice real-world scenarios.' },
+  DEBATE: { icon: 'swords', color: 'text-[#c7e9b4]', hoverBorder: 'hover:border-[#c7e9b4]/30', iconBg: 'bg-[#c7e9b4]/10', label: 'Debate', tagline: 'Defend your stance on issues.' },
+  GRAMMAR_FIX: { icon: 'spellcheck', color: 'text-[#bcc8cf]', hoverBorder: 'hover:border-[#bcc8cf]/30', iconBg: 'bg-[#bcc8cf]/10', label: 'Grammar Fix', tagline: 'Correct and improve every sentence.' },
+  PRONUNCIATION: { icon: 'record_voice_over', color: 'text-[#ffb4ab]', hoverBorder: 'hover:border-[#ffb4ab]/30', iconBg: 'bg-[#ffb4ab]/10', label: 'Pronunciation', tagline: 'Perfect your accent and clarity.' },
 };
 
 const LEVEL_ORDER: Level[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
@@ -141,65 +141,74 @@ export default function AppHome() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1200px] px-8 md:px-12 pt-12 pb-16">
+      <div className="mx-auto max-w-[1200px] px-8 pt-8 pb-16">
         {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-serif tracking-tight text-[#F5F2EC]">
-              {greeting()}, {firstName}
-            </h1>
-            <p className="text-[#D4A373] text-sm font-medium tracking-wide mt-1">{today()}</p>
+        <header className="mb-10">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[#c7e9b4] shadow-[0_0_8px_rgba(199,233,180,0.7)]" />
+            <span className="text-[11px] text-[#7a9a6b]">SYSTEM LINK ESTABLISHED</span>
+            <span className="mx-1 text-[11px] text-[#879299]">{'//'}</span>
+            <span className="text-[11px] text-[#879299]">SESSION · {today().toUpperCase()}</span>
           </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-[13px] text-[#9A948A] hover:text-[#F5F2EC] transition-colors"
-          >
-            View dashboard →
-          </button>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h1 className="font-[Sora] text-4xl font-black tracking-[-0.03em] text-[#e6eef8]">
+                {greeting()}, <span className="text-[#4fd1ff]">{firstName}.</span>
+              </h1>
+              <p className="mt-2 text-sm text-[#bcc8cf]">Queue: ready for session · Your streak is active.</p>
+            </div>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="font-mono text-[11px] text-[#4fd1ff] transition-colors hover:text-[#7dd3fc]"
+            >
+              View dashboard →
+            </button>
+          </div>
         </header>
 
         {error && (
-          <div className="mb-8 flex items-center justify-between border-l-2 border-[#B5564C] bg-[#B5564C]/10 px-4 py-3 text-[13px] text-[#F5F2EC]">
+          <div className="mb-8 flex items-center justify-between border-l-2 border-[#ffb4ab] bg-[#ffb4ab]/10 px-4 py-3 text-[13px] text-[#e6eef8]">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-3 text-[12px] text-[#9A948A] hover:text-[#F5F2EC]">dismiss</button>
+            <button onClick={() => setError(null)} className="ml-3 text-[11px] text-[#879299] hover:text-[#e6eef8]">dismiss</button>
           </div>
         )}
 
         {/* Stats Row */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <GlassCard icon="local_fire_department" iconFill label="Current Streak" value={stats ? `${stats.streak} Days` : '—'} />
-          <GlassCard icon="auto_stories" label="Words Learned" value={stats ? String(stats.wordsLearned) : '—'} />
-          <GlassCard icon="schedule" label="Minutes Practiced" value={stats ? `${stats.minutesPracticed}m` : '—'} />
-          <GlassCard icon="school" label="Current Level" value={selectedLevel.charAt(0) + selectedLevel.slice(1).toLowerCase()} />
+        <section className="mb-10 grid grid-cols-2 gap-[2px] md:grid-cols-4">
+          <StatCard label="Current Streak" value={stats ? `${stats.streak} Days` : '—'} />
+          <StatCard label="Words Learned" value={stats ? String(stats.wordsLearned) : '—'} />
+          <StatCard label="Minutes Practiced" value={stats ? `${stats.minutesPracticed}m` : '—'} />
+          <StatCard label="Current Level" value={selectedLevel.charAt(0) + selectedLevel.slice(1).toLowerCase()} />
         </section>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_340px]">
           {/* Left: Study Paths */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-lg text-[#9A948A] flex items-center gap-3 mb-2">
-              <span className="w-8 h-px bg-[#50453B]" />
-              Select Study Path
-            </h2>
+          <div>
+            <div className="mb-4 flex items-center justify-between border-b border-[#4fd1ff]/20 pb-2">
+              <h2 className="text-[14px] font-semibold text-[#e6eef8]">Select Study Path</h2>
+              <span className="">5 modes</span>
+            </div>
 
-            <div className="space-y-3">
-              {MODE_ORDER.map((id) => {
+            <div className="flex flex-col gap-[2px]">
+              {MODE_ORDER.map((id, i) => {
                 const cfg = MODE_CONFIG[id];
+                const isFirst = i === 0;
                 return (
                   <button
                     key={id}
                     disabled={isStarting}
                     onClick={() => handleModeClick(id)}
-                    className={`group flex w-full items-center gap-4 rounded-xl p-5 transition-all duration-300 border border-transparent ${cfg.hoverBorder} bg-[#1B1B1D] hover:bg-[#2A2A2C] disabled:opacity-50`}
+                    className={`group flex w-full items-center gap-4 border border-transparent p-4 text-left transition-all ${cfg.hoverBorder} ${isFirst ? 'border-l-[3px] border-l-[#4fd1ff] bg-[#4fd1ff]/[0.04]' : 'bg-[#141a22]'} hover:bg-[#1f242d] disabled:opacity-50`}
                   >
-                    <div className={`w-12 h-12 shrink-0 rounded-lg ${cfg.iconBg} flex items-center justify-center`}>
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center ${cfg.iconBg}`}>
                       <span className={`material-symbols-outlined text-2xl ${cfg.color}`}>{cfg.icon}</span>
                     </div>
-                    <div className="text-left flex-1">
-                      <h3 className="font-semibold text-sm text-[#F5F2EC]">{cfg.label}</h3>
-                      <p className="text-xs text-[#9A948A] italic line-clamp-1">{cfg.tagline}</p>
+                    <div className="flex-1">
+                      <h3 className="font-[Sora] text-[15px] font-bold text-[#e6eef8]">{cfg.label}</h3>
+                      <p className="text-[13px] text-[#879299]">{cfg.tagline}</p>
                     </div>
-                    <span className="material-symbols-outlined text-[#50453B] group-hover:text-[#9A948A] transition-colors">chevron_right</span>
+                    <span className="text-[#879299] transition-colors group-hover:text-[#4fd1ff]">&rsaquo;</span>
                   </button>
                 );
               })}
@@ -207,11 +216,11 @@ export default function AppHome() {
           </div>
 
           {/* Right: Level + Tip */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Level Selector */}
-            <div className="rounded-xl border border-[#2A2A2E] bg-[#1B1B1D] p-6">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-[#9A948A] font-bold mb-4">Your Level</div>
-              <div className="flex flex-col gap-2">
+            <div className="border border-[#3d484e] bg-[#141a22] p-6">
+              <div className="mb-4 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[#879299]">YOUR LEVEL</div>
+              <div className="flex flex-col gap-1">
                 {LEVEL_ORDER.map((lv) => {
                   const active = selectedLevel === lv;
                   const meta = LEVELS.find((l) => l.id === lv);
@@ -219,10 +228,10 @@ export default function AppHome() {
                     <button
                       key={lv}
                       onClick={() => setSelectedLevel(lv)}
-                      className={`text-left px-4 py-3 rounded-lg text-sm transition-all ${
+                      className={`px-4 py-2.5 text-left text-sm transition-all ${
                         active
-                          ? 'bg-[#D4A373]/10 text-[#D4A373] border border-[#D4A373]/20'
-                          : 'text-[#9A948A] hover:text-[#F5F2EC] hover:bg-[#2A2A2C] border border-transparent'
+                          ? 'border-l-2 border-[#4fd1ff] bg-[#1f242d] text-[#4fd1ff]'
+                          : 'border-l-2 border-transparent text-[#879299] hover:bg-[#1f242d] hover:text-[#bcc8cf]'
                       }`}
                     >
                       {meta?.title}
@@ -233,65 +242,67 @@ export default function AppHome() {
             </div>
 
             {/* Daily Tip */}
-            <div className="rounded-xl border border-[#2A2A2C] bg-[rgba(53,52,55,0.4)] backdrop-blur-[12px] p-6 min-h-[200px]">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-[#D4A373]">lightbulb</span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4A373]">Daily Tip</span>
+            <div className="border border-[#3d484e] bg-[#141a22] p-6">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-[6px] w-[6px] rounded-full bg-[#e8b64c]" />
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[#e8b64c]">DAILY TIP</span>
               </div>
-              <h4 className="text-xl font-serif font-bold text-[#F5F2EC] mb-3">Whose vs. Who&rsquo;s</h4>
-              <p className="text-sm text-[#9A948A] leading-relaxed">
-                <strong className="text-[#F5F2EC]">Whose</strong> is possessive, while{' '}
-                <strong className="text-[#F5F2EC]">Who&rsquo;s</strong> is a contraction of &ldquo;who is&rdquo;.
+              <h4 className="mb-2 font-[Sora] text-lg font-bold text-[#e6eef8]">Whose vs. Who&rsquo;s</h4>
+              <p className="text-[13px] leading-relaxed text-[#879299]">
+                <strong className="text-[#e6eef8]">Whose</strong> is possessive, while{' '}
+                <strong className="text-[#e6eef8]">Who&rsquo;s</strong> is a contraction of &ldquo;who is.&rdquo;
               </p>
-              <div className="mt-4 bg-[#0E0E10]/60 p-4 rounded-lg border border-[#D4A373]/15">
-                <p className="text-sm italic text-[#D4A373]">&ldquo;Who&rsquo;s responsible for whose shoes?&rdquo;</p>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Footer CTA */}
-        <div className="mt-12 pt-8 border-t border-[#2A2A2E]">
-          <div className="flex items-center justify-between rounded-xl bg-[#1B1B1D] border border-[#2A2A2E] p-6 hover:border-[#50453B] transition-colors">
-            <div className="flex items-center gap-5">
-              <div className="w-12 h-12 rounded-full bg-[#2A2A2C] flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.4)] animate-pulse" />
-              </div>
-              <div>
-                <h4 className="font-serif text-lg text-[#F5F2EC]">Quick Start</h4>
-                <p className="text-xs text-[#9A948A]">Jump into a free talk session instantly</p>
-              </div>
-            </div>
-            <button
-              onClick={() => startPracticeSession('FREE_TALK')}
-              disabled={isStarting}
-              className="rounded-lg bg-[#2A2A2C] hover:bg-[#353437] px-6 py-3 text-sm font-semibold text-[#F5F2EC] transition-colors disabled:opacity-50"
-            >
-              {isStarting ? 'Starting…' : 'Start Session'}
-            </button>
+        {/* Tutor notes */}
+        <div className="mt-10">
+          <div className="mb-4 flex items-center justify-between border-b border-[#4fd1ff]/20 pb-2">
+            <h2 className="text-[14px] font-semibold text-[#e6eef8]">Notes</h2>
+            <span className=""></span>
           </div>
-          <p className="mt-4 text-center text-[12px] text-[#50453B]">
-            Your progress, history and vocabulary are saved automatically.
-          </p>
+          <div className="flex flex-col gap-[2px]">
+            <div className="border border-[#3d484e] bg-[#141a22] p-5">
+              <div className="mb-1 text-[11px] text-[#879299]">[ {new Date().toISOString().slice(0, 10)} ]</div>
+              <div className="font-[Sora] text-sm font-semibold text-[#e6eef8]">Quick start a free talk session</div>
+              <div className="mt-1 text-[13px] text-[#879299]">Jump in instantly. Your progress saves automatically.</div>
+              <button
+                onClick={() => startPracticeSession('FREE_TALK')}
+                disabled={isStarting}
+                className="mt-3 font-mono text-[11px] text-[#4fd1ff] transition-colors hover:text-[#7dd3fc] disabled:opacity-50"
+              >
+                {isStarting ? 'Starting...' : 'Start Session →'}
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Footer */}
+        <footer className="mt-12 flex items-center justify-between border-t border-[#3d484e]/40 pt-4">
+          <span className="font-mono text-[10px] text-zinc-600">&copy; 2026 TALKIVO // NODE: HYD-01</span>
+          <span className="flex items-center gap-1.5 font-mono text-[10px] text-[#7a9a6b]">
+            <span className="h-[5px] w-[5px] rounded-full bg-[#7a9a6b]" /> SYSTEM_OPTIMAL
+          </span>
+        </footer>
       </div>
 
       {/* Topic Picker Modal */}
       {showTopicModal && selectedMode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0E0E10]/80 backdrop-blur-sm" onClick={() => setShowTopicModal(false)} />
+          <div className="absolute inset-0 bg-[#0d131b]/80 backdrop-blur-sm" onClick={() => setShowTopicModal(false)} />
           <div
-            className="relative flex max-h-[90vh] w-full max-w-[800px] flex-col overflow-hidden rounded-xl border border-[#2A2A2E] bg-[#17171A] text-[#F5F2EC] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]"
+            className="relative flex max-h-[90vh] w-full max-w-[800px] flex-col overflow-hidden border border-[#3d484e] bg-[#141a22] text-[#e6eef8] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]"
             role="dialog" aria-modal="true" aria-labelledby="modal-title"
           >
-            <div className="border-b border-[#2A2A2E] p-8">
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`w-8 h-8 rounded-lg ${MODE_CONFIG[selectedMode].iconBg} flex items-center justify-center`}>
+            <div className="border-b border-[#3d484e] p-8">
+              <div className="mb-2 flex items-center gap-3">
+                <div className={`flex h-8 w-8 items-center justify-center ${MODE_CONFIG[selectedMode].iconBg}`}>
                   <span className={`material-symbols-outlined text-lg ${MODE_CONFIG[selectedMode].color}`}>{MODE_CONFIG[selectedMode].icon}</span>
                 </div>
-                <span className="text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">{MODE_CONFIG[selectedMode].label}</span>
+                <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-[#4fd1ff]">{MODE_CONFIG[selectedMode].label}</span>
               </div>
-              <h3 id="modal-title" className="font-serif mt-2 text-[28px] leading-[1.15] tracking-[-0.02em]">
+              <h3 id="modal-title" className="mt-2 font-[Sora] text-[28px] font-bold leading-[1.15] tracking-[-0.02em]">
                 {selectedMode === 'FREE_TALK' && 'Pick a topic, or just start.'}
                 {selectedMode === 'ROLE_PLAY' && 'Choose a scenario.'}
                 {selectedMode === 'DEBATE' && 'Pick a topic and a side.'}
@@ -304,14 +315,14 @@ export default function AppHome() {
                 <DebatePositionSelector onSelect={(pos) => setDebatePosition(pos)} selectedPosition={debatePosition || undefined} />
               )}
             </div>
-            <div className="flex items-center justify-between border-t border-[#2A2A2E] p-5">
-              <button onClick={() => setShowTopicModal(false)} className="text-[13px] text-[#9A948A] hover:text-[#F5F2EC]">Cancel</button>
+            <div className="flex items-center justify-between border-t border-[#3d484e] p-5">
+              <button onClick={() => setShowTopicModal(false)} className="font-mono text-[11px] text-[#879299] hover:text-[#e6eef8]">Cancel</button>
               <button
                 onClick={handleConfirm}
                 disabled={!canConfirm() || isStarting}
-                className="rounded-md bg-[#D4A373] px-5 py-2.5 text-[14px] font-medium text-[#0E0E10] transition-colors hover:bg-[#DDB389] disabled:cursor-not-allowed disabled:opacity-50"
+                className="bg-[#4fd1ff] px-5 py-2.5 font-mono text-[12px] font-semibold uppercase tracking-wider text-[#0d131b] transition-colors hover:bg-[#7dd3fc] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isStarting ? 'Starting…' : 'Begin session →'}
+                {isStarting ? 'Starting...' : 'Begin session →'}
               </button>
             </div>
           </div>
@@ -321,17 +332,12 @@ export default function AppHome() {
   );
 }
 
-/* ── Glass stat card ─────────────────────────────────────────────── */
-function GlassCard({ icon, iconFill, label, value }: { icon: string; iconFill?: boolean; label: string; value: string }) {
+/* ── HUD stat card ── */
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl p-6 flex flex-col justify-between min-h-[140px] transition-all duration-500 hover:shadow-[0_0_25px_rgba(242,190,140,0.08)] bg-[rgba(53,52,55,0.4)] backdrop-blur-[12px] border border-[rgba(80,69,59,0.15)]">
-      <div className="w-10 h-10 rounded-lg bg-[#D4A373]/10 flex items-center justify-center text-[#D4A373] mb-3">
-        <span className="material-symbols-outlined text-2xl" style={iconFill ? { fontVariationSettings: "'FILL' 1" } : undefined}>{icon}</span>
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#9A948A] font-bold mb-1">{label}</p>
-        <p className="text-2xl font-serif font-bold text-[#F5F2EC]">{value}</p>
-      </div>
+    <div className="border border-[#3d484e] bg-[#141a22] p-5">
+      <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#879299]">{label}</div>
+      <div className="font-[Sora] text-[28px] font-bold leading-none tracking-[-0.03em] text-[#e6eef8]">{value}</div>
     </div>
   );
 }

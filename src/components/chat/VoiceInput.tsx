@@ -9,6 +9,7 @@ import { logger } from '@/lib/utils';
 interface VoiceInputProps {
   onTranscript: (text: string, pronunciationData?: PronunciationResult, fillerWords?: FillerWordDetection[]) => void;
   onInterimTranscript?: (text: string, confidence?: number) => void;
+  onError?: (message: string) => void;
   disabled?: boolean;
 }
 
@@ -66,26 +67,33 @@ const isSpeechRecognitionSupported = () => {
 export function VoiceInput({
   onTranscript,
   onInterimTranscript,
+  onError,
   disabled = false,
 }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [interimText, setInterimText] = useState('');
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const retriesRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const MAX_RETRIES = 2;
 
   // Stable refs to avoid recreating recognition when callbacks change
   const onTranscriptRef = useRef(onTranscript);
   const onInterimTranscriptRef = useRef(onInterimTranscript);
+  const onErrorRef = useRef(onError);
   useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
   useEffect(() => { onInterimTranscriptRef.current = onInterimTranscript; }, [onInterimTranscript]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
 
   useEffect(() => {
     setIsSupported(isSpeechRecognitionSupported());
   }, []);
 
-  // Cleanup recognition on unmount
+  // Cleanup recognition + retry timer on unmount
   useEffect(() => {
     return () => {
+      clearTimeout(retryTimerRef.current);
       if (recognitionRef.current) {
         recognitionRef.current.abort();
         recognitionRef.current = null;
@@ -117,6 +125,7 @@ export function VoiceInput({
     recognition.lang = 'en-IN';
 
     recognition.onstart = () => {
+      retriesRef.current = 0;
       setIsListening(true);
       setInterimText('');
     };
@@ -169,11 +178,34 @@ export function VoiceInput({
     };
 
     recognition.onerror = (event: Event & { error: string }) => {
-      // "aborted" and "no-speech" are benign — don't log them as errors
-      if (event.error !== 'aborted' && event.error !== 'no-speech') {
-        logger.error('Speech recognition error:', event.error);
+      const benign = event.error === 'aborted' || event.error === 'no-speech';
+
+      if (event.error === 'network' && retriesRef.current < MAX_RETRIES) {
+        // Transient network failure — retry after a short delay
+        retriesRef.current++;
+        logger.warn(`Speech recognition network error, retry ${retriesRef.current}/${MAX_RETRIES}`);
+        recognitionRef.current = null;
+        setIsListening(false);
+        setInterimText('');
+        retryTimerRef.current = setTimeout(() => startListening(), 500);
+        return;
       }
+
+      if (!benign) {
+        logger.error('Speech recognition error:', event.error);
+
+        const userMessage =
+          event.error === 'network'
+            ? 'Voice recognition needs an internet connection. Check your network and try again.'
+            : event.error === 'not-allowed'
+            ? 'Microphone access was denied. Allow mic permissions in your browser.'
+            : `Voice input error: ${event.error}`;
+
+        onErrorRef.current?.(userMessage);
+      }
+
       recognitionRef.current = null;
+      retriesRef.current = 0;
       setIsListening(false);
       setInterimText('');
     };

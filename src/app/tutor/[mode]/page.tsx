@@ -118,7 +118,6 @@ export default function TutorPage() {
 
   return (
     <RequireAuth>
-      <GridBackground />
       {/* Show report screen */}
       {showReport && reportData ? (
         <SessionReport
@@ -127,18 +126,18 @@ export default function TutorPage() {
           onViewDashboard={handleViewDashboard}
         />
       ) : !sessionId || !mode ? (
-        <div className="flex min-h-screen items-center justify-center bg-[#0E0E10] text-[#F5F2EC] font-geist">
+        <div className="flex min-h-screen items-center justify-center bg-[#0d131b] text-[#e6eef8]">
           <div className="text-center">
-            <div className="mb-4 text-[11px] uppercase tracking-[0.14em] text-[#D4A373]">
-              Session
+            <div className="mb-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[#4fd1ff]">
+              // INITIALIZING
             </div>
-            <p className="font-serif-display text-[22px] leading-[1.3] text-[#F5F2EC]">
-              Preparing the room…
+            <p className="font-[Sora] text-[22px] font-bold leading-[1.3] text-[#e6eef8]">
+              Preparing the room...
             </p>
             <div className="mt-6 flex justify-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse" />
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.15s]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373] animate-pulse [animation-delay:0.3s]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#4fd1ff] animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#4fd1ff] animate-pulse [animation-delay:0.15s]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#4fd1ff] animate-pulse [animation-delay:0.3s]" />
             </div>
           </div>
         </div>
