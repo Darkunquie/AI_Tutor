@@ -99,7 +99,8 @@ export default async function CityPage({
               { h: 'Cheaper than a tutor, patient like a friend', b: 'A live tutor in India costs \u20B9500-\u20B92000 per hour and meets once a week. Talkivo is \u20B9499 per month, unlimited, and never tired.' },
             ].map((x) => (
               <div key={x.h} className="rounded-2xl border border-[#4FD1FF]/20 bg-[#121215] p-6">
-              <div key={x.h} className="rounded-2xl border border-[#4FD1FF]/20 bg-[#121215] p-6">                <p className="mt-3 text-[14px] leading-[1.65] text-[#BCC8CF]">{x.b}</p>
+                <h3 className="font-sora text-lg text-[#E6EEF8]">{x.h}</h3>
+                <p className="mt-3 text-[14px] leading-[1.65] text-[#BCC8CF]">{x.b}</p>
               </div>
             ))}
           </div>

@@ -102,7 +102,6 @@ export const Footer = ({
                 >
                   Crafted by {creatorName}
                 </Link>
-                </Link>
               </nav>
             )}
           </div>

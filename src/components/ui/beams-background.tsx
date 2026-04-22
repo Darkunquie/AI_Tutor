@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 
 interface BeamsBackgroundProps {
@@ -42,7 +42,6 @@ export function BeamsBackground({ className, intensity = "subtle" }: BeamsBackgr
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const beamsRef = useRef<Beam[]>([]);
   const animationFrameRef = useRef<number>(0);
-  const prefersReducedMotion = useReducedMotion();
   const MINIMUM_BEAMS = 20;
 
   const opacityMap = {
@@ -154,6 +153,8 @@ export function BeamsBackground({ className, intensity = "subtle" }: BeamsBackgr
     >
       <canvas
         ref={canvasRef}
+        className="absolute inset-0 h-full w-full"
+      />
       <motion.div
         className="absolute inset-0 bg-[#070B10]/5"
         animate={{ opacity: [0.05, 0.15, 0.05] }}
@@ -167,9 +168,6 @@ export function BeamsBackground({ className, intensity = "subtle" }: BeamsBackgr
             animate: { opacity: 0.1 },
             transition: { duration: 0 },
           })}
-        style={{ backdropFilter: "blur(50px)" }}
-      />
-        transition={prefersReducedMotion ? { duration: 0 } : { duration: 10, ease: "easeInOut", repeat: Infinity }}
         style={{ backdropFilter: "blur(50px)" }}
       />
     </div>
