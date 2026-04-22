@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api-client';
+import { useToastStore } from '@/stores/toastStore';
 import type { ReviewWord } from '@/lib/types';
 
 interface FlashcardProps {
@@ -30,6 +31,8 @@ export function Flashcard({ words, onComplete }: FlashcardProps) {
     if (!flipped && !submitting) { setFlipped(true); }
   }, [flipped, submitting]);
 
+  const addToast = useToastStore((s) => s.addToast);
+
   const handleRate = useCallback(async (correct: boolean) => {
     if (submitting || !word) return;
     setSubmitting(true);
@@ -38,6 +41,7 @@ export function Flashcard({ words, onComplete }: FlashcardProps) {
       await api.vocabulary.submitReview(word.id, correct);
     } catch (err) {
       console.error('Failed to submit review:', err);
+      addToast('Failed to save review. Please try again.', undefined, 'error');
       setSubmitting(false);
       return;
     }
@@ -50,7 +54,7 @@ export function Flashcard({ words, onComplete }: FlashcardProps) {
     } else {
       setCurrentIndex((i) => i + 1);
     }
-  }, [submitting, word, currentIndex, total, onComplete]);
+  }, [submitting, word, currentIndex, total, onComplete, addToast]);
 
   // Keyboard: Space to flip, 1-4 to rate
   useEffect(() => {
@@ -89,7 +93,7 @@ export function Flashcard({ words, onComplete }: FlashcardProps) {
         </span>
         <div className="flex-1 h-1 rounded-full bg-[#1F242D] overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#4FD1FF] to-[#7DD3FC] transition-all duration-400"
+            className="h-full rounded-full bg-gradient-to-r from-[#4FD1FF] to-[#7DD3FC] transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>

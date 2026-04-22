@@ -19,8 +19,10 @@ jobs:
             cd /root/AI_Tutor
             git fetch origin main
             git reset --hard origin/main
-            npm install --production
+            npm install
             npx prisma generate
             npm run build
+            npm prune --production
+            npm prune --production
             pm2 restart ecosystem.config.js
             pm2 save

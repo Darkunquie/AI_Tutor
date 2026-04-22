@@ -22,7 +22,7 @@ export function AppShell({ children }: AppShellProps) {
   const { user, logout, isAdmin } = useAuth();
 
   const initials = user?.name
-    ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+    ? user.name.split(' ').filter(Boolean).map((n) => n[0]).slice(0, 2).join('').toUpperCase()
     : '??';
 
   const isActive = (href: string) =>

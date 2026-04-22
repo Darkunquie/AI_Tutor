@@ -28,10 +28,14 @@ export default function AchievementsPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [unlocked, setUnlocked] = useState<UnlockedAchievement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [fetchKey, setFetchKey] = useState(0);
 
   useEffect(() => {
     if (authLoading || !isAuthenticated || !user) { return; }
     let cancelled = false;
+    setLoading(true);
+    setError(false);
     (async () => {
       try {
         const res = await api.achievements.list() as unknown as { data: { unlocked: UnlockedAchievement[]; locked: unknown[] } };
@@ -39,13 +43,13 @@ export default function AchievementsPage() {
           setUnlocked(res.data?.unlocked ?? []);
         }
       } catch {
-        // silent
+        if (!cancelled) { setError(true); }
       } finally {
         if (!cancelled) { setLoading(false); }
       }
     })();
     return () => { cancelled = true; };
-  }, [authLoading, isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user, fetchKey]);
 
   const unlockedTypes = new Set(unlocked.map((a) => a.type));
   const unlockedCount = unlockedTypes.size;
@@ -77,11 +81,14 @@ export default function AchievementsPage() {
             <h1 className="font-[Sora] text-3xl font-bold tracking-[-0.02em] text-[#e6eef8]">
               Achievements
             </h1>
-            <p className="mt-2 text-sm text-[#879299]">
-              {unlockedCount} of {totalCount} unlocked
-            </p>
-            {/* Progress bar */}
-            <div className="mt-4 h-2 w-full max-w-[400px] overflow-hidden rounded-full bg-[#1f242d]">
+            <div 
+              className="mt-4 h-2 w-full max-w-[400px] overflow-hidden rounded-full bg-[#1f242d]"
+              role="progressbar"
+              aria-valuenow={unlockedCount}
+              aria-valuemin={0}
+              aria-valuemax={totalCount}
+              aria-label={`${unlockedCount} of ${totalCount} achievements unlocked`}
+            >
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#4fd1ff] to-[#2a6c88] transition-all duration-500"
                 style={{ width: `${(unlockedCount / totalCount) * 100}%` }}
@@ -188,8 +195,23 @@ export default function AchievementsPage() {
             );
           })}
 
+          {/* Error state */}
+          {!loading && error && (
+            <div className="mt-8 text-center">
+              <p className="text-[15px] text-[#879299]">
+                Could not load achievements.
+              </p>
+              <button
+                onClick={() => setFetchKey((k) => k + 1)}
+                className="mt-4 rounded bg-[#4fd1ff] px-5 py-2 font-mono text-[12px] font-medium text-[#0d131b] transition-colors hover:bg-[#7dd3fc]"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Empty state */}
-          {!loading && unlockedCount === 0 && (
+          {!loading && !error && unlockedCount === 0 && (
             <div className="mt-8 text-center">
               <p className="text-[15px] text-[#879299]">
                 Complete your first session to start unlocking achievements.

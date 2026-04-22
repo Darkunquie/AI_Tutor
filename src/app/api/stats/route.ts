@@ -64,10 +64,16 @@ async function handleGet(request: NextRequest) {
         )
       : 0;
 
-  // Get vocabulary count
-  const wordsLearned = await db.vocabulary.count({
-    where: { userId: userId },
-  });
+  // Get vocabulary count (total + period-scoped)
+  const vocabWhere: { userId: string; createdAt?: { gte: Date } } = { userId };
+  if (startDate) {
+    vocabWhere.createdAt = { gte: startDate };
+  }
+
+  const [wordsLearned, wordsLearnedInPeriod] = await Promise.all([
+    db.vocabulary.count({ where: { userId } }),
+    db.vocabulary.count({ where: vocabWhere }),
+  ]);
 
   // Get error breakdown - use session IDs to avoid N+1 query
   const sessionIds = sessions.map(s => s.id);
@@ -111,6 +117,7 @@ async function handleGet(request: NextRequest) {
     totalDuration,
     averageScore,
     wordsLearned,
+    wordsLearnedInPeriod,
     totalFillerWords,
     avgPronunciation,
     errorBreakdown,
