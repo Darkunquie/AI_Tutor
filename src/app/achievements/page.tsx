@@ -34,9 +34,9 @@ export default function AchievementsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.achievements.list() as unknown as { unlocked: UnlockedAchievement[]; locked: unknown[] };
+        const res = await api.achievements.list() as unknown as { data: { unlocked: UnlockedAchievement[]; locked: unknown[] } };
         if (!cancelled) {
-          setUnlocked(res.unlocked ?? []);
+          setUnlocked(res.data?.unlocked ?? []);
         }
       } catch {
         // silent
