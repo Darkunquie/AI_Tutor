@@ -13,7 +13,7 @@ const configSchema = z.object({
 
   // AI — Groq API
   GROQ_API_KEY: z.string().min(1, 'GROQ_API_KEY is required'),
-  GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
+  GROQ_MODEL: z.string().default('openai/gpt-oss-20b'),
   GROQ_MAX_CONCURRENT: z.coerce.number().int().positive().default(25),
   GROQ_RPM_LIMIT: z.coerce.number().int().positive().default(25),
   GROQ_MAX_PER_USER: z.coerce.number().int().positive().default(3),

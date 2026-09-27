@@ -17,6 +17,6 @@ export const env = {
   DATABASE_URL: requireEnv('DATABASE_URL'),
   JWT_SECRET: requireEnv('JWT_SECRET'),
   GROQ_API_KEY: requireEnv('GROQ_API_KEY'),
-  GROQ_MODEL: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  GROQ_MODEL: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
   NODE_ENV: process.env.NODE_ENV || 'development',
 } as const;
